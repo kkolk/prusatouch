@@ -22,6 +22,7 @@
     "@vue/test-utils": "^2.4.6",
     "happy-dom": "^20.0.11",
     "openapi-typescript-codegen": "^0.29.0",
+    "terser": "^5.44.1",
     "typescript": "^5.9.3",
     "vite": "^7.2.6",
     "vitest": "^4.0.15",
