@@ -1,0 +1,215 @@
+openapi: 3.0.0
+info:
+  title: PrusaLink API
+  version: 1.0.0
+  description: API for controlling Prusa 3D printers
+
+servers:
+  - url: /api/v1
+
+paths:
+  /status:
+    get:
+      summary: Get printer status
+      operationId: getStatus
+      responses:
+        '200':
+          description: Printer status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+
+  /job:
+    get:
+      summary: Get current job
+      operationId: getJob
+      responses:
+        '200':
+          description: Current job information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobResponse'
+
+  /job/{id}/pause:
+    put:
+      summary: Pause print job
+      operationId: pauseJob
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Job paused
+
+  /job/{id}/resume:
+    put:
+      summary: Resume print job
+      operationId: resumeJob
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Job resumed
+
+  /job/{id}:
+    delete:
+      summary: Stop print job
+      operationId: stopJob
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Job stopped
+
+  /storage:
+    get:
+      summary: Get available storage locations
+      operationId: getStorages
+      responses:
+        '200':
+          description: List of storages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Storage'
+
+  /files/{storage}/{path}:
+    get:
+      summary: List files
+      operationId: getFiles
+      parameters:
+        - name: storage
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: path
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: File list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileListResponse'
+    post:
+      summary: Start print
+      operationId: startPrint
+      parameters:
+        - name: storage
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: path
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Print started
+    delete:
+      summary: Delete file
+      operationId: deleteFile
+      parameters:
+        - name: storage
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: path
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: File deleted
+
+components:
+  schemas:
+    StatusResponse:
+      type: object
+      properties:
+        printer:
+          $ref: '#/components/schemas/PrinterStatus'
+
+    PrinterStatus:
+      type: object
+      properties:
+        state:
+          type: string
+          enum: [IDLE, PRINTING, PAUSED, FINISHED, ERROR]
+        temp_nozzle:
+          type: number
+        temp_bed:
+          type: number
+        target_nozzle:
+          type: number
+        target_bed:
+          type: number
+
+    JobResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        state:
+          type: string
+        progress:
+          type: number
+        time_remaining:
+          type: number
+        time_printing:
+          type: number
+        file:
+          $ref: '#/components/schemas/FileInfo'
+
+    FileInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        path:
+          type: string
+        size:
+          type: number
+        m_timestamp:
+          type: number
+
+    Storage:
+      type: object
+      properties:
+        path:
+          type: string
+        name:
+          type: string
+        read_only:
+          type: boolean
+
+    FileListResponse:
+      type: object
+      properties:
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileInfo'
