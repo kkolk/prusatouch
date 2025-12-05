@@ -26,5 +26,14 @@
     "vite": "^7.2.6",
     "vitest": "^4.0.15",
     "vue-tsc": "^3.1.5"
-  }
+  },
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }
