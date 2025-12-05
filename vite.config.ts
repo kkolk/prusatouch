@@ -11,6 +11,11 @@ export default defineConfig({
     }
   },
 
+  test: {
+    environment: 'happy-dom',
+    globals: true
+  },
+
   build: {
     target: 'es2020',
     minify: 'terser',
