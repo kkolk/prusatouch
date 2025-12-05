@@ -8,6 +8,39 @@
 
 **Tech Stack:** Vue 3, TypeScript 5.x, Vite 5.x, Pinia, Axios, openapi-typescript-codegen, Vitest, Playwright
 
+**Prerequisites:** Node.js 24.x LTS (Krypton) - Latest LTS as of December 2025
+
+---
+
+## Prerequisites: Node.js Installation
+
+**Required:** Node.js 24.x LTS (Krypton)
+
+**Verify Node.js version:**
+
+Run: `node --version`
+Expected: v24.x.x
+
+**If Node.js 24.x is not installed:**
+
+Using nvm (recommended):
+```bash
+# Install nvm if not already installed
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+
+# Install Node.js 24 LTS
+nvm install 24
+nvm use 24
+nvm alias default 24
+```
+
+Or download from: https://nodejs.org/
+
+**Verify installation:**
+
+Run: `node --version && npm --version`
+Expected: Node v24.x.x and npm 10.x.x
+
 ---
 
 ## Task 1: Project Initialization
