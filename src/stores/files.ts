@@ -31,9 +31,9 @@ export const useFilesStore = defineStore('files', () => {
 
   const sortedFiles = computed(() => {
     return [...files.value].sort((a, b) => {
-      // Folders first
-      const aIsFolder = !a.name.includes('.')
-      const bIsFolder = !b.name.includes('.')
+      // Folders first (folders have size 0 or undefined, files have size > 0)
+      const aIsFolder = !a.size || a.size === 0
+      const bIsFolder = !b.size || b.size === 0
 
       if (aIsFolder && !bIsFolder) return -1
       if (!aIsFolder && bIsFolder) return 1
