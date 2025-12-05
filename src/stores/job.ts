@@ -56,11 +56,14 @@ export const useJobStore = defineStore('job', () => {
 
   async function resumeJob(id: string) {
     try {
+      control.value.pauseInProgress = true
       const { DefaultService } = await import('../api')
       await DefaultService.resumeJob(id)
       await fetchJob()
     } catch (error) {
       console.error('Failed to resume job:', error)
+    } finally {
+      control.value.pauseInProgress = false
     }
   }
 
