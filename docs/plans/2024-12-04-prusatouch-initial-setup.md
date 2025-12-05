@@ -6,7 +6,7 @@
 
 **Architecture:** Vue 3 (Composition API) + TypeScript + Vite + Pinia for state management. Auto-generated API client from OpenAPI spec. Custom CSS with GPU-accelerated animations. Target <300KB bundle, 60fps on Pi 4.
 
-**Tech Stack:** Vue 3, TypeScript 5.x, Vite 5.x, Pinia, Axios, openapi-typescript-codegen, Vitest, Playwright
+**Tech Stack:** Vue 3.5, TypeScript 5.9, Vite 7.x, Pinia 3.x, Axios, openapi-typescript-codegen, Vitest 4.x, Playwright 1.57
 
 **Prerequisites:** Node.js 24.x LTS (Krypton) - Latest LTS as of December 2025
 
@@ -60,23 +60,27 @@ Expected: Creates package.json
 
 Run:
 ```bash
-npm install vue@^3.4.0 pinia@^2.1.0 axios@^1.6.0 vue-router@^4.2.0
+npm install vue@^3.5.25 pinia@^3.0.4 axios@^1.13.2 vue-router@^4.6.3
 ```
 Expected: Dependencies installed
+
+**Note:** Pinia 3.x drops Vue 2 support (we're using Vue 3 only)
 
 **Step 3: Install dev dependencies**
 
 Run:
 ```bash
-npm install -D @vitejs/plugin-vue@^5.0.0 vite@^5.0.0 typescript@^5.3.0 vue-tsc@^1.8.0 vitest@^1.1.0 @playwright/test@^1.40.0 @vue/test-utils@^2.4.0 happy-dom@^12.10.0
+npm install -D @vitejs/plugin-vue@^6.0.2 vite@^7.2.6 typescript@^5.9.3 vue-tsc@^3.1.5 vitest@^4.0.15 @playwright/test@^1.57.0 @vue/test-utils@^2.4.6 happy-dom@^20.0.11
 ```
 Expected: Dev dependencies installed
+
+**Note:** Multiple major version updates - Vite 7, Vitest 4, vue-tsc 3, happy-dom 20
 
 **Step 4: Install OpenAPI code generator**
 
 Run:
 ```bash
-npm install -D openapi-typescript-codegen@^0.27.0
+npm install -D openapi-typescript-codegen@^0.29.0
 ```
 Expected: Codegen tool installed
 
