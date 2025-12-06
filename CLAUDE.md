@@ -12,14 +12,40 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **Framework:** Vue 3 (Composition API) - Lower memory footprint than React
 - **Language:** TypeScript 5.x - Type safety from auto-generated OpenAPI client
-- **Build Tool:** Vite 5.x - Fast builds, optimized dev server
+- **Build Tool:** Vite 7.x - Fast builds, optimized dev server
+- **Node.js:** 24.x LTS (Krypton) via nvm
 - **State:** Pinia - Official Vue state management
 - **API:** Auto-generated from OpenAPI spec via `openapi-typescript-codegen`
 - **HTTP:** Axios with retry logic
 - **Testing:** Vitest (unit), Playwright (E2E)
 - **Styling:** Custom CSS with CSS Variables (no frameworks)
 
+## Node.js Environment Setup
+
+**CRITICAL:** Node.js 24.x is installed via nvm. You MUST load nvm before running ANY npm command.
+
+**Required prefix for ALL bash commands:**
+```bash
+export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && <your-command>
+```
+
+**Examples:**
+```bash
+# Install dependencies
+export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && npm install
+
+# Run dev server
+export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && npm run dev
+
+# Run tests
+export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && npm run test:unit
+```
+
+**Why:** The system does not have Node.js in the default PATH. nvm must be sourced in each shell session to access node/npm.
+
 ## Common Commands
+
+All commands below require the nvm prefix shown above.
 
 ```bash
 # Development
@@ -228,7 +254,9 @@ beforeEach(() => {
 
 **Checkpoint System:**
 
-Check `docs/plans/2024-12-04-prusatouch-initial-setup.md` for the complete implementation plan.
+**Implementation Plans:**
+- `docs/plans/2024-12-04-prusatouch-initial-setup.md` - Tasks 1-7 (Foundation)
+- `docs/plans/2025-12-05-core-components-phase2.md` - Tasks 8-12 (Components)
 
 **Progress tracking via git tags:**
 ```bash
@@ -237,11 +265,17 @@ git show checkpoint-task-N        # View checkpoint details
 ```
 
 **Implementation phases:**
-- [ ] Phase 1: Project setup + API + Stores (Tasks 1-6)
-- [ ] Phase 2: Core components (Tasks 7-15)
-- [ ] Phase 3: Composables (Tasks 16-20)
-- [ ] Phase 4: Views + Router (Tasks 21-28)
-- [ ] Phase 5: Testing + Deployment (Tasks 29-35)
+- [x] Phase 1: Project setup + API + Stores (Tasks 1-7) ✅ COMPLETE
+- [ ] Phase 2: Core components (Tasks 8-12) - IN PROGRESS
+- [ ] Phase 3: Composables (Tasks 13-17)
+- [ ] Phase 4: Views + Router (Tasks 18-25)
+- [ ] Phase 5: Testing + Deployment (Tasks 26-32)
+
+**Completed Components:**
+- TouchButton (Task 7) - Primary/secondary/danger variants, loading states
+- Printer Store - Adaptive polling, connection handling
+- Job Store - Print control actions, job history
+- Files Store - LRU thumbnail cache, file browser
 
 ## Important Notes
 
@@ -335,8 +369,10 @@ chore: maintenance tasks
 
 ## Reference Documentation
 
-**Full design specification:** `docs/prusatouch-design-initial.md`
-**Implementation plan:** `docs/plans/2024-12-04-prusatouch-initial-setup.md`
+**Full design specification:** `../prusatouch-design-doc.md` (parent directory)
+**Implementation plans:**
+- `docs/plans/2024-12-04-prusatouch-initial-setup.md` - Foundation (Tasks 1-7)
+- `docs/plans/2025-12-05-core-components-phase2.md` - Components (Tasks 8-12)
 
 ## Questions or Issues?
 
