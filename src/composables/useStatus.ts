@@ -82,7 +82,7 @@ export function useStatus() {
     lastUpdate: readonly(lastUpdate),
 
     // Raw store access (for advanced use)
-    status: computed(() => store.status),
+    status: readonly(computed(() => store.status)),
 
     // Lifecycle
     startPolling,
