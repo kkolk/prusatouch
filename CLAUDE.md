@@ -22,40 +22,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Node.js Environment Setup
 
-**CRITICAL:** Node.js 24.x is installed via nvm. You MUST load nvm before running ANY npm command.
+**Node.js:** 24.x LTS (Krypton) via nvm - Already configured and available globally.
 
-**Required prefix for ALL bash commands:**
-```bash
-export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && <your-command>
-```
-
-**Examples:**
-```bash
-# Install dependencies
-export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && npm install
-
-# Run dev server
-export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && npm run dev
-
-# Run tests
-export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && npm run test:unit
-```
-
-**Why:** The system does not have Node.js in the default PATH. nvm must be sourced in each shell session to access node/npm.
-
-## Common Commands
-
-All commands below require the nvm prefix shown above.
+You can use npm commands directly - no special setup needed!
 
 ```bash
 # Development
-npm install                    # Install dependencies
-npm run dev                    # Start dev server (http://localhost:5173)
+npm install                   # Install dependencies
+npm run dev                   # Start dev server (http://localhost:5173)
 npm run generate:api          # Regenerate API client from spec/openapi.yaml
 
 # Testing
 npm run test:unit             # Run all unit tests with Vitest
-npm run test:unit -- <file>   # Run specific test file
+npm run test:unit -- <file>   # Run specific test file (e.g., tests/unit/components/TouchButton.spec.ts)
 npm run test:e2e              # Run E2E tests with Playwright
 
 # Build
@@ -63,7 +42,7 @@ npm run build                 # Production build (outputs to dist/)
 npm run preview               # Preview production build
 
 # Type checking
-vue-tsc --noEmit              # Check TypeScript types without emitting
+npx vue-tsc --noEmit          # Check TypeScript types without emitting
 ```
 
 ## Architecture
