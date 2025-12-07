@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { configureAuth, getAuthConfig, clearAuth } from '../../../src/api/auth'
+import { configureAuth, getAuthConfig, clearAuth, isAuthConfigured } from '../../../src/api/auth'
 
 describe('API Auth', () => {
   beforeEach(() => {
@@ -32,5 +32,11 @@ describe('API Auth', () => {
     // This test verifies the function exists and runs without error
     initAuthFromEnv()
     // Actual env loading tested in integration
+  })
+
+  it('checks if auth is configured', () => {
+    expect(isAuthConfigured()).toBe(false)
+    configureAuth('testuser', 'testpass')
+    expect(isAuthConfigured()).toBe(true)
   })
 })
