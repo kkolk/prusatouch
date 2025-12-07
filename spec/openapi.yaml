@@ -2,15 +2,40 @@ openapi: 3.0.0
 info:
   title: PrusaLink API
   version: 1.0.0
-  description: API for controlling Prusa 3D printers
+  description: API for controlling Prusa 3D printers via PrusaLink
 
 servers:
   - url: /api/v1
+    description: PrusaLink v1 API (proxied in dev)
 
 paths:
+  /version:
+    get:
+      summary: Get version information
+      operationId: getVersion
+      responses:
+        '200':
+          description: Version info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionResponse'
+
+  /info:
+    get:
+      summary: Get printer info
+      operationId: getInfo
+      responses:
+        '200':
+          description: Printer info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InfoResponse'
+
   /status:
     get:
-      summary: Get printer status
+      summary: Get printer status with telemetry
       operationId: getStatus
       responses:
         '200':
@@ -31,6 +56,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/JobResponse'
+        '204':
+          description: No job active
+
+  /job/{id}:
+    delete:
+      summary: Stop print job
+      operationId: stopJob
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Job stopped
 
   /job/{id}/pause:
     put:
@@ -41,7 +82,7 @@ paths:
           in: path
           required: true
           schema:
-            type: string
+            type: integer
       responses:
         '204':
           description: Job paused
@@ -55,24 +96,10 @@ paths:
           in: path
           required: true
           schema:
-            type: string
+            type: integer
       responses:
         '204':
           description: Job resumed
-
-  /job/{id}:
-    delete:
-      summary: Stop print job
-      operationId: stopJob
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '204':
-          description: Job stopped
 
   /storage:
     get:
@@ -84,13 +111,11 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Storage'
+                $ref: '#/components/schemas/StorageResponse'
 
   /files/{storage}/{path}:
     get:
-      summary: List files
+      summary: Get file or folder info
       operationId: getFiles
       parameters:
         - name: storage
@@ -98,20 +123,22 @@ paths:
           required: true
           schema:
             type: string
+          description: Storage path (e.g., "local" or "usb")
         - name: path
           in: path
           required: true
           schema:
             type: string
+          description: File or folder path
       responses:
         '200':
-          description: File list
+          description: File/folder info
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/FileListResponse'
     post:
-      summary: Start print
+      summary: Start print from file
       operationId: startPrint
       parameters:
         - name: storage
@@ -147,56 +174,88 @@ paths:
 
 components:
   schemas:
+    VersionResponse:
+      type: object
+      properties:
+        api:
+          type: string
+        version:
+          type: string
+        printer:
+          type: string
+        text:
+          type: string
+        firmware:
+          type: string
+
+    InfoResponse:
+      type: object
+      properties:
+        name:
+          type: string
+        location:
+          type: string
+        serial:
+          type: string
+        hostname:
+          type: string
+        nozzle_diameter:
+          type: number
+
     StatusResponse:
       type: object
+      required:
+        - printer
       properties:
         printer:
           $ref: '#/components/schemas/PrinterStatus'
+        job:
+          $ref: '#/components/schemas/JobStatus'
+        storage:
+          $ref: '#/components/schemas/StorageStatus'
 
     PrinterStatus:
       type: object
       properties:
         state:
           type: string
-          enum: [IDLE, PRINTING, PAUSED, FINISHED, ERROR]
+          enum: [IDLE, BUSY, PRINTING, PAUSED, FINISHED, STOPPED, ERROR, ATTENTION, READY]
         temp_nozzle:
-          type: number
-        temp_bed:
           type: number
         target_nozzle:
           type: number
+        temp_bed:
+          type: number
         target_bed:
           type: number
+        axis_x:
+          type: number
+        axis_y:
+          type: number
+        axis_z:
+          type: number
+        flow:
+          type: integer
+        speed:
+          type: integer
+        fan_hotend:
+          type: integer
+        fan_print:
+          type: integer
 
-    JobResponse:
+    JobStatus:
       type: object
       properties:
         id:
-          type: string
-        state:
-          type: string
+          type: integer
         progress:
           type: number
         time_remaining:
-          type: number
+          type: integer
         time_printing:
-          type: number
-        file:
-          $ref: '#/components/schemas/FileInfo'
+          type: integer
 
-    FileInfo:
-      type: object
-      properties:
-        name:
-          type: string
-        path:
-          type: string
-        size:
-          type: number
-        m_timestamp:
-          type: number
-
-    Storage:
+    StorageStatus:
       type: object
       properties:
         path:
@@ -206,9 +265,83 @@ components:
         read_only:
           type: boolean
 
+    JobResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        state:
+          type: string
+        progress:
+          type: number
+        time_remaining:
+          type: integer
+        time_printing:
+          type: integer
+        file:
+          $ref: '#/components/schemas/FileInfo'
+
+    FileInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        display_name:
+          type: string
+        path:
+          type: string
+        size:
+          type: integer
+        m_timestamp:
+          type: integer
+        type:
+          type: string
+          enum: [FOLDER, PRINT_FILE, FILE, FIRMWARE, MOUNT]
+        refs:
+          type: object
+          properties:
+            download:
+              type: string
+            icon:
+              type: string
+            thumbnail:
+              type: string
+
+    Storage:
+      type: object
+      properties:
+        path:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        read_only:
+          type: boolean
+        available:
+          type: boolean
+        free_space:
+          type: integer
+        total_space:
+          type: integer
+
+    StorageResponse:
+      type: object
+      properties:
+        storage_list:
+          type: array
+          items:
+            $ref: '#/components/schemas/Storage'
+
     FileListResponse:
       type: object
       properties:
+        name:
+          type: string
+        path:
+          type: string
+        type:
+          type: string
         children:
           type: array
           items:

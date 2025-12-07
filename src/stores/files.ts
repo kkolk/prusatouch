@@ -39,7 +39,7 @@ export const useFilesStore = defineStore('files', () => {
       if (!aIsFolder && bIsFolder) return 1
 
       // Then alphabetically
-      return a.name.localeCompare(b.name)
+      return (a.name ?? '').localeCompare(b.name ?? '')
     })
   })
 
@@ -47,7 +47,8 @@ export const useFilesStore = defineStore('files', () => {
   async function fetchStorages() {
     try {
       const { DefaultService } = await import('../api')
-      storages.value = await DefaultService.getStorages()
+      const response = await DefaultService.getStorages()
+      storages.value = response.storage_list || []
     } catch (error) {
       console.error('Failed to fetch storages:', error)
     }
@@ -84,7 +85,7 @@ export const useFilesStore = defineStore('files', () => {
       await DefaultService.deleteFile(storage, path)
 
       // Refresh file list
-      await fetchFiles(storage, currentPath.value)
+      await fetchFiles(storage, currentPath.value || '/')
     } catch (error) {
       console.error('Failed to delete file:', error)
       throw error
@@ -94,7 +95,7 @@ export const useFilesStore = defineStore('files', () => {
   function cacheThumbnail(path: string, dataUrl: string) {
     // LRU cache: Remove oldest if at capacity
     if (thumbnailCache.value.size >= 50) {
-      const firstKey = thumbnailCache.value.keys().next().value
+      const firstKey = thumbnailCache.value.keys().next().value as string
       thumbnailCache.value.delete(firstKey)
     }
     thumbnailCache.value.set(path, dataUrl)

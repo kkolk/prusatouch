@@ -13,7 +13,7 @@ export const useJobStore = defineStore('job', () => {
 
   // Getters
   const progressPercent = computed(() => {
-    if (!currentJob.value) return 0
+    if (!currentJob.value || currentJob.value.progress === undefined) return 0
     return Math.round(currentJob.value.progress * 100)
   })
 
@@ -41,7 +41,7 @@ export const useJobStore = defineStore('job', () => {
     }
   }
 
-  async function pauseJob(id: string) {
+  async function pauseJob(id: number) {
     try {
       control.value.pauseInProgress = true
       const { DefaultService } = await import('../api')
@@ -54,7 +54,7 @@ export const useJobStore = defineStore('job', () => {
     }
   }
 
-  async function resumeJob(id: string) {
+  async function resumeJob(id: number) {
     try {
       control.value.pauseInProgress = true
       const { DefaultService } = await import('../api')
@@ -67,7 +67,7 @@ export const useJobStore = defineStore('job', () => {
     }
   }
 
-  async function stopJob(id: string) {
+  async function stopJob(id: number) {
     try {
       control.value.stopInProgress = true
       const { DefaultService } = await import('../api')
