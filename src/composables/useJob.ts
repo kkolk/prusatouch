@@ -79,8 +79,8 @@ export function useJob() {
     isStopping: readonly(isStopping),
 
     // Raw access
-    currentJob: computed(() => store.currentJob),
-    history: computed(() => store.history),
+    currentJob: readonly(computed(() => store.currentJob)),
+    history: readonly(computed(() => store.history)),
 
     // Actions
     pauseJob,
