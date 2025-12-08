@@ -62,3 +62,10 @@ export function initAuthFromEnv(): void {
 export function isAuthConfigured(): boolean {
   return authConfig.username !== '' && authConfig.password !== ''
 }
+
+/**
+ * Get Digest-enabled axios client
+ */
+export function getDigestClient(): any {
+  throw new Error('Not implemented')
+}

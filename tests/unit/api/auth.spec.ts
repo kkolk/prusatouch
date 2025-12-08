@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { configureAuth, getAuthConfig, clearAuth, isAuthConfigured } from '../../../src/api/auth'
+import { configureAuth, getAuthConfig, clearAuth, isAuthConfigured, getDigestClient } from '../../../src/api/auth'
 
 describe('API Auth', () => {
   beforeEach(() => {
@@ -38,5 +38,18 @@ describe('API Auth', () => {
     expect(isAuthConfigured()).toBe(false)
     configureAuth('testuser', 'testpass')
     expect(isAuthConfigured()).toBe(true)
+  })
+
+  it('provides digest auth client after configuration', () => {
+    configureAuth('testuser', 'testpass')
+    const client = getDigestClient()
+
+    expect(client).toBeDefined()
+    expect(client.request).toBeDefined()
+  })
+
+  it('throws error when getting digest client without auth', () => {
+    clearAuth()
+    expect(() => getDigestClient()).toThrow('Auth not configured')
   })
 })
