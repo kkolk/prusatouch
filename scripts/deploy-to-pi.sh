@@ -5,8 +5,8 @@ set -e
 # Usage: ./scripts/deploy-to-pi.sh [pi-hostname]
 
 PI_HOST="${1:-prusa-mk3s.local}"
-PI_USER="pi"
-DEPLOY_PATH="/var/www/html/prusatouch"
+PI_USER="kkolk"
+DEPLOY_PATH="/opt/prusatouch"
 
 echo "🚀 PrusaTouch Deployment to Raspberry Pi"
 echo "========================================="
@@ -17,7 +17,23 @@ echo ""
 # Colors
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+RED='\033[0;31m'
 NC='\033[0m'
+
+# Check if lighttpd is installed
+check_lighttpd() {
+  ssh ${PI_USER}@${PI_HOST} "which lighttpd > /dev/null 2>&1" && return 0 || return 1
+}
+
+# Install lighttpd
+install_lighttpd() {
+  echo "📦 Installing lighttpd web server..."
+  ssh ${PI_USER}@${PI_HOST} "sudo apt-get update && sudo apt-get install -y lighttpd" || {
+    echo "❌ Failed to install lighttpd"
+    exit 1
+  }
+  echo -e "${GREEN}✓ lighttpd installed${NC}"
+}
 
 # Step 1: Build production bundle
 echo "📦 Building production bundle..."
@@ -39,13 +55,23 @@ echo "🔍 Verifying performance..."
 }
 echo ""
 
-# Step 3: Create deployment directory on Pi
+# Step 3: Check/Install Web Server
+echo "🔍 Checking for web server..."
+if ! check_lighttpd; then
+  echo "lighttpd not found, installing..."
+  install_lighttpd
+else
+  echo -e "${GREEN}✓ lighttpd already installed${NC}"
+fi
+echo ""
+
+# Step 4: Create deployment directory on Pi
 echo "📁 Creating deployment directory on Pi..."
 ssh ${PI_USER}@${PI_HOST} "sudo mkdir -p ${DEPLOY_PATH} && sudo chown ${PI_USER}:${PI_USER} ${DEPLOY_PATH}"
 echo -e "${GREEN}✓ Directory ready${NC}"
 echo ""
 
-# Step 4: Transfer files
+# Step 5: Transfer files
 echo "📤 Transferring files to Pi..."
 rsync -avz --delete \
   --exclude='.git' \
@@ -56,13 +82,13 @@ rsync -avz --delete \
 echo -e "${GREEN}✓ Files transferred${NC}"
 echo ""
 
-# Step 5: Set permissions
+# Step 6: Set permissions
 echo "🔐 Setting permissions..."
 ssh ${PI_USER}@${PI_HOST} "sudo chown -R www-data:www-data ${DEPLOY_PATH} && sudo chmod -R 755 ${DEPLOY_PATH}"
 echo -e "${GREEN}✓ Permissions set${NC}"
 echo ""
 
-# Step 6: Verify deployment
+# Step 7: Verify deployment
 echo "✅ Verifying deployment..."
 ssh ${PI_USER}@${PI_HOST} "ls -lh ${DEPLOY_PATH}/index.html" || {
   echo "❌ index.html not found on Pi"
