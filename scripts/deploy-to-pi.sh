@@ -35,6 +35,43 @@ install_lighttpd() {
   echo -e "${GREEN}✓ lighttpd installed${NC}"
 }
 
+# Configure lighttpd
+configure_lighttpd() {
+  echo "⚙️  Configuring lighttpd..."
+
+  # Set port 8080 (avoid conflict with OctoPrint on port 80)
+  ssh ${PI_USER}@${PI_HOST} "sudo sed -i 's/server.port.*/server.port = 8080/' /etc/lighttpd/lighttpd.conf"
+
+  # Set document root to PrusaTouch
+  ssh ${PI_USER}@${PI_HOST} "sudo sed -i 's|server.document-root.*|server.document-root = \"${DEPLOY_PATH}\"|' /etc/lighttpd/lighttpd.conf"
+
+  echo -e "${GREEN}✓ lighttpd configured for port 8080${NC}"
+}
+
+# Configure SPA routing
+configure_spa_routing() {
+  echo "🔀 Configuring SPA routing..."
+
+  # Enable rewrite module
+  ssh ${PI_USER}@${PI_HOST} "sudo lighttpd-enable-mod rewrite > /dev/null 2>&1 || true"
+
+  # Create PrusaTouch config for SPA fallback
+  ssh ${PI_USER}@${PI_HOST} 'sudo tee /etc/lighttpd/conf-available/10-prusatouch.conf > /dev/null << "EOF"
+server.modules += ( "mod_rewrite" )
+
+# SPA fallback - serve index.html for all routes
+url.rewrite-once = (
+    "^/assets/(.*)$" => "/assets/$1",
+    "^/(.*)$" => "/index.html"
+)
+EOF'
+
+  # Enable PrusaTouch config
+  ssh ${PI_USER}@${PI_HOST} "sudo lighttpd-enable-mod prusatouch > /dev/null 2>&1 || true"
+
+  echo -e "${GREEN}✓ SPA routing enabled${NC}"
+}
+
 # Step 1: Build production bundle
 echo "📦 Building production bundle..."
 npm run build
@@ -63,6 +100,11 @@ if ! check_lighttpd; then
 else
   echo -e "${GREEN}✓ lighttpd already installed${NC}"
 fi
+echo ""
+
+# Configure lighttpd
+configure_lighttpd
+configure_spa_routing
 echo ""
 
 # Step 4: Create deployment directory on Pi
