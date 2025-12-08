@@ -72,6 +72,34 @@ EOF'
   echo -e "${GREEN}✓ SPA routing enabled${NC}"
 }
 
+# Configure API reverse proxy
+configure_api_proxy() {
+  echo "🔀 Configuring API reverse proxy..."
+
+  # Enable proxy module
+  ssh ${PI_USER}@${PI_HOST} "sudo lighttpd-enable-mod proxy > /dev/null 2>&1 || true"
+
+  # Create proxy configuration for PrusaLink API
+  ssh ${PI_USER}@${PI_HOST} 'sudo tee /etc/lighttpd/conf-available/11-prusalink-proxy.conf > /dev/null << "PROXYEOF"
+server.modules += ( "mod_proxy" )
+
+# Proxy /api requests to PrusaLink on port 80
+$HTTP["url"] =~ "^/api/" {
+    proxy.server = ( "" => (
+        (
+            "host" => "127.0.0.1",
+            "port" => 80
+        )
+    ))
+}
+PROXYEOF'
+
+  # Enable proxy configuration
+  ssh ${PI_USER}@${PI_HOST} "sudo lighttpd-enable-mod prusalink-proxy > /dev/null 2>&1 || true"
+
+  echo -e "${GREEN}✓ API proxy configured${NC}"
+}
+
 # Step 1: Build production bundle
 echo "📦 Building production bundle..."
 npm run build
@@ -105,6 +133,7 @@ echo ""
 # Configure lighttpd
 configure_lighttpd
 configure_spa_routing
+configure_api_proxy
 echo ""
 
 # Step 4: Create deployment directory on Pi
