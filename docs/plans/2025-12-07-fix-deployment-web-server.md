@@ -15,7 +15,7 @@ Update `scripts/deploy-to-pi.sh` to automatically install and configure lighttpd
 2. Port 80 is occupied by OctoPrint/PrusaLink (Python process)
 3. Manual lighttpd installation and configuration was required
 
-**Solution:** Enhance deployment script to detect, install, and configure lighttpd automatically on port 8080.
+**Solution:** Enhance deployment script to detect, install, and configure lighttpd automatically on port 8080 with reverse proxy to PrusaLink API to avoid CORS issues.
 
 ## Prerequisites
 
@@ -381,3 +381,65 @@ If issues occur:
 2. Stop lighttpd: `sudo systemctl stop lighttpd`
 3. Remove lighttpd: `sudo apt-get remove lighttpd`
 4. Revert script: `git checkout HEAD~1 scripts/deploy-to-pi.sh`
+
+### Task 2.5: Add API Reverse Proxy (CORS Fix)
+
+**Context:** Browser CORS policy blocks cross-origin requests. PrusaTouch on port 8080 cannot directly call PrusaLink API on port 80. Solution: Configure lighttpd to proxy `/api/*` requests to PrusaLink, making them same-origin from browser perspective.
+
+**Files to modify:**
+- M: `scripts/deploy-to-pi.sh:1-180`
+
+**Steps:**
+
+1. Add function to configure API proxy after `configure_spa_routing()`:
+
+```bash
+configure_api_proxy() {
+  echo "🔀 Configuring API reverse proxy..."
+
+  # Enable proxy module
+  ssh ${PI_USER}@${PI_HOST} "sudo lighttpd-enable-mod proxy > /dev/null 2>&1 || true"
+
+  # Create proxy configuration for PrusaLink API
+  ssh ${PI_USER}@${PI_HOST} 'sudo tee /etc/lighttpd/conf-available/11-prusalink-proxy.conf > /dev/null << "PROXYEOF"
+server.modules += ( "mod_proxy" )
+
+# Proxy /api requests to PrusaLink on port 80
+$HTTP["url"] =~ "^/api/" {
+    proxy.server = ( "" => (
+        ( 
+            "host" => "127.0.0.1",
+            "port" => 80
+        )
+    ))
+}
+PROXYEOF'
+
+  # Enable proxy configuration
+  ssh ${PI_USER}@${PI_HOST} "sudo lighttpd-enable-mod prusalink-proxy > /dev/null 2>&1 || true"
+
+  echo -e "${GREEN}✓ API proxy configured${NC}"
+}
+```
+
+2. Call `configure_api_proxy` after `configure_spa_routing()`:
+
+```bash
+# Configure lighttpd
+configure_lighttpd
+configure_spa_routing
+configure_api_proxy  # Add this line
+echo ""
+```
+
+**Verification:**
+- Check `/etc/lighttpd/conf-available/11-prusalink-proxy.conf` exists
+- Verify proxy module enabled: `lighttpd-mods-enabled | grep proxy`
+- Test proxy: `curl -I http://localhost:8080/api/v1/version` should return PrusaLink response
+- Browser console should show no CORS errors
+
+**Why This Matters:**
+- **Before:** Browser at `http://octopi:8080` → API at `http://octopi:80` = CORS error ❌
+- **After:** Browser at `http://octopi:8080/api/...` → lighttpd proxies to `localhost:80/api/...` = Same origin ✅
+- Works from any device on network (laptop, phone, tablet)
+
