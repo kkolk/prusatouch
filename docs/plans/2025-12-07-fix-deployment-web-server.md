@@ -443,3 +443,53 @@ echo ""
 - **After:** Browser at `http://octopi:8080/api/...` → lighttpd proxies to `localhost:80/api/...` = Same origin ✅
 - Works from any device on network (laptop, phone, tablet)
 
+
+## Security Enhancement Needed
+
+### Issue: Credentials Hardcoded in JavaScript Bundle
+
+**Current Implementation:**
+- Credentials stored in `.env.local` (development machine)
+- Build process bakes credentials into JavaScript bundle
+- Anyone can inspect browser DevTools → Sources → Search for "maker" to find password
+- Not secure for production deployment
+
+**Recommended Solution: Add Login Screen**
+
+Create a new implementation plan for:
+
+1. **Remove credentials from build:**
+   - Remove `VITE_PRUSALINK_USER` and `VITE_PRUSALINK_PASS` from environment variables
+   - Keep only `VITE_PRUSALINK_URL` (or use relative URL)
+
+2. **Add login screen:**
+   - Show login form on first load if no credentials in localStorage
+   - Store credentials in browser's localStorage after successful auth
+   - Add "Logout" option in Settings to clear stored credentials
+
+3. **Implement auth flow:**
+   - On app load: Check localStorage for credentials
+   - If found: Use them, test connection, proceed if valid
+   - If not found or invalid: Show login screen
+   - After login: Store in localStorage, initialize stores
+
+4. **Add session management:**
+   - Detect 401 responses from API
+   - Clear localStorage and show login screen on auth failure
+   - Add "Remember me" checkbox (optional)
+
+**Benefits:**
+- Secure: Credentials never in source code or JavaScript bundle
+- Flexible: Each user/device can have own credentials
+- Better UX: One-time login per device
+- Multi-user: Different users can log in to same kiosk
+
+**Files to create/modify:**
+- `src/views/LoginView.vue` (new)
+- `src/composables/useAuth.ts` (new) 
+- `src/router/index.ts` (add auth guard)
+- `src/api/auth.ts` (update to use localStorage)
+- Remove credentials from `.env.local`
+
+**Priority:** High - Current implementation is a security risk
+
