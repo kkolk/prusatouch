@@ -100,6 +100,20 @@ PROXYEOF'
   echo -e "${GREEN}✓ API proxy configured${NC}"
 }
 
+# Restart lighttpd
+restart_lighttpd() {
+  echo "🔄 Restarting lighttpd..."
+  ssh ${PI_USER}@${PI_HOST} "sudo systemctl restart lighttpd" || {
+    echo "❌ Failed to restart lighttpd"
+    exit 1
+  }
+
+  # Wait for service to start
+  sleep 2
+
+  echo -e "${GREEN}✓ lighttpd restarted${NC}"
+}
+
 # Step 1: Build production bundle
 echo "📦 Building production bundle..."
 npm run build
@@ -159,7 +173,11 @@ ssh ${PI_USER}@${PI_HOST} "sudo chown -R www-data:www-data ${DEPLOY_PATH} && sud
 echo -e "${GREEN}✓ Permissions set${NC}"
 echo ""
 
-# Step 7: Verify deployment
+# Step 7: Restart Web Server
+restart_lighttpd
+echo ""
+
+# Step 8: Verify deployment
 echo "✅ Verifying deployment..."
 ssh ${PI_USER}@${PI_HOST} "ls -lh ${DEPLOY_PATH}/index.html" || {
   echo "❌ index.html not found on Pi"
