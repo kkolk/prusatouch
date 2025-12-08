@@ -6,6 +6,7 @@
 - HyperPixel 4 display (800x480) configured
 - SSH access to Pi
 - Node.js 24.x on development machine
+- **Note:** Deployment script will automatically install and configure lighttpd web server
 
 ## Quick Deployment
 
@@ -24,8 +25,10 @@ From your development machine:
 This script will:
 - Build production bundle
 - Verify performance targets
+- Install and configure lighttpd web server (if needed)
 - Transfer files to Pi
 - Set proper permissions
+- Restart web server and verify HTTP 200 response
 
 ### 2. Set Up Kiosk Mode
 
@@ -71,10 +74,47 @@ If the script doesn't work, deploy manually:
 - Ensure Pi user has sudo access
 - Check directory ownership
 
+### Web server issues
+
+**Port 8080 already in use:**
+- Check what's using it: `sudo netstat -tlnp | grep 8080`
+- Stop conflicting service or choose different port
+- Edit `DEPLOY_PATH` in deploy script
+
+**lighttpd won't start:**
+- Check logs: `sudo journalctl -u lighttpd -n 50`
+- Common issue: Port 80 conflict (script uses 8080 to avoid this)
+- Verify config: `sudo lighttpd -t -f /etc/lighttpd/lighttpd.conf`
+
+**404 errors on navigation:**
+- SPA routing may not be configured
+- Check `/etc/lighttpd/conf-available/10-prusatouch.conf` exists
+- Verify rewrite module enabled: `sudo lighttpd-enable-mod rewrite`
+
 ### Page doesn't load
-- Verify nginx/lighttpd is running
-- Check logs: `sudo journalctl -u nginx -f`
+- Verify lighttpd is running: `sudo systemctl status lighttpd`
+- Check logs: `sudo journalctl -u lighttpd -f`
 - Verify PrusaLink base URL in `.env`
+
+## Manual lighttpd Setup (if script fails)
+
+If the automated setup fails, configure manually:
+
+```bash
+# Install
+sudo apt-get update
+sudo apt-get install -y lighttpd
+
+# Configure
+sudo sed -i 's/server.port.*/server.port = 8080/' /etc/lighttpd/lighttpd.conf
+sudo sed -i 's|server.document-root.*|server.document-root = "/opt/prusatouch"|' /etc/lighttpd/lighttpd.conf
+
+# Enable modules
+sudo lighttpd-enable-mod rewrite
+
+# Restart
+sudo systemctl restart lighttpd
+```
 
 ## Performance Verification
 
