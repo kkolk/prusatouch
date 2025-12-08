@@ -10,7 +10,8 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
-    "generate:api": "openapi --input ./spec/openapi.yaml --output ./src/api --client axios"
+    "generate:api": "openapi --input ./spec/openapi.yaml --output ./src/api --client axios",
+    "verify:performance": "./scripts/verify-performance.sh"
   },
   "dependencies": {
     "axios": "^1.13.2",
