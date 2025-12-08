@@ -31,6 +31,28 @@ export const mockPrusaLinkResponses = {
   },
 }
 
+export const mockPrintingState = {
+  status: {
+    printer: {
+      state: 'PRINTING',
+      temp_nozzle: 215.0,
+      target_nozzle: 215.0,
+      temp_bed: 60.0,
+      target_bed: 60.0,
+    },
+  },
+
+  job: {
+    state: 'PRINTING',
+    progress: 45,
+    time_remaining: 5400, // 1h 30m in seconds
+    file: {
+      name: 'test-print.gcode',
+      size: 1024000,
+    },
+  },
+}
+
 export function setupMockServer(page: Page) {
   // Intercept API calls and return mock data
   page.route('**/api/v1/status', (route: Route) => {
@@ -54,6 +76,27 @@ export function setupMockServer(page: Page) {
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify(mockPrusaLinkResponses.files),
+    })
+  })
+}
+
+export function setupMockServerWithPrinting(page: Page) {
+  setupMockServer(page) // Base setup
+
+  // Override with printing state
+  page.route('**/api/v1/status', (route: Route) => {
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(mockPrintingState.status),
+    })
+  })
+
+  page.route('**/api/v1/job', (route: Route) => {
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(mockPrintingState.job),
     })
   })
 }
