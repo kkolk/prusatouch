@@ -1,0 +1,82 @@
+#!/bin/bash
+set -e
+
+# PrusaTouch Deployment Script for Raspberry Pi
+# Usage: ./scripts/deploy-to-pi.sh [pi-hostname]
+
+PI_HOST="${1:-prusa-mk3s.local}"
+PI_USER="pi"
+DEPLOY_PATH="/var/www/html/prusatouch"
+
+echo "🚀 PrusaTouch Deployment to Raspberry Pi"
+echo "========================================="
+echo "Target: ${PI_USER}@${PI_HOST}"
+echo "Path: ${DEPLOY_PATH}"
+echo ""
+
+# Colors
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+# Step 1: Build production bundle
+echo "📦 Building production bundle..."
+npm run build
+
+if [ ! -d "dist" ]; then
+  echo "❌ Build failed - dist directory not found"
+  exit 1
+fi
+
+echo -e "${GREEN}✓ Build complete${NC}"
+echo ""
+
+# Step 2: Verify bundle size
+echo "🔍 Verifying performance..."
+./scripts/verify-performance.sh || {
+  echo "❌ Performance verification failed"
+  exit 1
+}
+echo ""
+
+# Step 3: Create deployment directory on Pi
+echo "📁 Creating deployment directory on Pi..."
+ssh ${PI_USER}@${PI_HOST} "sudo mkdir -p ${DEPLOY_PATH} && sudo chown ${PI_USER}:${PI_USER} ${DEPLOY_PATH}"
+echo -e "${GREEN}✓ Directory ready${NC}"
+echo ""
+
+# Step 4: Transfer files
+echo "📤 Transferring files to Pi..."
+rsync -avz --delete \
+  --exclude='.git' \
+  --exclude='node_modules' \
+  --exclude='.env' \
+  dist/ ${PI_USER}@${PI_HOST}:${DEPLOY_PATH}/
+
+echo -e "${GREEN}✓ Files transferred${NC}"
+echo ""
+
+# Step 5: Set permissions
+echo "🔐 Setting permissions..."
+ssh ${PI_USER}@${PI_HOST} "sudo chown -R www-data:www-data ${DEPLOY_PATH} && sudo chmod -R 755 ${DEPLOY_PATH}"
+echo -e "${GREEN}✓ Permissions set${NC}"
+echo ""
+
+# Step 6: Verify deployment
+echo "✅ Verifying deployment..."
+ssh ${PI_USER}@${PI_HOST} "ls -lh ${DEPLOY_PATH}/index.html" || {
+  echo "❌ index.html not found on Pi"
+  exit 1
+}
+
+echo -e "${GREEN}✓ Deployment verified${NC}"
+echo ""
+
+echo "=========================================="
+echo -e "${GREEN}✅ Deployment complete!${NC}"
+echo ""
+echo "Access PrusaTouch at: http://${PI_HOST}:8080"
+echo ""
+echo "Next steps:"
+echo "  1. Set up kiosk mode: ./scripts/setup-kiosk.sh ${PI_HOST}"
+echo "  2. Configure autostart on boot"
