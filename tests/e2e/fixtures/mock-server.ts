@@ -1,4 +1,4 @@
-import { MockedEndpoint } from '@playwright/test'
+import { Page, Route } from '@playwright/test'
 
 export const mockPrusaLinkResponses = {
   status: {
@@ -31,9 +31,9 @@ export const mockPrusaLinkResponses = {
   },
 }
 
-export function setupMockServer(page: any) {
+export function setupMockServer(page: Page) {
   // Intercept API calls and return mock data
-  page.route('**/api/v1/status', (route: any) => {
+  page.route('**/api/v1/status', (route: Route) => {
     route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -41,7 +41,7 @@ export function setupMockServer(page: any) {
     })
   })
 
-  page.route('**/api/v1/job', (route: any) => {
+  page.route('**/api/v1/job', (route: Route) => {
     route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -49,7 +49,7 @@ export function setupMockServer(page: any) {
     })
   })
 
-  page.route('**/api/v1/files/**', (route: any) => {
+  page.route('**/api/v1/files/**', (route: Route) => {
     route.fulfill({
       status: 200,
       contentType: 'application/json',
