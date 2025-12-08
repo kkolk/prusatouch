@@ -3,6 +3,8 @@
  */
 
 import { OpenAPI } from './core/OpenAPI'
+import { createDigestAuthClient } from './digestAuth'
+import type { AxiosInstance } from 'axios'
 
 interface AuthConfig {
   username: string
@@ -14,11 +16,15 @@ let authConfig: AuthConfig = {
   password: ''
 }
 
+let digestClient: AxiosInstance | null = null
+
 /**
  * Configure authentication credentials
  */
 export function configureAuth(username: string, password: string): void {
   authConfig = { username, password }
+  // Create Digest auth client
+  digestClient = createDigestAuthClient(username, password)
 }
 
 /**
@@ -29,10 +35,21 @@ export function getAuthConfig(): AuthConfig {
 }
 
 /**
+ * Get Digest-enabled axios client
+ */
+export function getDigestClient(): AxiosInstance {
+  if (!digestClient || !isAuthConfigured()) {
+    throw new Error('Auth not configured. Call configureAuth() first.')
+  }
+  return digestClient
+}
+
+/**
  * Clear authentication credentials
  */
 export function clearAuth(): void {
   authConfig = { username: '', password: '' }
+  digestClient = null
 }
 
 /**
@@ -44,16 +61,13 @@ export function initAuthFromEnv(): void {
 
   if (username && password) {
     configureAuth(username, password)
-    // Set credentials on OpenAPI client for HTTP Basic Auth
-    OpenAPI.USERNAME = username
-    OpenAPI.PASSWORD = password
   }
 
   // Use relative URL for API calls (proxied by lighttpd to avoid CORS)
   // In production, lighttpd proxies /api/* to PrusaLink on port 80
   // In development, VITE_PRUSALINK_URL is used via vite proxy config
   OpenAPI.BASE = '/api/v1'
-  console.log('PrusaLink API configured:', OpenAPI.BASE, 'Auth:', username ? 'Configured' : 'Not configured')
+  console.log('PrusaLink API configured:', OpenAPI.BASE, 'Auth:', username ? 'Digest' : 'Not configured')
 }
 
 /**
@@ -61,11 +75,4 @@ export function initAuthFromEnv(): void {
  */
 export function isAuthConfigured(): boolean {
   return authConfig.username !== '' && authConfig.password !== ''
-}
-
-/**
- * Get Digest-enabled axios client
- */
-export function getDigestClient(): any {
-  throw new Error('Not implemented')
 }
