@@ -96,6 +96,43 @@ If the script doesn't work, deploy manually:
 - Check logs: `sudo journalctl -u lighttpd -f`
 - Verify PrusaLink base URL in `.env`
 
+## Authentication
+
+PrusaTouch uses **HTTP Digest authentication** to communicate with PrusaLink.
+
+### Configuration
+
+Set credentials in `.env.local` (development) or environment variables (production):
+
+```bash
+VITE_PRUSALINK_USER=maker
+VITE_PRUSALINK_PASS=your_password
+```
+
+### How It Works
+
+1. App attempts API call to `/api/v1/status`
+2. PrusaLink returns 401 with `WWW-Authenticate: Digest` challenge
+3. axios-digest-auth intercepts the 401 and generates Authorization header
+4. Request is retried with Digest credentials
+5. PrusaLink returns 200 OK with data
+
+### Troubleshooting Authentication
+
+**All API calls return 401:**
+- Check credentials in `.env.local`
+- Verify PrusaLink username/password is correct
+- Check browser console for auth errors
+
+**CORS errors:**
+- Ensure lighttpd reverse proxy is configured (see Web Server section)
+- Verify `/api/*` requests are proxied to port 80
+
+**Temperatures show 0°:**
+- Authentication is failing
+- Check Network tab for 401 responses
+- Verify Digest auth challenge is present in response headers
+
 ## Manual lighttpd Setup (if script fails)
 
 If the automated setup fails, configure manually:

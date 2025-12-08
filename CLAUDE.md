@@ -91,10 +91,18 @@ User Interaction → Component → Composable → Pinia Store → API Service �
 
 **IMPORTANT:** The `src/api/` directory is auto-generated. Never edit files directly.
 
+**Authentication:** Uses HTTP Digest auth via @mhoc/axios-digest-auth package.
+
 **To update API:**
 1. Edit `spec/openapi.yaml`
 2. Run `npm run generate:api`
 3. Commit both the spec and generated files
+
+**Auth Flow:**
+- Credentials configured via `configureAuth(username, password)`
+- Digest client created automatically
+- All API calls use Digest auth via axios interceptor
+- No credentials stored in headers or localStorage
 
 ### Component Patterns
 
