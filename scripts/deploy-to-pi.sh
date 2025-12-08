@@ -179,10 +179,21 @@ echo ""
 
 # Step 8: Verify deployment
 echo "✅ Verifying deployment..."
+
+# Check files exist
 ssh ${PI_USER}@${PI_HOST} "ls -lh ${DEPLOY_PATH}/index.html" || {
   echo "❌ index.html not found on Pi"
   exit 1
 }
+
+# Check HTTP response
+HTTP_CODE=$(ssh ${PI_USER}@${PI_HOST} "curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/")
+if [ "$HTTP_CODE" = "200" ]; then
+  echo -e "${GREEN}✓ HTTP server responding (200 OK)${NC}"
+else
+  echo -e "${RED}❌ HTTP server not responding correctly (got $HTTP_CODE)${NC}"
+  exit 1
+fi
 
 echo -e "${GREEN}✓ Deployment verified${NC}"
 echo ""
