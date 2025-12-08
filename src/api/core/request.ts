@@ -321,3 +321,10 @@ export const request = <T>(config: OpenAPIConfig, options: ApiRequestOptions, ax
         }
     });
 };
+
+/**
+ * Get the default axios client (to be used or overridden)
+ */
+export function getDefaultAxiosClient(): AxiosInstance {
+    return axios;
+};
