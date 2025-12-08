@@ -12,6 +12,7 @@ import type { ApiResult } from './ApiResult';
 import { CancelablePromise } from './CancelablePromise';
 import type { OnCancel } from './CancelablePromise';
 import type { OpenAPIConfig } from './OpenAPI';
+import { getAuthConfig, isAuthConfigured, getDigestClient } from '../auth';
 
 export const isDefined = <T>(value: T | null | undefined): value is Exclude<T, null | undefined> => {
     return value !== undefined && value !== null;
@@ -145,10 +146,8 @@ export const resolve = async <T>(options: ApiRequestOptions, resolver?: T | Reso
 };
 
 export const getHeaders = async (config: OpenAPIConfig, options: ApiRequestOptions, formData?: FormData): Promise<Record<string, string>> => {
-    const [token, username, password, additionalHeaders] = await Promise.all([
+    const [token, additionalHeaders] = await Promise.all([
         resolve(options, config.TOKEN),
-        resolve(options, config.USERNAME),
-        resolve(options, config.PASSWORD),
         resolve(options, config.HEADERS),
     ]);
 
@@ -170,10 +169,11 @@ export const getHeaders = async (config: OpenAPIConfig, options: ApiRequestOptio
         headers['Authorization'] = `Bearer ${token}`;
     }
 
-    if (isStringWithValue(username) && isStringWithValue(password)) {
-        const credentials = base64(`${username}:${password}`);
-        headers['Authorization'] = `Basic ${credentials}`;
-    }
+    // REMOVED: Basic auth logic - Digest auth handles authentication via interceptor
+    // if (isStringWithValue(username) && isStringWithValue(password)) {
+    //     const credentials = base64(`${username}:${password}`);
+    //     headers['Authorization'] = `Basic ${credentials}`;
+    // }
 
     if (options.body !== undefined) {
         if (options.mediaType) {
@@ -291,7 +291,10 @@ export const catchErrorCodes = (options: ApiRequestOptions, result: ApiResult): 
  * @returns CancelablePromise<T>
  * @throws ApiError
  */
-export const request = <T>(config: OpenAPIConfig, options: ApiRequestOptions, axiosClient: AxiosInstance = axios): CancelablePromise<T> => {
+export const request = <T>(config: OpenAPIConfig, options: ApiRequestOptions, axiosClient?: AxiosInstance): CancelablePromise<T> => {
+    // Use provided client, or get default (Digest if configured, axios otherwise)
+    const client = axiosClient ?? getDefaultAxiosClient()
+
     return new CancelablePromise(async (resolve, reject, onCancel) => {
         try {
             const url = getUrl(config, options);
@@ -300,7 +303,7 @@ export const request = <T>(config: OpenAPIConfig, options: ApiRequestOptions, ax
             const headers = await getHeaders(config, options, formData);
 
             if (!onCancel.isCancelled) {
-                const response = await sendRequest<T>(config, options, url, body, formData, headers, onCancel, axiosClient);
+                const response = await sendRequest<T>(config, options, url, body, formData, headers, onCancel, client);
                 const responseBody = getResponseBody(response);
                 const responseHeader = getResponseHeader(response, options.responseHeader);
 
@@ -323,8 +326,16 @@ export const request = <T>(config: OpenAPIConfig, options: ApiRequestOptions, ax
 };
 
 /**
- * Get the default axios client (to be used or overridden)
+ * Get the axios client to use for requests
+ * Uses Digest auth client if configured, otherwise default axios
  */
 export function getDefaultAxiosClient(): AxiosInstance {
-    return axios;
+    try {
+        if (isAuthConfigured()) {
+            return getDigestClient()
+        }
+    } catch (e) {
+        // Auth not configured, use default
+    }
+    return axios
 };
