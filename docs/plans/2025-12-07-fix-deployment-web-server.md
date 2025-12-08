@@ -493,3 +493,74 @@ Create a new implementation plan for:
 
 **Priority:** High - Current implementation is a security risk
 
+
+## Critical Issue: HTTP Digest Authentication Required
+
+### Problem Discovered (2025-12-07)
+
+PrusaLink uses **HTTP Digest authentication**, not Basic auth. Current OpenAPI client only supports Basic auth, causing all API calls to fail with 401 Unauthorized.
+
+**Evidence:**
+```
+WWW-Authenticate: Digest realm="Administrator",qop="auth",algorithm="MD5-sess",nonce="...",opaque="..."
+```
+
+**Symptoms:**
+- Browser shows 0° temperatures (API calls fail)
+- Network tab shows 401 responses
+- Console shows no obvious errors (auth silently fails)
+
+### Solution: Implement HTTP Digest Auth
+
+**Implementation Plan:**
+
+1. **Install axios-digest-auth package:**
+   ```bash
+   npm install axios-digest-auth
+   ```
+
+2. **Create Digest auth interceptor** (`src/api/digestAuth.ts`):
+   ```typescript
+   import axios from 'axios'
+   import digestAuth from 'axios-digest-auth'
+   
+   export function createDigestAuthClient(username: string, password: string) {
+     return digestAuth({
+       username,
+       password,
+       async: true
+     })
+   }
+   ```
+
+3. **Update API client configuration** (`src/api/auth.ts`):
+   - Remove `OpenAPI.USERNAME` and `OpenAPI.PASSWORD` (doesn't work for Digest)
+   - Configure axios instance with Digest auth interceptor
+   - Pass credentials to Digest auth handler
+
+4. **Update request.ts to use Digest client:**
+   - Replace default axios instance with Digest-enabled one
+   - Ensure all API calls go through Digest auth interceptor
+
+5. **Test authentication:**
+   ```bash
+   # From Pi, test with curl Digest auth:
+   curl --digest username:password http://localhost:80/api/v1/status
+   ```
+
+**Files to modify:**
+- `package.json` - Add axios-digest-auth dependency
+- `src/api/digestAuth.ts` (new) - Digest auth setup
+- `src/api/auth.ts` - Configure Digest auth instead of Basic
+- `src/api/core/request.ts` - Use Digest-enabled axios instance
+
+**Verification:**
+- API calls return 200 OK with actual printer data
+- Browser console shows successful API responses
+- Temperatures display correctly (not 0°)
+- Print status updates in real-time
+
+**Priority:** CRITICAL - App non-functional without this
+
+**Estimated effort:** 1-2 hours (library integration + testing)
+
