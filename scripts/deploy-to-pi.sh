@@ -7,6 +7,8 @@ set -e
 PI_HOST="${1:-prusa-mk3s.local}"
 PI_USER="kkolk"
 DEPLOY_PATH="/opt/prusatouch"
+SSH_KEY="$HOME/.ssh/octopi_key"
+SSH_OPTS="-i ${SSH_KEY}"
 
 echo "🚀 PrusaTouch Deployment to Raspberry Pi"
 echo "========================================="
@@ -22,13 +24,13 @@ NC='\033[0m'
 
 # Check if lighttpd is installed
 check_lighttpd() {
-  ssh ${PI_USER}@${PI_HOST} "which lighttpd > /dev/null 2>&1" && return 0 || return 1
+  ssh ${SSH_OPTS} ${PI_USER}@${PI_HOST} "which lighttpd > /dev/null 2>&1" && return 0 || return 1
 }
 
 # Install lighttpd
 install_lighttpd() {
   echo "📦 Installing lighttpd web server..."
-  ssh ${PI_USER}@${PI_HOST} "sudo apt-get update && sudo apt-get install -y lighttpd" || {
+  ssh ${SSH_OPTS} ${PI_USER}@${PI_HOST} "sudo apt-get update && sudo apt-get install -y lighttpd" || {
     echo "❌ Failed to install lighttpd"
     exit 1
   }
@@ -40,10 +42,10 @@ configure_lighttpd() {
   echo "⚙️  Configuring lighttpd..."
 
   # Set port 8080 (avoid conflict with OctoPrint on port 80)
-  ssh ${PI_USER}@${PI_HOST} "sudo sed -i 's/server.port.*/server.port = 8080/' /etc/lighttpd/lighttpd.conf"
+  ssh ${SSH_OPTS} ${PI_USER}@${PI_HOST} "sudo sed -i 's/server.port.*/server.port = 8080/' /etc/lighttpd/lighttpd.conf"
 
   # Set document root to PrusaTouch
-  ssh ${PI_USER}@${PI_HOST} "sudo sed -i 's|server.document-root.*|server.document-root = \"${DEPLOY_PATH}\"|' /etc/lighttpd/lighttpd.conf"
+  ssh ${SSH_OPTS} ${PI_USER}@${PI_HOST} "sudo sed -i 's|server.document-root.*|server.document-root = \"${DEPLOY_PATH}\"|' /etc/lighttpd/lighttpd.conf"
 
   echo -e "${GREEN}✓ lighttpd configured for port 8080${NC}"
 }
@@ -53,10 +55,10 @@ configure_spa_routing() {
   echo "🔀 Configuring SPA routing..."
 
   # Enable rewrite module
-  ssh ${PI_USER}@${PI_HOST} "sudo lighttpd-enable-mod rewrite > /dev/null 2>&1 || true"
+  ssh ${SSH_OPTS} ${PI_USER}@${PI_HOST} "sudo lighttpd-enable-mod rewrite > /dev/null 2>&1 || true"
 
   # Create PrusaTouch config for SPA fallback
-  ssh ${PI_USER}@${PI_HOST} 'sudo tee /etc/lighttpd/conf-available/10-prusatouch.conf > /dev/null << "EOF"
+  ssh ${SSH_OPTS} ${PI_USER}@${PI_HOST} 'sudo tee /etc/lighttpd/conf-available/10-prusatouch.conf > /dev/null << "EOF"
 server.modules += ( "mod_rewrite" )
 
 # SPA fallback - serve index.html for all routes
@@ -67,7 +69,7 @@ url.rewrite-once = (
 EOF'
 
   # Enable PrusaTouch config
-  ssh ${PI_USER}@${PI_HOST} "sudo lighttpd-enable-mod prusatouch > /dev/null 2>&1 || true"
+  ssh ${SSH_OPTS} ${PI_USER}@${PI_HOST} "sudo lighttpd-enable-mod prusatouch > /dev/null 2>&1 || true"
 
   echo -e "${GREEN}✓ SPA routing enabled${NC}"
 }
@@ -77,10 +79,10 @@ configure_api_proxy() {
   echo "🔀 Configuring API reverse proxy..."
 
   # Enable proxy module
-  ssh ${PI_USER}@${PI_HOST} "sudo lighttpd-enable-mod proxy > /dev/null 2>&1 || true"
+  ssh ${SSH_OPTS} ${PI_USER}@${PI_HOST} "sudo lighttpd-enable-mod proxy > /dev/null 2>&1 || true"
 
   # Create proxy configuration for PrusaLink API
-  ssh ${PI_USER}@${PI_HOST} 'sudo tee /etc/lighttpd/conf-available/11-prusalink-proxy.conf > /dev/null << "PROXYEOF"
+  ssh ${SSH_OPTS} ${PI_USER}@${PI_HOST} 'sudo tee /etc/lighttpd/conf-available/11-prusalink-proxy.conf > /dev/null << "PROXYEOF"
 server.modules += ( "mod_proxy" )
 
 # Proxy /api requests to PrusaLink on port 80
@@ -95,7 +97,7 @@ $HTTP["url"] =~ "^/api/" {
 PROXYEOF'
 
   # Enable proxy configuration
-  ssh ${PI_USER}@${PI_HOST} "sudo lighttpd-enable-mod prusalink-proxy > /dev/null 2>&1 || true"
+  ssh ${SSH_OPTS} ${PI_USER}@${PI_HOST} "sudo lighttpd-enable-mod prusalink-proxy > /dev/null 2>&1 || true"
 
   echo -e "${GREEN}✓ API proxy configured${NC}"
 }
@@ -103,7 +105,7 @@ PROXYEOF'
 # Restart lighttpd
 restart_lighttpd() {
   echo "🔄 Restarting lighttpd..."
-  ssh ${PI_USER}@${PI_HOST} "sudo systemctl restart lighttpd" || {
+  ssh ${SSH_OPTS} ${PI_USER}@${PI_HOST} "sudo systemctl restart lighttpd" || {
     echo "❌ Failed to restart lighttpd"
     exit 1
   }
@@ -152,13 +154,14 @@ echo ""
 
 # Step 4: Create deployment directory on Pi
 echo "📁 Creating deployment directory on Pi..."
-ssh ${PI_USER}@${PI_HOST} "sudo mkdir -p ${DEPLOY_PATH} && sudo chown ${PI_USER}:${PI_USER} ${DEPLOY_PATH}"
+ssh ${SSH_OPTS} ${PI_USER}@${PI_HOST} "sudo mkdir -p ${DEPLOY_PATH} && sudo chown -R ${PI_USER}:${PI_USER} ${DEPLOY_PATH}"
 echo -e "${GREEN}✓ Directory ready${NC}"
 echo ""
 
 # Step 5: Transfer files
 echo "📤 Transferring files to Pi..."
 rsync -avz --delete \
+  -e "ssh ${SSH_OPTS}" \
   --exclude='.git' \
   --exclude='node_modules' \
   --exclude='.env' \
@@ -169,7 +172,7 @@ echo ""
 
 # Step 6: Set permissions
 echo "🔐 Setting permissions..."
-ssh ${PI_USER}@${PI_HOST} "sudo chown -R www-data:www-data ${DEPLOY_PATH} && sudo chmod -R 755 ${DEPLOY_PATH}"
+ssh ${SSH_OPTS} ${PI_USER}@${PI_HOST} "sudo chown -R www-data:www-data ${DEPLOY_PATH} && sudo chmod -R 755 ${DEPLOY_PATH}"
 echo -e "${GREEN}✓ Permissions set${NC}"
 echo ""
 
@@ -181,13 +184,13 @@ echo ""
 echo "✅ Verifying deployment..."
 
 # Check files exist
-ssh ${PI_USER}@${PI_HOST} "ls -lh ${DEPLOY_PATH}/index.html" || {
+ssh ${SSH_OPTS} ${PI_USER}@${PI_HOST} "ls -lh ${DEPLOY_PATH}/index.html" || {
   echo "❌ index.html not found on Pi"
   exit 1
 }
 
 # Check HTTP response
-HTTP_CODE=$(ssh ${PI_USER}@${PI_HOST} "curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/")
+HTTP_CODE=$(ssh ${SSH_OPTS} ${PI_USER}@${PI_HOST} "curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/")
 if [ "$HTTP_CODE" = "200" ]; then
   echo -e "${GREEN}✓ HTTP server responding (200 OK)${NC}"
 else
