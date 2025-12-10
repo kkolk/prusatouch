@@ -1,5 +1,5 @@
 const express = require('express');
-const DigestFetch = require('digest-fetch');
+const DigestFetch = require('digest-fetch').default;
 
 const app = express();
 const PORT = process.env.PORT || 3000;
