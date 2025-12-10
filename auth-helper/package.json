@@ -1,0 +1,13 @@
+{
+  "name": "prusalink-auth-helper",
+  "version": "1.0.0",
+  "description": "Authentication proxy for PrusaLink - handles HTTP Digest auth transparently",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "digest-fetch": "^3.1.1"
+  }
+}
