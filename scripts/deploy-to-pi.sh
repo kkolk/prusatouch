@@ -81,16 +81,16 @@ configure_api_proxy() {
   # Enable proxy module
   ssh ${SSH_OPTS} ${PI_USER}@${PI_HOST} "sudo lighttpd-enable-mod proxy > /dev/null 2>&1 || true"
 
-  # Create proxy configuration for PrusaLink API
+  # Create proxy configuration for auth-helper (which handles PrusaLink auth)
   ssh ${SSH_OPTS} ${PI_USER}@${PI_HOST} 'sudo tee /etc/lighttpd/conf-available/11-prusalink-proxy.conf > /dev/null << "PROXYEOF"
 server.modules += ( "mod_proxy" )
 
-# Proxy /api requests to PrusaLink on port 80
+# Proxy /api requests to auth-helper (which handles PrusaLink auth)
 $HTTP["url"] =~ "^/api/" {
     proxy.server = ( "" => (
         (
             "host" => "127.0.0.1",
-            "port" => 80
+            "port" => 3000
         )
     ))
 }
