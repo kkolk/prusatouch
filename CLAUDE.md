@@ -91,18 +91,29 @@ User Interaction → Component → Composable → Pinia Store → API Service �
 
 **IMPORTANT:** The `src/api/` directory is auto-generated. Never edit files directly.
 
-**Authentication:** Uses HTTP Digest auth via @mhoc/axios-digest-auth package.
-
 **To update API:**
 1. Edit `spec/openapi.yaml`
 2. Run `npm run generate:api`
 3. Commit both the spec and generated files
 
-**Auth Flow:**
-- Credentials configured via `configureAuth(username, password)`
-- Digest client created automatically
-- All API calls use Digest auth via axios interceptor
-- No credentials stored in headers or localStorage
+### Authentication Architecture (Updated 2025-12-09)
+
+**Kiosk Mode:** Authentication is handled server-side to prevent browser popups.
+
+**Service Stack:**
+```
+Browser (no auth) → lighttpd:8080 → auth-helper:3000 → PrusaLink:80
+```
+
+**Auth Helper:** Node.js proxy service that transparently handles HTTP Digest authentication with PrusaLink. Credentials are stored in systemd service environment variables (not in browser bundle).
+
+**Browser Side:**
+- Makes simple HTTP requests to `/api/v1/*` (no auth credentials)
+- Lighttpd proxies requests to auth-helper
+- Auth-helper handles digest auth transparently
+- Browser never sees authentication popups
+
+**See:** `deployment/lighttpd/README.md` for full architecture documentation and troubleshooting.
 
 ### Component Patterns
 
