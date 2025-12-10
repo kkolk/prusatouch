@@ -1,5 +1,6 @@
 const express = require('express');
-const DigestFetch = require('digest-fetch').default;
+const axios = require('axios');
+const AxiosDigestAuth = require('@mhoc/axios-digest-auth').default;
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,84 +14,57 @@ if (!PRUSALINK_USER || !PRUSALINK_PASS) {
   process.exit(1);
 }
 
-// Create digest fetch client with credentials
-const digestFetch = new DigestFetch(PRUSALINK_USER, PRUSALINK_PASS, { algorithm: 'MD5' });
+// Create axios client with digest auth
+const digestAuth = new AxiosDigestAuth({
+  username: PRUSALINK_USER,
+  password: PRUSALINK_PASS,
+});
 
-// Middleware to parse JSON and raw bodies
+// Middleware to parse JSON
 app.use(express.json());
-app.use(express.raw({ type: '*/*' }));
 
-// Helper function to forward requests
-async function forwardRequest(method, path, headers, body) {
+// Catch-all route for /api/*
+app.all('/api/*', async (req, res) => {
+  const path = req.url;
   const url = `${PRUSALINK_HOST}${path}`;
 
-  // Prepare headers (exclude Host header)
-  const forwardHeaders = { ...headers };
-  delete forwardHeaders['host'];
+  console.log(`Forwarding ${req.method} ${path} to ${url}`);
 
   try {
-    const options = {
-      method,
+    // Prepare headers (exclude host)
+    const forwardHeaders = { ...req.headers };
+    delete forwardHeaders.host;
+    delete forwardHeaders.connection;
+
+    // Forward request with digest auth
+    const response = await digestAuth.request({
+      method: req.method,
+      url,
       headers: forwardHeaders,
-    };
+      data: req.body,
+      validateStatus: () => true, // Accept all status codes
+    });
 
-    // Add body if present (for POST, PUT, PATCH)
-    if (body && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
-      options.body = body;
-    }
+    console.log(`Response status: ${response.status}`);
 
-    const response = await digestFetch.fetch(url, options);
-    const contentType = response.headers.get('content-type');
+    // Forward response headers (exclude some)
+    Object.entries(response.headers).forEach(([key, value]) => {
+      if (!['connection', 'transfer-encoding'].includes(key.toLowerCase())) {
+        res.setHeader(key, value);
+      }
+    });
 
-    // Read response body
-    let responseBody = await response.text();
-
-    return {
-      status: response.status,
-      headers: Object.fromEntries(response.headers),
-      body: responseBody,
-      contentType,
-    };
+    // Send response
+    res.status(response.status).send(response.data);
   } catch (error) {
-    console.error(`Error forwarding ${method} ${path}:`, error.message);
-
-    // Check if it's a 401 (auth failure)
-    if (error.message && error.message.includes('401')) {
-      return {
-        status: 401,
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ error: 'Digest authentication failed' }),
-      };
-    }
-
-    // Otherwise return 503 (service unavailable)
-    return {
-      status: 503,
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ error: 'PrusaLink is unreachable' }),
-    };
+    console.error(`Error forwarding ${req.method} ${path}:`, error.message);
+    res.status(503).json({ error: 'PrusaLink unavailable', message: error.message });
   }
-}
-
-// Route all /api/* requests
-app.all('/api/*', async (req, res) => {
-  const path = req.path;
-  const method = req.method;
-  const headers = req.headers;
-  const body = req.body;
-
-  const result = await forwardRequest(method, path, headers, body);
-
-  res.status(result.status);
-  Object.entries(result.headers).forEach(([key, value]) => {
-    res.setHeader(key, value);
-  });
-  res.send(result.body);
 });
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
+  res.json({ status: 'ok', service: 'prusalink-auth-helper' });
 });
 
 // Start server
@@ -99,19 +73,18 @@ const server = app.listen(PORT, '127.0.0.1', () => {
 });
 
 // Graceful shutdown
-const shutdown = () => {
+process.on('SIGTERM', () => {
   console.log('Shutting down auth helper service...');
   server.close(() => {
     console.log('Server closed');
     process.exit(0);
   });
+});
 
-  // Force exit after 10 seconds
-  setTimeout(() => {
-    console.error('Forced shutdown');
-    process.exit(1);
-  }, 10000);
-};
-
-process.on('SIGTERM', shutdown);
-process.on('SIGINT', shutdown);
+process.on('SIGINT', () => {
+  console.log('Shutting down auth helper service...');
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
+});
