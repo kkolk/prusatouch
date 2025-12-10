@@ -18,6 +18,7 @@ rsync -avz --delete -e "ssh $SSH_OPTS" \
   auth-helper/server.js \
   auth-helper/.env.example \
   auth-helper/README.md \
+  auth-helper/systemd/ \
   kkolk@$PI_HOST:/home/pi/prusalink-auth/
 
 # Install dependencies on Pi

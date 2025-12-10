@@ -43,7 +43,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: process.env.VITE_PRUSALINK_URL || 'http://octopi.local.frostbyte.us',
+        target: 'http://127.0.0.1:3000',
         changeOrigin: true,
         secure: false,
         configure: (proxy) => {
