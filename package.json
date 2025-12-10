@@ -15,7 +15,6 @@
     "verify:production": "./scripts/verify-production-ready.sh"
   },
   "dependencies": {
-    "@mhoc/axios-digest-auth": "^0.8.0",
     "axios": "^1.13.2",
     "pinia": "^3.0.4",
     "vue": "^3.5.25",

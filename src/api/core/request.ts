@@ -12,7 +12,6 @@ import type { ApiResult } from './ApiResult';
 import { CancelablePromise } from './CancelablePromise';
 import type { OnCancel } from './CancelablePromise';
 import type { OpenAPIConfig } from './OpenAPI';
-import { isAuthConfigured, getDigestClient } from '../auth';
 
 export const isDefined = <T>(value: T | null | undefined): value is Exclude<T, null | undefined> => {
     return value !== undefined && value !== null;
@@ -327,15 +326,9 @@ export const request = <T>(config: OpenAPIConfig, options: ApiRequestOptions, ax
 
 /**
  * Get the axios client to use for requests
- * Uses Digest auth client if configured, otherwise default axios
+ * Auth is now handled server-side by auth-helper
+ * Just return a regular axios instance
  */
 export function getDefaultAxiosClient(): AxiosInstance {
-    try {
-        if (isAuthConfigured()) {
-            return getDigestClient()
-        }
-    } catch (e) {
-        // Auth not configured, use default
-    }
-    return axios
+    return axios.create()
 };
