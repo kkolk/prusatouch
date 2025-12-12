@@ -118,11 +118,11 @@ function buildAuthorizationHeader(username, realm, nonce, uri, qop, cnonce, nc, 
     `realm="${realm}"`,
     `nonce="${nonce}"`,
     `uri="${uri}"`,
-    `qop=${qop}`,
+    `qop="${qop}"`,
     `nc=${nc}`,
     `cnonce="${cnonce}"`,
     `response="${response}"`,
-    `algorithm=${algorithm}`,
+    `algorithm="${algorithm}"`,
   ].join(', ');
 
   console.log('Built Authorization header:', header);
