@@ -12,7 +12,8 @@ Restart=always
 RestartSec=5
 Environment="PRUSALINK_USER=kkolk"
 Environment="PRUSALINK_PASS=<set-during-deployment>"
-Environment="PORT=3000"
+Environment="PORT=8080"
+Environment="SPA_PATH=/opt/prusatouch/dist"
 
 # Security hardening
 NoNewPrivileges=true

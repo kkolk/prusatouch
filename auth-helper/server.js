@@ -1,12 +1,14 @@
 const express = require('express');
 const axios = require('axios');
 const crypto = require('crypto');
+const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 const PRUSALINK_USER = process.env.PRUSALINK_USER;
 const PRUSALINK_PASS = process.env.PRUSALINK_PASS;
 const PRUSALINK_HOST = 'http://127.0.0.1:80';
+const SPA_PATH = process.env.SPA_PATH || '/opt/prusatouch/dist';
 
 // Validate required environment variables
 if (!PRUSALINK_USER || !PRUSALINK_PASS) {
@@ -358,10 +360,19 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'prusalink-auth-helper' });
 });
 
-// Start server
-const server = app.listen(PORT, '127.0.0.1', () => {
-  console.log(`Auth helper service listening on 127.0.0.1:${PORT}`);
-  console.log(`Proxying to PrusaLink at ${PRUSALINK_HOST}`);
+// Serve static files from SPA build directory
+app.use(express.static(SPA_PATH));
+
+// SPA fallback - serve index.html for all other routes (Vue Router history mode)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(SPA_PATH, 'index.html'));
+});
+
+// Start server (listen on all interfaces for network access)
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`PrusaTouch with auth helper listening on 0.0.0.0:${PORT}`);
+  console.log(`Serving SPA from: ${SPA_PATH}`);
+  console.log(`Proxying /api/* to PrusaLink at ${PRUSALINK_HOST}`);
 });
 
 // Graceful shutdown
