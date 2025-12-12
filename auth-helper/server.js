@@ -20,6 +20,7 @@ const nonceCache = {
   nc: 0,
   realm: null,
   qop: null,
+  algorithm: null,
 };
 
 /**
@@ -83,10 +84,19 @@ function md5(data) {
  * @param {string} qop - Quality of protection (typically "auth")
  * @returns {string} - Computed response hash
  */
-function computeDigestResponse(method, uri, username, password, realm, nonce, cnonce, nc, qop) {
-  // HA1 = MD5(username:realm:password)
-  const ha1 = md5(`${username}:${realm}:${password}`);
-  console.log(`HA1 = MD5(${username}:${realm}:****) = ${ha1}`);
+function computeDigestResponse(method, uri, username, password, realm, nonce, cnonce, nc, qop, algorithm = 'MD5') {
+  // HA1 calculation depends on algorithm
+  let ha1;
+  if (algorithm === 'MD5-sess') {
+    // MD5-sess: HA1 = MD5(MD5(username:realm:password):nonce:cnonce)
+    const ha1_base = md5(`${username}:${realm}:${password}`);
+    ha1 = md5(`${ha1_base}:${nonce}:${cnonce}`);
+    console.log(`HA1 (MD5-sess) = MD5(MD5(${username}:${realm}:****):${nonce}:${cnonce}) = ${ha1}`);
+  } else {
+    // MD5: HA1 = MD5(username:realm:password)
+    ha1 = md5(`${username}:${realm}:${password}`);
+    console.log(`HA1 (MD5) = MD5(${username}:${realm}:****) = ${ha1}`);
+  }
 
   // HA2 = MD5(method:uri)
   const ha2 = md5(`${method}:${uri}`);
@@ -157,7 +167,8 @@ async function requestWithDigest(method, url, headers, data) {
         nonceCache.nonce,
         cnonce,
         nc,
-        nonceCache.qop || 'auth'
+        nonceCache.qop || 'auth',
+        nonceCache.algorithm || 'MD5'
       );
 
       const authHeader = buildAuthorizationHeader(
@@ -234,6 +245,7 @@ async function requestWithDigest(method, url, headers, data) {
   nonceCache.nonce = nonce;
   nonceCache.realm = realm;
   nonceCache.qop = qop;
+  nonceCache.algorithm = algorithm;
   nonceCache.nc = 1;
 
   // Generate digest response
@@ -249,7 +261,8 @@ async function requestWithDigest(method, url, headers, data) {
     nonce,
     cnonce,
     nc,
-    qop
+    qop,
+    algorithm
   );
 
   const authHeader = buildAuthorizationHeader(
