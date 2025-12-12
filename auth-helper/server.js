@@ -21,6 +21,7 @@ const nonceCache = {
   realm: null,
   qop: null,
   algorithm: null,
+  opaque: null,
 };
 
 /**
@@ -122,8 +123,8 @@ function computeDigestResponse(method, uri, username, password, realm, nonce, cn
  * @param {string} algorithm - Algorithm (optional, defaults to MD5)
  * @returns {string} - Complete Authorization header value
  */
-function buildAuthorizationHeader(username, realm, nonce, uri, qop, cnonce, nc, response, algorithm = 'MD5') {
-  const header = [
+function buildAuthorizationHeader(username, realm, nonce, uri, qop, cnonce, nc, response, algorithm = 'MD5', opaque = null) {
+  const parts = [
     `Digest username="${username}"`,
     `realm="${realm}"`,
     `nonce="${nonce}"`,
@@ -133,7 +134,13 @@ function buildAuthorizationHeader(username, realm, nonce, uri, qop, cnonce, nc, 
     `cnonce="${cnonce}"`,
     `response="${response}"`,
     `algorithm="${algorithm}"`,
-  ].join(', ');
+  ];
+
+  if (opaque) {
+    parts.push(`opaque="${opaque}"`);
+  }
+
+  const header = parts.join(', ');
 
   console.log('Built Authorization header:', header);
 
@@ -179,7 +186,9 @@ async function requestWithDigest(method, url, headers, data) {
         nonceCache.qop || 'auth',
         cnonce,
         nc,
-        response
+        response,
+        nonceCache.algorithm || 'MD5',
+        nonceCache.opaque
       );
 
       const cachedResponse = await axios({
@@ -235,7 +244,7 @@ async function requestWithDigest(method, url, headers, data) {
   console.log('Received 401 with WWW-Authenticate:', wwwAuth);
   const challenge = parseWWWAuthenticate(wwwAuth);
 
-  const { realm, nonce, qop = 'auth', algorithm = 'MD5' } = challenge;
+  const { realm, nonce, qop = 'auth', algorithm = 'MD5', opaque = null } = challenge;
 
   if (!realm || !nonce) {
     throw new Error('WWW-Authenticate challenge missing realm or nonce');
@@ -246,6 +255,7 @@ async function requestWithDigest(method, url, headers, data) {
   nonceCache.realm = realm;
   nonceCache.qop = qop;
   nonceCache.algorithm = algorithm;
+  nonceCache.opaque = opaque;
   nonceCache.nc = 1;
 
   // Generate digest response
@@ -274,7 +284,8 @@ async function requestWithDigest(method, url, headers, data) {
     cnonce,
     nc,
     digestResponse,
-    algorithm
+    algorithm,
+    opaque
   );
 
   // Retry request with Authorization header
