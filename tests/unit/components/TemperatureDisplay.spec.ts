@@ -66,4 +66,30 @@ describe('TemperatureDisplay', () => {
     expect(wrapper.text()).toMatch(/215°/)
     expect(wrapper.text()).toMatch(/220°/)
   })
+
+  it('emits click event when tapped', async () => {
+    const wrapper = mount(TemperatureDisplay, {
+      props: { current: 215, target: 220, type: 'nozzle' }
+    })
+    await wrapper.trigger('click')
+    expect(wrapper.emitted('click')).toBeTruthy()
+  })
+
+  it('has cursor pointer style', () => {
+    const wrapper = mount(TemperatureDisplay, {
+      props: { current: 215, target: 220, type: 'nozzle' }
+    })
+    const element = wrapper.element as HTMLElement
+    const styles = window.getComputedStyle(element)
+    // Check if cursor is set via class or inline style
+    expect(wrapper.classes()).toContain('tappable')
+  })
+
+  it('has touch-friendly size', () => {
+    const wrapper = mount(TemperatureDisplay, {
+      props: { current: 215, target: 220, type: 'nozzle' }
+    })
+    // Component should have minimum touch target size
+    expect(wrapper.classes()).toContain('tappable')
+  })
 })

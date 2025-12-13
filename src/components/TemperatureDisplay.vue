@@ -9,6 +9,10 @@ interface Props {
 
 const props = defineProps<Props>()
 
+const emit = defineEmits<{
+  click: []
+}>()
+
 // Determine temperature state
 const tempState = computed(() => {
   if (props.current < 40) return 'cold'
@@ -31,7 +35,7 @@ const stateClass = computed(() => {
 </script>
 
 <template>
-  <div class="temperature-display" :class="stateClass">
+  <div class="temperature-display tappable" :class="stateClass" @click="emit('click')">
     <span class="icon">{{ icon }}</span>
     <div class="temps">
       <span class="current">{{ current }}°</span>
@@ -48,6 +52,22 @@ const stateClass = computed(() => {
   gap: var(--space-sm);
   font-size: 18px;
   font-weight: bold;
+}
+
+.temperature-display.tappable {
+  cursor: pointer;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  min-height: var(--touch-comfortable);
+  transition: transform var(--transition-fast), background var(--transition-fast);
+}
+
+.temperature-display.tappable:hover {
+  background: var(--bg-secondary);
+}
+
+.temperature-display.tappable:active {
+  transform: scale(0.95);
 }
 
 .icon {
