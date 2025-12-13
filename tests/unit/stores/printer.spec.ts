@@ -72,4 +72,38 @@ describe('printerStore', () => {
     store.status = { state: 'IDLE', temp_nozzle: 25, temp_bed: 22, target_nozzle: 0, target_bed: 0 }
     expect(store.pollingInterval).toBe(5000)
   })
+
+  describe('movement control actions', () => {
+    it('moveAxis is defined and callable', () => {
+      const store = usePrinterStore()
+      expect(store.moveAxis).toBeDefined()
+      expect(typeof store.moveAxis).toBe('function')
+    })
+
+    it('homeAxes is defined and callable', () => {
+      const store = usePrinterStore()
+      expect(store.homeAxes).toBeDefined()
+      expect(typeof store.homeAxes).toBe('function')
+    })
+
+    it('disableSteppers is defined and callable', () => {
+      const store = usePrinterStore()
+      expect(store.disableSteppers).toBeDefined()
+      expect(typeof store.disableSteppers).toBe('function')
+    })
+  })
+
+  describe('temperature control actions', () => {
+    it('setNozzleTemp is defined and callable', () => {
+      const store = usePrinterStore()
+      expect(store.setNozzleTemp).toBeDefined()
+      expect(typeof store.setNozzleTemp).toBe('function')
+    })
+
+    it('setBedTemp is defined and callable', () => {
+      const store = usePrinterStore()
+      expect(store.setBedTemp).toBeDefined()
+      expect(typeof store.setBedTemp).toBe('function')
+    })
+  })
 })

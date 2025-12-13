@@ -69,6 +69,83 @@ export const usePrinterStore = defineStore('printer', () => {
     }
   }
 
+  // Movement control actions
+  async function moveAxis(axis: 'x' | 'y' | 'z', distance: number) {
+    try {
+      const { DefaultService } = await import('../api')
+      const moveRequest: any = {
+        command: 'jog',
+        [axis]: distance
+      }
+      await DefaultService.movePrinthead(moveRequest)
+      // Refresh status after movement
+      await fetchStatus()
+    } catch (error) {
+      console.error(`Failed to move ${axis} axis:`, error)
+      throw error
+    }
+  }
+
+  async function homeAxes(axes: ('x' | 'y' | 'z')[]) {
+    try {
+      const { DefaultService } = await import('../api')
+      await DefaultService.homeAxes({
+        command: 'home',
+        axes
+      })
+      // Refresh status after homing
+      await fetchStatus()
+    } catch (error) {
+      console.error('Failed to home axes:', error)
+      throw error
+    }
+  }
+
+  async function disableSteppers() {
+    try {
+      const { DefaultService } = await import('../api')
+      await DefaultService.controlSteppers({
+        command: 'disable'
+      })
+    } catch (error) {
+      console.error('Failed to disable steppers:', error)
+      throw error
+    }
+  }
+
+  // Temperature control actions
+  async function setNozzleTemp(target: number) {
+    try {
+      const { DefaultService } = await import('../api')
+      await DefaultService.setNozzleTemp({
+        command: 'target',
+        targets: {
+          tool0: target
+        }
+      })
+      // Refresh status to get updated target temp
+      await fetchStatus()
+    } catch (error) {
+      console.error('Failed to set nozzle temperature:', error)
+      throw error
+    }
+  }
+
+  async function setBedTemp(target: number) {
+    try {
+      const { DefaultService } = await import('../api')
+      await DefaultService.setBedTemp({
+        command: 'target',
+        target
+      })
+      // Refresh status to get updated target temp
+      await fetchStatus()
+    } catch (error) {
+      console.error('Failed to set bed temperature:', error)
+      throw error
+    }
+  }
+
   return {
     // State
     status,
@@ -83,6 +160,11 @@ export const usePrinterStore = defineStore('printer', () => {
     // Actions
     fetchStatus,
     startPolling,
-    stopPolling
+    stopPolling,
+    moveAxis,
+    homeAxes,
+    disableSteppers,
+    setNozzleTemp,
+    setBedTemp
   }
 })
