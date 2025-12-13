@@ -145,8 +145,10 @@ export const resolve = async <T>(options: ApiRequestOptions, resolver?: T | Reso
 };
 
 export const getHeaders = async (config: OpenAPIConfig, options: ApiRequestOptions, formData?: FormData): Promise<Record<string, string>> => {
-    const [token, additionalHeaders] = await Promise.all([
+    const [token, username, password, additionalHeaders] = await Promise.all([
         resolve(options, config.TOKEN),
+        resolve(options, config.USERNAME),
+        resolve(options, config.PASSWORD),
         resolve(options, config.HEADERS),
     ]);
 
@@ -168,11 +170,10 @@ export const getHeaders = async (config: OpenAPIConfig, options: ApiRequestOptio
         headers['Authorization'] = `Bearer ${token}`;
     }
 
-    // REMOVED: Basic auth logic - Digest auth handles authentication via interceptor
-    // if (isStringWithValue(username) && isStringWithValue(password)) {
-    //     const credentials = base64(`${username}:${password}`);
-    //     headers['Authorization'] = `Basic ${credentials}`;
-    // }
+    if (isStringWithValue(username) && isStringWithValue(password)) {
+        const credentials = base64(`${username}:${password}`);
+        headers['Authorization'] = `Basic ${credentials}`;
+    }
 
     if (options.body !== undefined) {
         if (options.mediaType) {
@@ -290,10 +291,7 @@ export const catchErrorCodes = (options: ApiRequestOptions, result: ApiResult): 
  * @returns CancelablePromise<T>
  * @throws ApiError
  */
-export const request = <T>(config: OpenAPIConfig, options: ApiRequestOptions, axiosClient?: AxiosInstance): CancelablePromise<T> => {
-    // Use provided client, or get default (Digest if configured, axios otherwise)
-    const client = axiosClient ?? getDefaultAxiosClient()
-
+export const request = <T>(config: OpenAPIConfig, options: ApiRequestOptions, axiosClient: AxiosInstance = axios): CancelablePromise<T> => {
     return new CancelablePromise(async (resolve, reject, onCancel) => {
         try {
             const url = getUrl(config, options);
@@ -302,7 +300,7 @@ export const request = <T>(config: OpenAPIConfig, options: ApiRequestOptions, ax
             const headers = await getHeaders(config, options, formData);
 
             if (!onCancel.isCancelled) {
-                const response = await sendRequest<T>(config, options, url, body, formData, headers, onCancel, client);
+                const response = await sendRequest<T>(config, options, url, body, formData, headers, onCancel, axiosClient);
                 const responseBody = getResponseBody(response);
                 const responseHeader = getResponseHeader(response, options.responseHeader);
 
@@ -322,13 +320,4 @@ export const request = <T>(config: OpenAPIConfig, options: ApiRequestOptions, ax
             reject(error);
         }
     });
-};
-
-/**
- * Get the axios client to use for requests
- * Auth is now handled server-side by auth-helper
- * Just return a regular axios instance
- */
-export function getDefaultAxiosClient(): AxiosInstance {
-    return axios.create()
 };

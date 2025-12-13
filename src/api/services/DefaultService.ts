@@ -2,11 +2,18 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { BedTempRequest } from '../models/BedTempRequest';
+import type { ExtrudeRequest } from '../models/ExtrudeRequest';
 import type { FileListResponse } from '../models/FileListResponse';
+import type { HomeRequest } from '../models/HomeRequest';
 import type { InfoResponse } from '../models/InfoResponse';
 import type { JobResponse } from '../models/JobResponse';
+import type { PrintheadMoveRequest } from '../models/PrintheadMoveRequest';
+import type { RetractRequest } from '../models/RetractRequest';
 import type { StatusResponse } from '../models/StatusResponse';
+import type { StepperRequest } from '../models/StepperRequest';
 import type { StorageResponse } from '../models/StorageResponse';
+import type { ToolTempRequest } from '../models/ToolTempRequest';
 import type { VersionResponse } from '../models/VersionResponse';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
@@ -104,6 +111,136 @@ export class DefaultService {
             url: '/job/{id}/resume',
             path: {
                 'id': id,
+            },
+        });
+    }
+    /**
+     * Move printhead
+     * @param requestBody
+     * @returns void
+     * @throws ApiError
+     */
+    public static movePrinthead(
+        requestBody: PrintheadMoveRequest,
+    ): CancelablePromise<void> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/printer/printhead',
+            body: requestBody,
+            mediaType: 'application/json',
+            errors: {
+                409: `Printer busy or not ready`,
+            },
+        });
+    }
+    /**
+     * Home printer axes
+     * @param requestBody
+     * @returns void
+     * @throws ApiError
+     */
+    public static homeAxes(
+        requestBody: HomeRequest,
+    ): CancelablePromise<void> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/printer/home',
+            body: requestBody,
+            mediaType: 'application/json',
+            errors: {
+                409: `Printer busy`,
+            },
+        });
+    }
+    /**
+     * Enable or disable stepper motors
+     * @param requestBody
+     * @returns void
+     * @throws ApiError
+     */
+    public static controlSteppers(
+        requestBody: StepperRequest,
+    ): CancelablePromise<void> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/printer/stepper',
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Set nozzle temperature
+     * @param requestBody
+     * @returns void
+     * @throws ApiError
+     */
+    public static setNozzleTemp(
+        requestBody: ToolTempRequest,
+    ): CancelablePromise<void> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/printer/tool',
+            body: requestBody,
+            mediaType: 'application/json',
+            errors: {
+                409: `Printer busy`,
+            },
+        });
+    }
+    /**
+     * Set bed temperature
+     * @param requestBody
+     * @returns void
+     * @throws ApiError
+     */
+    public static setBedTemp(
+        requestBody: BedTempRequest,
+    ): CancelablePromise<void> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/printer/bed',
+            body: requestBody,
+            mediaType: 'application/json',
+            errors: {
+                409: `Printer busy`,
+            },
+        });
+    }
+    /**
+     * Extrude filament
+     * @param requestBody
+     * @returns void
+     * @throws ApiError
+     */
+    public static extrudeFilament(
+        requestBody: ExtrudeRequest,
+    ): CancelablePromise<void> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/printer/tool/extrude',
+            body: requestBody,
+            mediaType: 'application/json',
+            errors: {
+                409: `Nozzle too cold or printer busy`,
+            },
+        });
+    }
+    /**
+     * Retract filament
+     * @param requestBody
+     * @returns void
+     * @throws ApiError
+     */
+    public static retractFilament(
+        requestBody: RetractRequest,
+    ): CancelablePromise<void> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/printer/tool/retract',
+            body: requestBody,
+            mediaType: 'application/json',
+            errors: {
+                409: `Nozzle too cold or printer busy`,
             },
         });
     }

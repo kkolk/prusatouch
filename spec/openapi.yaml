@@ -101,6 +101,116 @@ paths:
         '204':
           description: Job resumed
 
+  /printer/printhead:
+    post:
+      summary: Move printhead
+      operationId: movePrinthead
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrintheadMoveRequest'
+      responses:
+        '204':
+          description: Printhead movement command sent
+        '409':
+          description: Printer busy or not ready
+
+  /printer/home:
+    post:
+      summary: Home printer axes
+      operationId: homeAxes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HomeRequest'
+      responses:
+        '204':
+          description: Homing command sent
+        '409':
+          description: Printer busy
+
+  /printer/stepper:
+    post:
+      summary: Enable or disable stepper motors
+      operationId: controlSteppers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StepperRequest'
+      responses:
+        '204':
+          description: Stepper command sent
+
+  /printer/tool:
+    post:
+      summary: Set nozzle temperature
+      operationId: setNozzleTemp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ToolTempRequest'
+      responses:
+        '204':
+          description: Temperature set
+        '409':
+          description: Printer busy
+
+  /printer/bed:
+    post:
+      summary: Set bed temperature
+      operationId: setBedTemp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BedTempRequest'
+      responses:
+        '204':
+          description: Temperature set
+        '409':
+          description: Printer busy
+
+  /printer/tool/extrude:
+    post:
+      summary: Extrude filament
+      operationId: extrudeFilament
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExtrudeRequest'
+      responses:
+        '204':
+          description: Extrude command sent
+        '409':
+          description: Nozzle too cold or printer busy
+
+  /printer/tool/retract:
+    post:
+      summary: Retract filament
+      operationId: retractFilament
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RetractRequest'
+      responses:
+        '204':
+          description: Retract command sent
+        '409':
+          description: Nozzle too cold or printer busy
+
   /storage:
     get:
       summary: Get available storage locations
@@ -346,3 +456,119 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FileInfo'
+
+    PrintheadMoveRequest:
+      type: object
+      required:
+        - command
+      properties:
+        command:
+          type: string
+          enum: [jog]
+        x:
+          type: number
+          description: X-axis movement in mm (relative)
+        y:
+          type: number
+          description: Y-axis movement in mm (relative)
+        z:
+          type: number
+          description: Z-axis movement in mm (relative)
+        absolute:
+          type: boolean
+          default: false
+          description: Use absolute positioning (true) or relative (false)
+        speed:
+          type: number
+          description: Movement speed in mm/s
+
+    HomeRequest:
+      type: object
+      required:
+        - command
+        - axes
+      properties:
+        command:
+          type: string
+          enum: [home]
+        axes:
+          type: array
+          items:
+            type: string
+            enum: [x, y, z]
+          description: Axes to home (empty array or ['x', 'y', 'z'] for all)
+
+    StepperRequest:
+      type: object
+      required:
+        - command
+      properties:
+        command:
+          type: string
+          enum: [enable, disable]
+          description: Enable or disable stepper motors
+
+    ToolTempRequest:
+      type: object
+      required:
+        - command
+        - targets
+      properties:
+        command:
+          type: string
+          enum: [target]
+        targets:
+          type: object
+          properties:
+            tool0:
+              type: number
+              description: Target temperature in Celsius
+          required:
+            - tool0
+
+    BedTempRequest:
+      type: object
+      required:
+        - command
+        - target
+      properties:
+        command:
+          type: string
+          enum: [target]
+        target:
+          type: number
+          description: Target temperature in Celsius
+
+    ExtrudeRequest:
+      type: object
+      required:
+        - command
+      properties:
+        command:
+          type: string
+          enum: [extrude]
+        amount:
+          type: number
+          description: Amount to extrude in mm (default 5mm)
+          default: 5
+        speed:
+          type: number
+          description: Extrusion speed in mm/s (default 100)
+          default: 100
+
+    RetractRequest:
+      type: object
+      required:
+        - command
+      properties:
+        command:
+          type: string
+          enum: [retract]
+        amount:
+          type: number
+          description: Amount to retract in mm (default 5mm)
+          default: 5
+        speed:
+          type: number
+          description: Retraction speed in mm/s (default 100)
+          default: 100
