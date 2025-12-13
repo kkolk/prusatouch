@@ -10,6 +10,8 @@ const printerStore = usePrinterStore()
 // Local state
 const selectedStep = ref(1) // Default to 1mm
 const stepOptions = [0.1, 1, 10, 100]
+const errorMessage = ref<string>('')
+const isLoading = ref(false)
 
 // Computed
 const position = computed(() => ({
@@ -24,21 +26,53 @@ function selectStep(step: number) {
 }
 
 async function handleMove(event: { axis: 'x' | 'y' | 'z'; direction: number }) {
-  const distance = selectedStep.value * event.direction
-  await printerStore.moveAxis(event.axis, distance)
+  try {
+    errorMessage.value = ''
+    isLoading.value = true
+    const distance = selectedStep.value * event.direction
+    await printerStore.moveAxis(event.axis, distance)
+  } catch (error) {
+    console.error('Failed to move axis:', error)
+    errorMessage.value = `Failed to move ${event.axis.toUpperCase()} axis. Please try again.`
+  } finally {
+    isLoading.value = false
+  }
 }
 
 async function handleHomeAll() {
-  await printerStore.homeAxes(['x', 'y', 'z'])
+  try {
+    errorMessage.value = ''
+    isLoading.value = true
+    await printerStore.homeAxes(['x', 'y', 'z'])
+  } catch (error) {
+    console.error('Failed to home axes:', error)
+    errorMessage.value = 'Failed to home all axes. Please try again.'
+  } finally {
+    isLoading.value = false
+  }
 }
 
 async function handleDisableSteppers() {
-  await printerStore.disableSteppers()
+  try {
+    errorMessage.value = ''
+    isLoading.value = true
+    await printerStore.disableSteppers()
+  } catch (error) {
+    console.error('Failed to disable steppers:', error)
+    errorMessage.value = 'Failed to disable steppers. Please try again.'
+  } finally {
+    isLoading.value = false
+  }
 }
 </script>
 
 <template>
   <div class="control-view">
+    <!-- Error Message -->
+    <div v-if="errorMessage" class="error-banner">
+      {{ errorMessage }}
+    </div>
+
     <!-- Position Display -->
     <div class="position-display">
       <h2 class="section-title">Position</h2>
@@ -82,10 +116,10 @@ async function handleDisableSteppers() {
 
       <!-- Action Buttons -->
       <div class="action-buttons">
-        <TouchButton variant="secondary" @click="handleHomeAll">
+        <TouchButton variant="secondary" :loading="isLoading" @click="handleHomeAll">
           Home All
         </TouchButton>
-        <TouchButton variant="secondary" @click="handleDisableSteppers">
+        <TouchButton variant="secondary" :loading="isLoading" @click="handleDisableSteppers">
           Disable Steppers
         </TouchButton>
       </div>
@@ -101,6 +135,18 @@ async function handleDisableSteppers() {
   padding: var(--space-md);
   gap: var(--space-lg);
   overflow-y: auto;
+}
+
+/* Error Banner */
+.error-banner {
+  padding: var(--space-md);
+  background: rgba(255, 0, 0, 0.1);
+  border: 2px solid rgba(255, 0, 0, 0.3);
+  border-radius: var(--radius-md);
+  color: #ff6b6b;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
 }
 
 /* Position Display */
