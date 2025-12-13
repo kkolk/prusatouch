@@ -46,7 +46,7 @@ describe('App', () => {
     expect(wrapper.find('.bottom-nav').exists()).toBe(true)
   })
 
-  it('renders three nav tabs', async () => {
+  it('renders four nav tabs', async () => {
     router.push('/')
     await router.isReady()
 
@@ -54,7 +54,7 @@ describe('App', () => {
       global: { plugins: [router] }
     })
     const tabs = wrapper.findAll('.nav-tab')
-    expect(tabs.length).toBe(3)
+    expect(tabs.length).toBe(4)
   })
 
   it('highlights active tab based on route', async () => {

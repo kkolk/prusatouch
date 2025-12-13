@@ -5,6 +5,7 @@ import HomeView from '../views/HomeView.vue'
 
 // Lazy loaded (code splitting)
 const FilesView = () => import('../views/FilesView.vue')
+const ControlView = () => import('../views/ControlView.vue')
 const SettingsView = () => import('../views/SettingsView.vue')
 
 export const routes: RouteRecordRaw[] = [
@@ -19,6 +20,12 @@ export const routes: RouteRecordRaw[] = [
     name: 'files',
     component: FilesView,
     meta: { title: 'Files' }
+  },
+  {
+    path: '/control',
+    name: 'control',
+    component: ControlView,
+    meta: { title: 'Control' }
   },
   {
     path: '/settings',

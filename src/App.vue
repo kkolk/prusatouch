@@ -44,6 +44,7 @@ const route = useRoute()
 const tabs = [
   { name: 'home', route: '/', icon: '🏠', label: 'Home' },
   { name: 'files', route: '/files', icon: '📁', label: 'Files' },
+  { name: 'control', route: '/control', icon: '🎮', label: 'Control' },
   { name: 'settings', route: '/settings', icon: '⚙️', label: 'Settings' }
 ]
 
