@@ -1,5 +1,5 @@
 [Desktop Entry]
 Type=Application
 Name=PrusaTouch Kiosk
-Exec=/home/pi/start-prusatouch.sh
+Exec=/home/kkolk/start-prusatouch.sh
 X-GNOME-Autostart-enabled=true

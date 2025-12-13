@@ -4,45 +4,90 @@
 
 - Raspberry Pi 4 (1GB+ RAM) with Raspberry Pi OS
 - HyperPixel 4 display (800x480) configured
-- SSH access to Pi
+- SSH access to Pi with SSH key authentication
 - Node.js 24.x on development machine
-- **Note:** Deployment script will automatically install and configure lighttpd web server
+- Node.js 24.x on Raspberry Pi (automatically installed by deployment scripts)
+
+## Architecture Overview
+
+PrusaTouch uses a simplified architecture:
+
+```
+Browser → auth-helper:8080 → PrusaLink:80
+          (serves SPA + proxies API with digest auth)
+```
+
+**Key components:**
+- `auth-helper` - Node.js service that serves the SPA and proxies API calls to PrusaLink with HTTP Digest authentication
+- `prusatouch-kiosk` - Systemd service that launches Chromium in kiosk mode on boot
 
 ## Quick Deployment
 
-### 1. Build and Deploy
+### 1. Deploy Auth Helper
 
 From your development machine:
 
 ```bash
-# Deploy to default hostname (prusa-mk3s.local)
-./scripts/deploy-to-pi.sh
+# Deploy auth-helper to default hostname (octopi.local.frostbyte.us)
+./scripts/deploy-auth-helper.sh
 
 # Deploy to custom hostname
-./scripts/deploy-to-pi.sh raspberrypi.local
+./scripts/deploy-auth-helper.sh my-pi.local
 ```
 
 This script will:
-- Build production bundle
-- Verify performance targets
-- Install and configure lighttpd web server (if needed)
-- Transfer files to Pi
-- Set proper permissions
-- Restart web server and verify HTTP 200 response
+- Install Node.js 24.x on Pi (if needed)
+- Transfer auth-helper service files
+- Install npm dependencies
+- Install systemd service
 
-### 2. Set Up Kiosk Mode
+After deployment, SSH into the Pi and configure credentials:
 
 ```bash
-./scripts/setup-kiosk.sh prusa-mk3s.local
+ssh -i ~/.ssh/octopi_key kkolk@octopi.local.frostbyte.us
+sudo nano /etc/systemd/system/prusalink-auth.service  # Set PRUSALINK_PASS
+sudo systemctl daemon-reload
+sudo systemctl enable prusalink-auth
+sudo systemctl restart prusalink-auth
 ```
 
-### 3. Verify
+### 2. Deploy SPA Build
 
-Open Chromium on the Pi and navigate to:
-`http://localhost:8080`
+Build and deploy the PrusaTouch web application:
 
-Or from another device:
-`http://prusa-mk3s.local:8080`
+```bash
+npm run build
+./scripts/deploy-to-pi.sh
+```
+
+The SPA is deployed to `/opt/prusatouch/dist/` and served by auth-helper.
+
+### 3. Set Up Kiosk Mode
+
+Configure Chromium to auto-launch in kiosk mode on boot:
+
+```bash
+./scripts/setup-kiosk.sh
+```
+
+This script will:
+- Install Chromium, unclutter, and xdotool
+- Deploy kiosk launch script
+- Configure desktop autostart
+- Disable screen blanking
+- Install and enable systemd service for automatic restart
+
+### 4. Verify
+
+Check services are running:
+
+```bash
+ssh -i ~/.ssh/octopi_key kkolk@octopi.local.frostbyte.us 'sudo systemctl status prusalink-auth && sudo systemctl status prusatouch-kiosk'
+```
+
+Access the application:
+- From Pi: `http://localhost:8080`
+- From network: `http://octopi.local.frostbyte.us:8080`
 
 ## Manual Deployment
 
@@ -74,84 +119,180 @@ If the script doesn't work, deploy manually:
 - Ensure Pi user has sudo access
 - Check directory ownership
 
-### Web server issues
+### Service issues
 
 **Port 8080 already in use:**
 - Check what's using it: `sudo netstat -tlnp | grep 8080`
-- Stop conflicting service or choose different port
-- Edit `DEPLOY_PATH` in deploy script
+- Stop conflicting service: `sudo systemctl stop <service-name>`
+- Adjust port in `/etc/systemd/system/prusalink-auth.service`
 
-**lighttpd won't start:**
-- Check logs: `sudo journalctl -u lighttpd -n 50`
-- Common issue: Port 80 conflict (script uses 8080 to avoid this)
-- Verify config: `sudo lighttpd -t -f /etc/lighttpd/lighttpd.conf`
+**Auth-helper won't start:**
+- Check logs: `sudo journalctl -u prusalink-auth -n 50`
+- Verify Node.js is installed: `ssh kkolk@pi 'node --version'`
+- Check server.js exists: `ls ~/prusalink-auth/server.js`
+- Verify credentials are set in systemd service
 
-**404 errors on navigation:**
-- SPA routing may not be configured
-- Check `/etc/lighttpd/conf-available/10-prusatouch.conf` exists
-- Verify rewrite module enabled: `sudo lighttpd-enable-mod rewrite`
+**404 errors on API calls:**
+- Check auth-helper is proxying correctly
+- Verify PrusaLink is running: `curl http://localhost:80/api/v1/status`
+- Check logs: `sudo journalctl -u prusalink-auth -f`
 
 ### Page doesn't load
-- Verify lighttpd is running: `sudo systemctl status lighttpd`
-- Check logs: `sudo journalctl -u lighttpd -f`
-- Verify PrusaLink base URL in `.env`
+- Verify auth-helper is running: `sudo systemctl status prusalink-auth`
+- Check logs: `sudo journalctl -u prusalink-auth -f`
+- Verify SPA files exist: `ls /opt/prusatouch/dist/`
+- Check port 8080 is accessible: `curl http://localhost:8080`
 
 ## Authentication
 
-PrusaTouch uses **HTTP Digest authentication** to communicate with PrusaLink.
+PrusaTouch uses **server-side HTTP Digest authentication** to communicate with PrusaLink in kiosk mode. The auth-helper service handles all authentication transparently - the browser never sees authentication prompts.
 
 ### Configuration
 
-Set credentials in `.env.local` (development) or environment variables (production):
+Set credentials in the systemd service environment variables:
 
 ```bash
-VITE_PRUSALINK_USER=maker
-VITE_PRUSALINK_PASS=your_password
+sudo nano /etc/systemd/system/prusalink-auth.service
+```
+
+Edit the `Environment` variables:
+
+```ini
+Environment="PRUSALINK_USER=kkolk"
+Environment="PRUSALINK_PASS=your_password_here"
+Environment="PRUSALINK_HOST=127.0.0.1"
+Environment="PRUSALINK_PORT=80"
+Environment="SPA_PATH=/opt/prusatouch/dist"
+```
+
+After editing, restart the service:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl restart prusalink-auth
 ```
 
 ### How It Works
 
-1. App attempts API call to `/api/v1/status`
-2. PrusaLink returns 401 with `WWW-Authenticate: Digest` challenge
-3. axios-digest-auth intercepts the 401 and generates Authorization header
-4. Request is retried with Digest credentials
-5. PrusaLink returns 200 OK with data
+1. Browser makes request to `http://localhost:8080/api/v1/status`
+2. Auth-helper receives request and proxies to PrusaLink
+3. If PrusaLink returns 401, auth-helper generates custom Digest auth header
+4. Auth-helper retries request with authentication
+5. Response is returned to browser (no auth popups!)
+
+**Why custom implementation?** PrusaLink uses non-standard MD5-sess algorithm with opaque parameter. All standard digest auth libraries fail. See `docs/digest_auth_summary.md` for details.
 
 ### Troubleshooting Authentication
 
 **All API calls return 401:**
-- Check credentials in `.env.local`
+- Check credentials in `/etc/systemd/system/prusalink-auth.service`
 - Verify PrusaLink username/password is correct
-- Check browser console for auth errors
+- Check logs: `sudo journalctl -u prusalink-auth -n 50`
 
-**CORS errors:**
-- Ensure lighttpd reverse proxy is configured (see Web Server section)
-- Verify `/api/*` requests are proxied to port 80
+**Service won't start:**
+- Check logs: `sudo journalctl -u prusalink-auth -xe`
+- Verify Node.js path is correct in ExecStart
+- Ensure `/home/kkolk/prusalink-auth/server.js` exists
 
-**Temperatures show 0°:**
-- Authentication is failing
-- Check Network tab for 401 responses
-- Verify Digest auth challenge is present in response headers
+**Browser shows auth popup:**
+- Auth-helper may not be running
+- Check service: `sudo systemctl status prusalink-auth`
+- Verify you're accessing `http://localhost:8080` not `http://localhost:80`
 
-## Manual lighttpd Setup (if script fails)
+## Kiosk Mode
 
-If the automated setup fails, configure manually:
+PrusaTouch runs in full-screen kiosk mode using Chromium. The setup script configures everything automatically.
+
+### How Kiosk Mode Works
+
+1. **Auto-login**: Raspberry Pi OS configured to auto-login user `kkolk` on boot
+2. **Desktop autostart**: `~/.config/autostart/kiosk-autostart.desktop` launches kiosk script
+3. **Systemd service**: `/etc/systemd/system/prusatouch-kiosk.service` (recommended, more robust)
+4. **Kiosk script**: `/home/kkolk/start-prusatouch.sh` disables blanking and launches Chromium
+
+### Manual Kiosk Setup
+
+If the automated setup fails:
 
 ```bash
-# Install
-sudo apt-get update
-sudo apt-get install -y lighttpd
+# Install dependencies
+sudo apt-get install -y chromium unclutter xdotool
 
-# Configure
-sudo sed -i 's/server.port.*/server.port = 8080/' /etc/lighttpd/lighttpd.conf
-sudo sed -i 's|server.document-root.*|server.document-root = "/opt/prusatouch"|' /etc/lighttpd/lighttpd.conf
+# Create startup script
+cat > ~/start-prusatouch.sh << 'EOF'
+#!/bin/bash
+xset s off
+xset -dpms
+xset s noblank
+unclutter -idle 0.1 -root &
+sleep 5
+chromium --kiosk --noerrdialogs --disable-infobars \
+  --disable-session-crashed-bubble --disable-component-update \
+  --check-for-update-interval=31536000 \
+  --app=http://localhost:8080
+EOF
+chmod +x ~/start-prusatouch.sh
 
-# Enable modules
-sudo lighttpd-enable-mod rewrite
+# Create systemd service
+sudo tee /etc/systemd/system/prusatouch-kiosk.service << 'EOF'
+[Unit]
+Description=PrusaTouch Kiosk Mode (Chromium)
+After=graphical.target prusalink-auth.service
+Wants=prusalink-auth.service
 
-# Restart
-sudo systemctl restart lighttpd
+[Service]
+Type=simple
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/kkolk/.Xauthority
+ExecStartPre=/bin/sleep 10
+ExecStart=/home/kkolk/start-prusatouch.sh
+Restart=always
+RestartSec=5
+User=kkolk
+
+[Install]
+WantedBy=graphical.target
+EOF
+
+# Enable and start
+sudo systemctl daemon-reload
+sudo systemctl enable prusatouch-kiosk
 ```
+
+### Testing Kiosk Mode
+
+After setup, reboot the Pi:
+
+```bash
+ssh -i ~/.ssh/octopi_key kkolk@octopi.local.frostbyte.us 'sudo reboot'
+```
+
+The system should:
+1. Boot to graphical desktop (auto-login)
+2. Wait 10 seconds for network
+3. Launch Chromium in full-screen kiosk mode
+4. Load PrusaTouch at `http://localhost:8080`
+
+### Troubleshooting Kiosk Mode
+
+**Chromium doesn't launch on boot:**
+- Check service: `sudo systemctl status prusatouch-kiosk`
+- Check logs: `sudo journalctl -u prusatouch-kiosk -n 50`
+- Verify auto-login: `cat /etc/lightdm/lightdm.conf | grep autologin-user`
+
+**Kiosk crashes/exits:**
+- Check Chromium logs: `journalctl --user -u prusatouch-kiosk`
+- Verify auth-helper is running: `sudo systemctl status prusalink-auth`
+- Check network connectivity: `ping 127.0.0.1`
+
+**Screen blanking still occurs:**
+- Verify lightdm config: `/etc/lightdm/lightdm.conf.d/01-disable-blanking.conf`
+- Check xset settings in startup script
+- Disable DPMS in Pi configuration
+
+**Chromium shows "Restore session" dialog:**
+- Add `--disable-session-crashed-bubble` to chromium flags (already in template)
+- Delete Chromium profile: `rm -rf ~/.config/chromium/`
 
 ## Performance Verification
 

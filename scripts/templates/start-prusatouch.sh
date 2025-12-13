@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Disable screen blanking
-xset s off
-xset -dpms
-xset s noblank
+# Disable screen blanking (ignore errors if X server doesn't support extension)
+xset s off 2>/dev/null || true
+xset -dpms 2>/dev/null || true
+xset s noblank 2>/dev/null || true
 
 # Hide cursor after 0.1 seconds of inactivity
 unclutter -idle 0.1 -root &
@@ -12,7 +12,7 @@ unclutter -idle 0.1 -root &
 sleep 5
 
 # Launch Chromium in kiosk mode
-chromium-browser \
+chromium \
   --kiosk \
   --noerrdialogs \
   --disable-infobars \

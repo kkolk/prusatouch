@@ -1,0 +1,17 @@
+[Unit]
+Description=PrusaTouch Kiosk Mode (Chromium)
+After=graphical.target prusalink-auth.service
+Wants=prusalink-auth.service
+
+[Service]
+Type=simple
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/kkolk/.Xauthority
+ExecStartPre=/bin/sleep 10
+ExecStart=/home/kkolk/start-prusatouch.sh
+Restart=always
+RestartSec=5
+User=kkolk
+
+[Install]
+WantedBy=graphical.target
