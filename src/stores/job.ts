@@ -30,6 +30,28 @@ export const useJobStore = defineStore('job', () => {
     return `${minutes}m`
   })
 
+  const printSpeed = computed(() => {
+    // Speed comes from printerStore, default to 100%
+    // This will be enhanced when we integrate with printerStore
+    if (!currentJob.value) return 0
+    return 100
+  })
+
+  const currentLayer = computed(() => {
+    // Layer info would come from file metadata or job status
+    // PrusaLink may provide this in extended job info
+    // For now, return 0 as placeholder
+    if (!currentJob.value) return 0
+    return 0
+  })
+
+  const totalLayers = computed(() => {
+    // Total layers would come from file metadata
+    // For now, return 0 as placeholder
+    if (!currentJob.value) return 0
+    return 0
+  })
+
   // Actions
   async function fetchJob() {
     try {
@@ -86,6 +108,18 @@ export const useJobStore = defineStore('job', () => {
     }
   }
 
+  async function startPrint(storage: string, path: string) {
+    try {
+      const { DefaultService } = await import('../api')
+      await DefaultService.startPrint(storage, path)
+      // Fetch the newly started job
+      await fetchJob()
+    } catch (error) {
+      console.error('Failed to start print:', error)
+      throw error
+    }
+  }
+
   function addToHistory(job: JobResponse) {
     history.value.unshift(job)
 
@@ -104,12 +138,16 @@ export const useJobStore = defineStore('job', () => {
     // Getters
     progressPercent,
     timeRemainingFormatted,
+    printSpeed,
+    currentLayer,
+    totalLayers,
 
     // Actions
     fetchJob,
     pauseJob,
     resumeJob,
     stopJob,
+    startPrint,
     addToHistory
   }
 })

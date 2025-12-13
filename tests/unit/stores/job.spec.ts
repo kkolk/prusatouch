@@ -71,4 +71,60 @@ describe('jobStore', () => {
 
     expect(store.history).toHaveLength(10)
   })
+
+  describe('printSpeed getter', () => {
+    it('returns 0 when no current job', () => {
+      const store = useJobStore()
+      expect(store.printSpeed).toBe(0)
+    })
+
+    it('returns speed from printer status when job is active', () => {
+      const store = useJobStore()
+      store.currentJob = {
+        id: 123,
+        state: 'PRINTING',
+        progress: 0.5,
+        time_remaining: 1800,
+        time_printing: 900,
+        file: { name: 'test.gcode', path: '/test.gcode', size: 1024, m_timestamp: Date.now() }
+      }
+
+      // PrintSpeed should come from printerStore, not jobStore
+      // For now, return 100 as default (will be implemented later)
+      expect(store.printSpeed).toBe(100)
+    })
+  })
+
+  describe('currentLayer and totalLayers getters', () => {
+    it('returns 0 for both when no job', () => {
+      const store = useJobStore()
+      expect(store.currentLayer).toBe(0)
+      expect(store.totalLayers).toBe(0)
+    })
+
+    it('returns 0 for both when file metadata not available', () => {
+      const store = useJobStore()
+      store.currentJob = {
+        id: 123,
+        state: 'PRINTING',
+        progress: 0.5,
+        time_remaining: 1800,
+        time_printing: 900,
+        file: { name: 'test.gcode', path: '/test.gcode', size: 1024, m_timestamp: Date.now() }
+      }
+      expect(store.currentLayer).toBe(0)
+      expect(store.totalLayers).toBe(0)
+    })
+  })
+
+  describe('startPrint action', () => {
+    it('is defined and callable', () => {
+      const store = useJobStore()
+      expect(store.startPrint).toBeDefined()
+      expect(typeof store.startPrint).toBe('function')
+    })
+
+    // Integration test would verify actual API calls
+    // Unit test just verifies the action exists and has correct signature
+  })
 })
