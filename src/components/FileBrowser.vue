@@ -24,6 +24,7 @@ const filesStore = useFilesStore()
 
 // Local state
 const selectedStorage = ref('local')
+const errorMessage = ref<string>('')
 
 // Computed
 const hasFiles = computed(() => filesStore.sortedFiles.length > 0)
@@ -38,17 +39,35 @@ function handleFileClick(file: FileInfo) {
 }
 
 async function handleStorageChange() {
-  await filesStore.fetchFiles(selectedStorage.value, '/')
+  try {
+    errorMessage.value = ''
+    await filesStore.fetchFiles(selectedStorage.value, '/')
+  } catch (error) {
+    console.error('Failed to fetch files for storage:', error)
+    errorMessage.value = 'Failed to load files. Please try again.'
+  }
 }
 
 async function handleRefresh() {
-  await filesStore.fetchFiles(selectedStorage.value, filesStore.currentPath)
+  try {
+    errorMessage.value = ''
+    await filesStore.fetchFiles(selectedStorage.value, filesStore.currentPath)
+  } catch (error) {
+    console.error('Failed to refresh files:', error)
+    errorMessage.value = 'Failed to refresh files. Please try again.'
+  }
 }
 
 // Lifecycle
 onMounted(async () => {
-  await filesStore.fetchStorages()
-  await filesStore.fetchFiles(selectedStorage.value, '/')
+  try {
+    errorMessage.value = ''
+    await filesStore.fetchStorages()
+    await filesStore.fetchFiles(selectedStorage.value, '/')
+  } catch (error) {
+    console.error('Failed to initialize file browser:', error)
+    errorMessage.value = 'Failed to load file browser. Please close and try again.'
+  }
 })
 </script>
 
@@ -59,6 +78,11 @@ onMounted(async () => {
     @close="handleClose"
   >
     <div class="file-browser">
+      <!-- Error Message -->
+      <div v-if="errorMessage" class="error-banner">
+        {{ errorMessage }}
+      </div>
+
       <!-- Storage Selector -->
       <div class="storage-selector-container">
         <select
@@ -117,6 +141,18 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
+}
+
+/* Error Banner */
+.error-banner {
+  padding: var(--space-md);
+  background: rgba(255, 0, 0, 0.1);
+  border: 2px solid rgba(255, 0, 0, 0.3);
+  border-radius: var(--radius-md);
+  color: #ff6b6b;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
 }
 
 /* Storage Selector */
