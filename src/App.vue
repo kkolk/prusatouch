@@ -72,9 +72,6 @@ function goToSettings() {
   margin: 0 auto;
   background: var(--bg-primary);
   overflow: hidden;
-  /* Fix for HyperPixel 4 display rotated 90° clockwise - rotate back 270° counterclockwise */
-  transform-origin: center center;
-  transform: rotate(270deg);
 }
 
 /* Top Bar - 60px */
