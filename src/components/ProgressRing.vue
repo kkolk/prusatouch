@@ -75,6 +75,11 @@ svg {
   transform: scaleY(-1); /* Flip to make rotation work correctly */
 }
 
+/* Smooth transition on progress updates - GPU-accelerated */
+.progress {
+  transition: stroke-dasharray var(--transition-slow);
+}
+
 .center-content {
   position: absolute;
   top: 50%;
