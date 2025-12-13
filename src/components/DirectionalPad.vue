@@ -147,14 +147,15 @@ function handleMove(axis: 'x' | 'y' | 'z', direction: number) {
   font-family: inherit;
 }
 
+/* GPU-accelerated hover state - ONLY transform and opacity */
 .pad-button:hover {
-  background: var(--bg-tertiary);
+  transform: scale(1.05);
+  opacity: 0.9;
 }
 
 /* GPU-accelerated active state - ONLY transform */
 .pad-button:active {
   transform: scale(0.90);
-  background: var(--prusa-orange);
 }
 
 .arrow {

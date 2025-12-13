@@ -379,3 +379,4 @@ When uncertain about implementation details:
 2. Check the implementation plan for step-by-step guidance
 3. Check existing similar components for patterns
 4. Verify against performance constraints (60fps, <300KB)
+Use the bd tool instead of markdown for all new work, it's great
