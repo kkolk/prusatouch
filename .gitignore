@@ -7,6 +7,7 @@ coverage
 playwright-report
 test-results
 src/api/
+.beads
 
 # Local environment files with credentials
 .env.local
