@@ -49,7 +49,8 @@
 
       <div class="job-info">
         <p class="file-name">{{ fileName }}</p>
-        <p v-if="totalLayers > 0" class="layer-info">
+        <!-- Only show layer info if available (PrusaLink limitation: layer data not exposed via API) -->
+        <p v-if="totalLayers > 0 && currentLayer > 0" class="layer-info">
           Layer {{ currentLayer }} / {{ totalLayers }}
         </p>
         <p v-if="printSpeed > 0" class="speed-info">

@@ -38,16 +38,19 @@ export const useJobStore = defineStore('job', () => {
   })
 
   const currentLayer = computed(() => {
-    // Layer info would come from file metadata or job status
-    // PrusaLink may provide this in extended job info
-    // For now, return 0 as placeholder
+    // KNOWN LIMITATION: PrusaLink does not expose layer information via standard API
+    // Layer data would require parsing GCODE comments or using extended telemetry
+    // which is beyond the scope of this integration
+    // Returning 0 to indicate "not available" - UI will hide when both values are 0
     if (!currentJob.value) return 0
     return 0
   })
 
   const totalLayers = computed(() => {
-    // Total layers would come from file metadata
-    // For now, return 0 as placeholder
+    // KNOWN LIMITATION: PrusaLink does not expose layer information via standard API
+    // Layer data would require parsing GCODE comments or using extended telemetry
+    // which is beyond the scope of this integration
+    // Returning 0 to indicate "not available" - UI will hide when both values are 0
     if (!currentJob.value) return 0
     return 0
   })
