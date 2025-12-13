@@ -34,6 +34,10 @@ export function useJob() {
 
   const jobState = computed(() => store.currentJob?.state ?? null)
 
+  const currentLayer = computed(() => store.currentLayer)
+  const totalLayers = computed(() => store.totalLayers)
+  const printSpeed = computed(() => store.printSpeed)
+
   // Control action loading states
   const isPausing = computed(() => store.control.pauseInProgress)
   const isStopping = computed(() => store.control.stopInProgress)
@@ -73,6 +77,9 @@ export function useJob() {
     timePrinting: readonly(timePrinting),
     fileName: readonly(fileName),
     jobState: readonly(jobState),
+    currentLayer: readonly(currentLayer),
+    totalLayers: readonly(totalLayers),
+    printSpeed: readonly(printSpeed),
 
     // Loading states
     isPausing: readonly(isPausing),

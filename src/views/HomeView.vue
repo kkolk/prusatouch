@@ -49,6 +49,12 @@
 
       <div class="job-info">
         <p class="file-name">{{ fileName }}</p>
+        <p v-if="totalLayers > 0" class="layer-info">
+          Layer {{ currentLayer }} / {{ totalLayers }}
+        </p>
+        <p v-if="printSpeed > 0" class="speed-info">
+          Print Speed: {{ printSpeed }}%
+        </p>
       </div>
 
       <div class="job-controls">
@@ -130,6 +136,9 @@ const {
   progress,
   timeRemaining,
   fileName,
+  currentLayer,
+  totalLayers,
+  printSpeed,
   isPausing,
   isStopping,
   pauseJob,
@@ -261,11 +270,18 @@ async function handleStop() {
 .file-name {
   font-size: 16px;
   color: var(--text-secondary);
-  margin: 0;
+  margin: 0 0 var(--space-xs) 0;
   max-width: 300px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.layer-info,
+.speed-info {
+  font-size: 14px;
+  color: var(--text-tertiary);
+  margin: var(--space-xs) 0 0 0;
 }
 
 .job-controls {
