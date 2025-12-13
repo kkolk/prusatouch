@@ -29,7 +29,7 @@
         <TouchButton
           variant="primary"
           size="large"
-          @click="goToFiles"
+          @click="openFileBrowser"
         >
           Select File to Print
         </TouchButton>
@@ -106,20 +106,29 @@
         </TouchButton>
       </template>
     </BottomSheet>
+
+    <!-- File Browser -->
+    <FileBrowser
+      :visible="showFileBrowser"
+      @close="closeFileBrowser"
+      @file-selected="handleFileSelected"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { useStatus, useJob } from '../composables'
+import { useFilesStore } from '../stores/files'
+import type { FileInfo } from '../api/models/FileInfo'
 import StatusBadge from '../components/StatusBadge.vue'
 import TemperatureDisplay from '../components/TemperatureDisplay.vue'
 import ProgressRing from '../components/ProgressRing.vue'
 import TouchButton from '../components/TouchButton.vue'
 import BottomSheet from '../components/BottomSheet.vue'
+import FileBrowser from '../components/FileBrowser.vue'
 
-const router = useRouter()
+const filesStore = useFilesStore()
 
 // Composables
 const {
@@ -148,6 +157,7 @@ const {
 
 // Local state
 const showStopConfirm = ref(false)
+const showFileBrowser = ref(false)
 
 // Lifecycle
 onMounted(() => {
@@ -159,8 +169,21 @@ onUnmounted(() => {
 })
 
 // Actions
-function goToFiles() {
-  router.push('/files')
+function openFileBrowser() {
+  showFileBrowser.value = true
+}
+
+function closeFileBrowser() {
+  showFileBrowser.value = false
+}
+
+async function handleFileSelected(file: FileInfo) {
+  try {
+    await filesStore.startPrint(filesStore.currentStorage, file.path || '')
+    showFileBrowser.value = false
+  } catch (error) {
+    console.error('Failed to start print:', error)
+  }
 }
 
 async function handlePause() {
