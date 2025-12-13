@@ -1,6 +1,10 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { PrinterStatus } from '../api/models/PrinterStatus'
+import { HomeRequest } from '../api/models/HomeRequest'
+import { StepperRequest } from '../api/models/StepperRequest'
+import { BedTempRequest } from '../api/models/BedTempRequest'
+import { ToolTempRequest } from '../api/models/ToolTempRequest'
 
 export const usePrinterStore = defineStore('printer', () => {
   // State
@@ -90,7 +94,7 @@ export const usePrinterStore = defineStore('printer', () => {
     try {
       const { DefaultService } = await import('../api')
       await DefaultService.homeAxes({
-        command: 'home',
+        command: HomeRequest.command.HOME,
         axes
       })
       // Refresh status after homing
@@ -105,7 +109,7 @@ export const usePrinterStore = defineStore('printer', () => {
     try {
       const { DefaultService } = await import('../api')
       await DefaultService.controlSteppers({
-        command: 'disable'
+        command: StepperRequest.command.DISABLE
       })
     } catch (error) {
       console.error('Failed to disable steppers:', error)
@@ -118,7 +122,7 @@ export const usePrinterStore = defineStore('printer', () => {
     try {
       const { DefaultService } = await import('../api')
       await DefaultService.setNozzleTemp({
-        command: 'target',
+        command: ToolTempRequest.command.TARGET,
         targets: {
           tool0: target
         }
@@ -135,7 +139,7 @@ export const usePrinterStore = defineStore('printer', () => {
     try {
       const { DefaultService } = await import('../api')
       await DefaultService.setBedTemp({
-        command: 'target',
+        command: BedTempRequest.command.TARGET,
         target
       })
       // Refresh status to get updated target temp
