@@ -96,24 +96,24 @@ User Interaction → Component → Composable → Pinia Store → API Service �
 2. Run `npm run generate:api`
 3. Commit both the spec and generated files
 
-### Authentication Architecture (Updated 2025-12-09)
+### Authentication Architecture (Updated 2025-12-13)
 
 **Kiosk Mode:** Authentication is handled server-side to prevent browser popups.
 
 **Service Stack:**
 ```
-Browser (no auth) → lighttpd:8080 → auth-helper:3000 → PrusaLink:80
+Browser (no auth) → auth-helper:8080 → PrusaLink:80
 ```
 
-**Auth Helper:** Node.js proxy service that transparently handles HTTP Digest authentication with PrusaLink. Credentials are stored in systemd service environment variables (not in browser bundle).
+**Auth Helper:** Node.js service that serves the SPA and transparently handles HTTP Digest authentication with PrusaLink. Credentials are stored in systemd service environment variables (not in browser bundle).
 
 **Browser Side:**
 - Makes simple HTTP requests to `/api/v1/*` (no auth credentials)
-- Lighttpd proxies requests to auth-helper
-- Auth-helper handles digest auth transparently
+- Auth-helper serves static SPA files from `/opt/prusatouch/dist`
+- Auth-helper proxies API requests to PrusaLink with digest auth
 - Browser never sees authentication popups
 
-**See:** `deployment/lighttpd/README.md` for full architecture documentation and troubleshooting.
+**See:** `docs/deployment.md` for full architecture documentation and troubleshooting.
 
 ### Component Patterns
 
@@ -371,7 +371,7 @@ chore: maintenance tasks
 **Implementation plans:**
 - `docs/plans/2024-12-04-prusatouch-initial-setup.md` - Foundation (Tasks 1-7)
 - `docs/plans/2025-12-05-core-components-phase2.md` - Components (Tasks 8-12)
-
+**Deployment Guide:** `docs/deployment.md`
 ## Questions or Issues?
 
 When uncertain about implementation details:

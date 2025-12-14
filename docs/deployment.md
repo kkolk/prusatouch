@@ -10,7 +10,7 @@
 
 ## Architecture Overview
 
-PrusaTouch uses a simplified architecture:
+PrusaTouch uses a simple 2-tier architecture:
 
 ```
 Browser → auth-helper:8080 → PrusaLink:80
@@ -20,6 +20,10 @@ Browser → auth-helper:8080 → PrusaLink:80
 **Key components:**
 - `auth-helper` - Node.js service that serves the SPA and proxies API calls to PrusaLink with HTTP Digest authentication
 - `prusatouch-kiosk` - Systemd service that launches Chromium in kiosk mode on boot
+
+**Port assignments:**
+- **80:** PrusaLink (Python service, requires Digest auth)
+- **8080:** Auth-helper (Node.js, serves SPA + proxies API)
 
 ## Quick Deployment
 
@@ -100,12 +104,17 @@ If the script doesn't work, deploy manually:
 
 2. **Transfer**:
    ```bash
-   scp -r dist/* pi@prusa-mk3s.local:/var/www/html/prusatouch/
+   rsync -avz -e "ssh -i ~/.ssh/octopi_key" dist/ kkolk@octopi.local.frostbyte.us:/opt/prusatouch/dist/
    ```
 
 3. **Set permissions**:
    ```bash
-   ssh pi@prusa-mk3s.local "sudo chown -R www-data:www-data /var/www/html/prusatouch && sudo chmod -R 755 /var/www/html/prusatouch"
+   ssh -i ~/.ssh/octopi_key kkolk@octopi.local.frostbyte.us "sudo chown -R kkolk:kkolk /opt/prusatouch/dist && sudo chmod -R 755 /opt/prusatouch/dist"
+   ```
+
+4. **Restart auth-helper**:
+   ```bash
+   ssh -i ~/.ssh/octopi_key kkolk@octopi.local.frostbyte.us "sudo systemctl restart prusalink-auth"
    ```
 
 ## Troubleshooting
