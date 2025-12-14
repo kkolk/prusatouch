@@ -5,6 +5,7 @@ import { HomeRequest } from '../api/models/HomeRequest'
 import { StepperRequest } from '../api/models/StepperRequest'
 import { BedTempRequest } from '../api/models/BedTempRequest'
 import { ToolTempRequest } from '../api/models/ToolTempRequest'
+import { PrintheadMoveRequest } from '../api/models/PrintheadMoveRequest'
 
 export const usePrinterStore = defineStore('printer', () => {
   // State
@@ -77,8 +78,8 @@ export const usePrinterStore = defineStore('printer', () => {
   async function moveAxis(axis: 'x' | 'y' | 'z', distance: number) {
     try {
       const { DefaultService } = await import('../api')
-      const moveRequest: any = {
-        command: 'jog',
+      const moveRequest: PrintheadMoveRequest = {
+        command: PrintheadMoveRequest.command.JOG,
         [axis]: distance
       }
       await DefaultService.movePrinthead(moveRequest)
