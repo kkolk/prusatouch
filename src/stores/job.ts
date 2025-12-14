@@ -1,11 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { JobResponse } from '../api/models/JobResponse'
+import type { Job } from '../api/models/Job'
 
 export const useJobStore = defineStore('job', () => {
   // State
-  const currentJob = ref<JobResponse | null>(null)
-  const history = ref<JobResponse[]>([])
+  const currentJob = ref<Job | null>(null)
+  const history = ref<Job[]>([])
   const control = ref({
     pauseInProgress: false,
     stopInProgress: false
@@ -59,7 +59,7 @@ export const useJobStore = defineStore('job', () => {
   async function fetchJob() {
     try {
       const { DefaultService } = await import('../api')
-      const response = await DefaultService.getJob()
+      const response = await DefaultService.getApiV1Job()
       currentJob.value = response
     } catch (error) {
       console.error('Failed to fetch job:', error)
@@ -70,7 +70,7 @@ export const useJobStore = defineStore('job', () => {
     try {
       control.value.pauseInProgress = true
       const { DefaultService } = await import('../api')
-      await DefaultService.pauseJob(id)
+      await DefaultService.putApiV1JobPause(id)
       await fetchJob()
     } catch (error) {
       console.error('Failed to pause job:', error)
@@ -83,7 +83,7 @@ export const useJobStore = defineStore('job', () => {
     try {
       control.value.pauseInProgress = true
       const { DefaultService } = await import('../api')
-      await DefaultService.resumeJob(id)
+      await DefaultService.putApiV1JobResume(id)
       await fetchJob()
     } catch (error) {
       console.error('Failed to resume job:', error)
@@ -96,7 +96,7 @@ export const useJobStore = defineStore('job', () => {
     try {
       control.value.stopInProgress = true
       const { DefaultService } = await import('../api')
-      await DefaultService.stopJob(id)
+      await DefaultService.deleteApiV1Job(id)
 
       // Add to history before clearing
       if (currentJob.value) {
@@ -114,7 +114,7 @@ export const useJobStore = defineStore('job', () => {
   async function startPrint(storage: string, path: string) {
     try {
       const { DefaultService } = await import('../api')
-      await DefaultService.startPrint(storage, path)
+      await DefaultService.postApiV1Files(storage, path)
       // Fetch the newly started job
       await fetchJob()
     } catch (error) {
@@ -123,7 +123,7 @@ export const useJobStore = defineStore('job', () => {
     }
   }
 
-  function addToHistory(job: JobResponse) {
+  function addToHistory(job: Job) {
     history.value.unshift(job)
 
     // Keep only last 10

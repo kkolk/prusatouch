@@ -110,9 +110,9 @@ onMounted(async () => {
       <div v-else-if="hasFiles" class="file-list">
         <FileListItem
           v-for="file in filesStore.sortedFiles"
-          :key="file.path"
+          :key="file.name"
           :file="file"
-          :thumbnail-url="filesStore.getThumbnail(file.path || '')"
+          :thumbnail-url="filesStore.getThumbnail(file.name || '')"
           @click="handleFileClick"
         />
       </div>

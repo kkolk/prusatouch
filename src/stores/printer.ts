@@ -1,9 +1,10 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import type { StatusPrinter } from '../api/models/StatusPrinter'
 
 export const usePrinterStore = defineStore('printer', () => {
   // State
-  const status = ref<PrinterStatus | null>(null)
+  const status = ref<StatusPrinter | null>(null)
   const connection = ref({
     connected: false,
     lastUpdate: null as Date | null,
@@ -27,9 +28,9 @@ export const usePrinterStore = defineStore('printer', () => {
     try {
       // Import API service
       const { DefaultService } = await import('../api')
-      const response = await DefaultService.getStatus()
+      const response = await DefaultService.getApiV1Status()
 
-      status.value = response.printer || null
+      status.value = response.printer
       connection.value.connected = true
       connection.value.lastUpdate = new Date()
       connection.value.retryCount = 0
@@ -127,10 +128,12 @@ export const usePrinterStore = defineStore('printer', () => {
   async function setNozzleTemp(target: number) {
     try {
       const { DefaultService } = await import('../api')
-      await DefaultService.setNozzleTemp({
-        command: ToolTempRequest.command.TARGET,
-        targets: {
-          tool0: target
+      await DefaultService.postApiPrinterTool({
+        target: {
+          command: 'target',
+          targets: {
+            tool0: target
+          }
         }
       })
       // Refresh status to get updated target temp
@@ -144,8 +147,8 @@ export const usePrinterStore = defineStore('printer', () => {
   async function setBedTemp(target: number) {
     try {
       const { DefaultService } = await import('../api')
-      await DefaultService.setBedTemp({
-        command: BedTempRequest.command.TARGET,
+      await DefaultService.postApiPrinterBed({
+        command: 'target',
         target
       })
       // Refresh status to get updated target temp
@@ -160,11 +163,12 @@ export const usePrinterStore = defineStore('printer', () => {
   async function extrudeFilament(amount: number) {
     try {
       const { DefaultService } = await import('../api')
-      const request: ExtrudeRequest = {
-        command: ExtrudeRequest.command.EXTRUDE,
-        amount: amount
-      }
-      await DefaultService.extrudeFilament(request)
+      await DefaultService.postApiPrinterTool({
+        extrude: {
+          command: 'extrude',
+          amount: amount
+        }
+      })
       // Refresh status after extrusion
       await fetchStatus()
     } catch (error) {
@@ -176,11 +180,12 @@ export const usePrinterStore = defineStore('printer', () => {
   async function retractFilament(amount: number) {
     try {
       const { DefaultService } = await import('../api')
-      const request: RetractRequest = {
-        command: RetractRequest.command.RETRACT,
-        amount: amount
-      }
-      await DefaultService.retractFilament(request)
+      await DefaultService.postApiPrinterTool({
+        retract: {
+          command: 'retract',
+          amount: amount
+        }
+      })
       // Refresh status after retraction
       await fetchStatus()
     } catch (error) {

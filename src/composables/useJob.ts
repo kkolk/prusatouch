@@ -30,7 +30,14 @@ export function useJob() {
     return `${minutes}m`
   })
 
-  const fileName = computed(() => store.currentJob?.file?.name ?? '')
+  const fileName = computed(() => {
+    const job = store.currentJob
+    // Job can be either JobFilePrint (has file property) or JobSerialPrint (no file property)
+    if (job && 'file' in job && job.file) {
+      return job.file.name ?? ''
+    }
+    return ''
+  })
 
   const jobState = computed(() => store.currentJob?.state ?? null)
 

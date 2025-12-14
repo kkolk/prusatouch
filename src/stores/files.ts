@@ -47,7 +47,7 @@ export const useFilesStore = defineStore('files', () => {
   async function fetchStorages() {
     try {
       const { DefaultService } = await import('../api')
-      const response = await DefaultService.getStorages()
+      const response = await DefaultService.getApiV1Storage()
       storages.value = response.storage_list || []
     } catch (error) {
       console.error('Failed to fetch storages:', error)
@@ -58,8 +58,9 @@ export const useFilesStore = defineStore('files', () => {
     try {
       loading.value = true
       const { DefaultService } = await import('../api')
-      const response = await DefaultService.getFiles(storage, path)
-      files.value = response.children || []
+      const response = await DefaultService.getApiV1Files(storage, path, undefined, 'application/json')
+      // Response can be FolderInfo which has children property
+      files.value = (response as any).children || []
       currentPath.value = path
       currentStorage.value = storage
     } catch (error) {
@@ -72,7 +73,7 @@ export const useFilesStore = defineStore('files', () => {
   async function startPrint(storage: string, path: string) {
     try {
       const { DefaultService } = await import('../api')
-      await DefaultService.startPrint(storage, path)
+      await DefaultService.postApiV1Files(storage, path)
     } catch (error) {
       console.error('Failed to start print:', error)
       throw error
@@ -82,7 +83,7 @@ export const useFilesStore = defineStore('files', () => {
   async function deleteFile(storage: string, path: string) {
     try {
       const { DefaultService } = await import('../api')
-      await DefaultService.deleteFile(storage, path)
+      await DefaultService.deleteApiV1Files(storage, path)
 
       // Refresh file list
       await fetchFiles(storage, currentPath.value || '/')

@@ -180,7 +180,11 @@ function closeFileBrowser() {
 
 async function handleFileSelected(file: FileInfo) {
   try {
-    await filesStore.startPrint(filesStore.currentStorage, file.path || '')
+    // Construct the full path from current path and file name
+    const fullPath = filesStore.currentPath === '/'
+      ? file.name
+      : `${filesStore.currentPath}/${file.name}`
+    await filesStore.startPrint(filesStore.currentStorage, fullPath)
     showFileBrowser.value = false
   } catch (error) {
     console.error('Failed to start print:', error)
