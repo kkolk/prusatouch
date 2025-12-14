@@ -15,7 +15,7 @@ import { OpenAPI } from './core/OpenAPI'
  * In development, Vite dev server proxies /api/* to auth-helper
  */
 export function initAuthFromEnv(): void {
-  // Use relative URL for API calls (proxied by lighttpd/dev server)
-  OpenAPI.BASE = '/api/v1'
-  console.log('PrusaLink API configured:', OpenAPI.BASE)
+  // Use empty base URL - API methods already include full paths (e.g., /api/v1/status)
+  OpenAPI.BASE = ''
+  console.log('PrusaLink API configured with empty base (paths are absolute)')
 }
