@@ -1,11 +1,5 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { PrinterStatus } from '../api/models/PrinterStatus'
-import { HomeRequest } from '../api/models/HomeRequest'
-import { StepperRequest } from '../api/models/StepperRequest'
-import { BedTempRequest } from '../api/models/BedTempRequest'
-import { ToolTempRequest } from '../api/models/ToolTempRequest'
-import { PrintheadMoveRequest } from '../api/models/PrintheadMoveRequest'
 
 export const usePrinterStore = defineStore('printer', () => {
   // State
@@ -78,11 +72,14 @@ export const usePrinterStore = defineStore('printer', () => {
   async function moveAxis(axis: 'x' | 'y' | 'z', distance: number) {
     try {
       const { DefaultService } = await import('../api')
-      const moveRequest: PrintheadMoveRequest = {
-        command: PrintheadMoveRequest.command.JOG,
-        [axis]: distance
+      // Legacy API uses nested command structure
+      const moveRequest = {
+        jog: {
+          command: 'jog',
+          [axis]: distance
+        }
       }
-      await DefaultService.movePrinthead(moveRequest)
+      await DefaultService.postApiPrinterPrinthead(moveRequest)
       // Refresh status after movement
       await fetchStatus()
     } catch (error) {
@@ -94,10 +91,14 @@ export const usePrinterStore = defineStore('printer', () => {
   async function homeAxes(axes: ('x' | 'y' | 'z')[]) {
     try {
       const { DefaultService } = await import('../api')
-      await DefaultService.homeAxes({
-        command: HomeRequest.command.HOME,
-        axes
-      })
+      // Legacy API uses nested command structure
+      const homeRequest = {
+        home: {
+          command: 'home',
+          axes: axes.map(a => a.toUpperCase())
+        }
+      }
+      await DefaultService.postApiPrinterPrinthead(homeRequest)
       // Refresh status after homing
       await fetchStatus()
     } catch (error) {
@@ -109,9 +110,13 @@ export const usePrinterStore = defineStore('printer', () => {
   async function disableSteppers() {
     try {
       const { DefaultService } = await import('../api')
-      await DefaultService.controlSteppers({
-        command: StepperRequest.command.DISABLE
-      })
+      // Legacy API uses nested command structure
+      const disableRequest = {
+        disable_steppers: {
+          command: 'disable_steppers'
+        }
+      }
+      await DefaultService.postApiPrinterPrinthead(disableRequest)
     } catch (error) {
       console.error('Failed to disable steppers:', error)
       throw error
@@ -151,6 +156,39 @@ export const usePrinterStore = defineStore('printer', () => {
     }
   }
 
+  // Extruder control actions
+  async function extrudeFilament(amount: number) {
+    try {
+      const { DefaultService } = await import('../api')
+      const request: ExtrudeRequest = {
+        command: ExtrudeRequest.command.EXTRUDE,
+        amount: amount
+      }
+      await DefaultService.extrudeFilament(request)
+      // Refresh status after extrusion
+      await fetchStatus()
+    } catch (error) {
+      console.error('Failed to extrude:', error)
+      throw error
+    }
+  }
+
+  async function retractFilament(amount: number) {
+    try {
+      const { DefaultService } = await import('../api')
+      const request: RetractRequest = {
+        command: RetractRequest.command.RETRACT,
+        amount: amount
+      }
+      await DefaultService.retractFilament(request)
+      // Refresh status after retraction
+      await fetchStatus()
+    } catch (error) {
+      console.error('Failed to retract:', error)
+      throw error
+    }
+  }
+
   return {
     // State
     status,
@@ -170,6 +208,8 @@ export const usePrinterStore = defineStore('printer', () => {
     homeAxes,
     disableSteppers,
     setNozzleTemp,
-    setBedTemp
+    setBedTemp,
+    extrudeFilament,
+    retractFilament
   }
 })
