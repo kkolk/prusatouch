@@ -202,6 +202,20 @@ async function requestWithDigest(method, url, headers, data) {
         },
         data,
         validateStatus: () => true,
+        // Handle different response types (including empty 204 responses)
+        transformResponse: [(data, headers) => {
+          if (!data || data.length === 0) return '';
+          if (headers['content-type']?.includes('application/json')) {
+            try {
+              return JSON.parse(data);
+            } catch (e) {
+              return data;
+            }
+          }
+          return data;
+        }],
+        maxBodyLength: Infinity,
+        maxContentLength: Infinity,
       });
 
       if (cachedResponse.status !== 401) {
@@ -229,6 +243,19 @@ async function requestWithDigest(method, url, headers, data) {
     headers,
     data,
     validateStatus: () => true,
+    transformResponse: [(data, headers) => {
+      if (!data || data.length === 0) return '';
+      if (headers['content-type']?.includes('application/json')) {
+        try {
+          return JSON.parse(data);
+        } catch (e) {
+          return data;
+        }
+      }
+      return data;
+    }],
+    maxBodyLength: Infinity,
+    maxContentLength: Infinity,
   });
 
   if (initialResponse.status !== 401) {
@@ -292,25 +319,56 @@ async function requestWithDigest(method, url, headers, data) {
 
   // Retry request with Authorization header
   console.log(`Retrying request with digest authentication`);
-  const authResponse = await axios({
-    method,
-    url,
-    headers: {
-      ...headers,
-      'Authorization': authHeader,
-    },
-    data,
-    validateStatus: () => true,
-  });
 
-  if (authResponse.status === 401) {
-    console.error('Authentication failed after digest response - check credentials');
-    // Clear cache on auth failure
-    nonceCache.nonce = null;
-    nonceCache.nc = 0;
+  try {
+    const authResponse = await axios({
+      method,
+      url,
+      headers: {
+        ...headers,
+        'Authorization': authHeader,
+      },
+      data,
+      validateStatus: () => true,
+      // Handle different response types (including empty 204 responses)
+      transformResponse: [(data, headers) => {
+        // Don't try to parse empty responses
+        if (!data || data.length === 0) {
+          return '';
+        }
+        // Try to parse as JSON, fall back to text
+        if (headers['content-type']?.includes('application/json')) {
+          try {
+            return JSON.parse(data);
+          } catch (e) {
+            console.log('Failed to parse JSON response, returning as text');
+            return data;
+          }
+        }
+        return data;
+      }],
+      // Increase buffer limits for legacy API
+      maxBodyLength: Infinity,
+      maxContentLength: Infinity,
+    });
+
+    if (authResponse.status === 401) {
+      console.error('Authentication failed after digest response - check credentials');
+      // Clear cache on auth failure
+      nonceCache.nonce = null;
+      nonceCache.nc = 0;
+    }
+
+    return authResponse;
+  } catch (error) {
+    console.error('Axios error during authenticated request:', error.message);
+    console.error('Error code:', error.code);
+    if (error.response) {
+      console.error('Response status:', error.response.status);
+      console.error('Response headers:', error.response.headers);
+    }
+    throw error;
   }
-
-  return authResponse;
 }
 
 // Middleware to parse JSON
