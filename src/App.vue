@@ -4,9 +4,14 @@
     <header class="top-bar">
       <div class="top-bar-content">
         <h1 class="app-title">PrusaTouch</h1>
-        <button class="settings-btn" @click="goToSettings" aria-label="Settings">
-          <span class="settings-icon">⚙️</span>
-        </button>
+        <div class="top-bar-actions">
+          <button class="settings-btn" @click="goToDebug" aria-label="Debug">
+            <span class="settings-icon">🐛</span>
+          </button>
+          <button class="settings-btn" @click="goToSettings" aria-label="Settings">
+            <span class="settings-icon">⚙️</span>
+          </button>
+        </div>
       </div>
     </header>
 
@@ -59,6 +64,10 @@ function navigate(path: string) {
 function goToSettings() {
   router.push('/settings')
 }
+
+function goToDebug() {
+  router.push('/debug')
+}
 </script>
 
 <style scoped>
@@ -97,6 +106,11 @@ function goToSettings() {
   font-weight: bold;
   color: var(--prusa-orange);
   margin: 0;
+}
+
+.top-bar-actions {
+  display: flex;
+  gap: var(--space-xs);
 }
 
 .settings-btn {

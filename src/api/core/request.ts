@@ -327,8 +327,17 @@ export const request = <T>(config: OpenAPIConfig, options: ApiRequestOptions, ax
 /**
  * Get the axios client to use for requests
  * Auth is now handled server-side by auth-helper proxy
- * Just return a regular axios instance
+ * Returns a client with debug logging interceptors
  */
 export function getDefaultAxiosClient(): AxiosInstance {
-    return axios.create()
+    // Import dynamically to avoid circular dependencies
+    // The client module sets up interceptors for debug logging
+    try {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const { getAxiosClient } = require('../client')
+        return getAxiosClient()
+    } catch (e) {
+        // Fallback to plain axios if client module not available
+        return axios.create()
+    }
 }

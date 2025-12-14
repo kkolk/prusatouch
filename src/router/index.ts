@@ -7,6 +7,7 @@ import HomeView from '../views/HomeView.vue'
 const FilesView = () => import('../views/FilesView.vue')
 const ControlView = () => import('../views/ControlView.vue')
 const SettingsView = () => import('../views/SettingsView.vue')
+const DebugView = () => import('../views/DebugView.vue')
 
 export const routes: RouteRecordRaw[] = [
   {
@@ -32,6 +33,12 @@ export const routes: RouteRecordRaw[] = [
     name: 'settings',
     component: SettingsView,
     meta: { title: 'Settings' }
+  },
+  {
+    path: '/debug',
+    name: 'debug',
+    component: DebugView,
+    meta: { title: 'Debug' }
   },
   {
     path: '/:pathMatch(.*)*',
