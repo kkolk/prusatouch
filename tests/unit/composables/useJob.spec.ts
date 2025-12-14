@@ -4,10 +4,10 @@ import { nextTick } from 'vue'
 
 vi.mock('../../../src/api', () => ({
   DefaultService: {
-    getJob: vi.fn(),
-    pauseJob: vi.fn(),
-    resumeJob: vi.fn(),
-    stopJob: vi.fn()
+    getApiV1Job: vi.fn(),
+    putApiV1JobPause: vi.fn(),
+    putApiV1JobResume: vi.fn(),
+    deleteApiV1Job: vi.fn()
   }
 }))
 
@@ -19,7 +19,7 @@ describe('useJob', () => {
 
   it('provides reactive job progress', async () => {
     const { DefaultService } = await import('../../../src/api')
-    vi.mocked(DefaultService.getJob).mockResolvedValue({
+    vi.mocked(DefaultService.getApiV1Job).mockResolvedValue({
       id: 123,
       state: 'PRINTING',
       progress: 0.45,
@@ -41,7 +41,7 @@ describe('useJob', () => {
 
   it('provides formatted time under 1 hour', async () => {
     const { DefaultService } = await import('../../../src/api')
-    vi.mocked(DefaultService.getJob).mockResolvedValue({
+    vi.mocked(DefaultService.getApiV1Job).mockResolvedValue({
       id: 123,
       progress: 0.80,
       time_remaining: 1500  // 25 minutes
@@ -58,7 +58,7 @@ describe('useJob', () => {
 
   it('handles no active job', async () => {
     const { DefaultService } = await import('../../../src/api')
-    vi.mocked(DefaultService.getJob).mockResolvedValue(null)
+    vi.mocked(DefaultService.getApiV1Job).mockResolvedValue(null)
 
     const { useJob } = await import('../../../src/composables/useJob')
     const { hasActiveJob, progress, fetchJob } = useJob()
@@ -72,8 +72,8 @@ describe('useJob', () => {
 
   it('exposes pause action with loading state', async () => {
     const { DefaultService } = await import('../../../src/api')
-    vi.mocked(DefaultService.getJob).mockResolvedValue({ id: 123 })
-    vi.mocked(DefaultService.pauseJob).mockResolvedValue(undefined)
+    vi.mocked(DefaultService.getApiV1Job).mockResolvedValue({ id: 123 })
+    vi.mocked(DefaultService.putApiV1JobPause).mockResolvedValue(undefined)
 
     const { useJob } = await import('../../../src/composables/useJob')
     const { pauseJob, isPausing, fetchJob } = useJob()
@@ -85,13 +85,13 @@ describe('useJob', () => {
 
     await pausePromise
     expect(isPausing.value).toBe(false)
-    expect(DefaultService.pauseJob).toHaveBeenCalledWith(123)
+    expect(DefaultService.putApiV1JobPause).toHaveBeenCalledWith(123)
   })
 
   it('exposes resume action with loading state', async () => {
     const { DefaultService } = await import('../../../src/api')
-    vi.mocked(DefaultService.getJob).mockResolvedValue({ id: 456 })
-    vi.mocked(DefaultService.resumeJob).mockResolvedValue(undefined)
+    vi.mocked(DefaultService.getApiV1Job).mockResolvedValue({ id: 456 })
+    vi.mocked(DefaultService.putApiV1JobResume).mockResolvedValue(undefined)
 
     const { useJob } = await import('../../../src/composables/useJob')
     const { resumeJob, isPausing, fetchJob } = useJob()
@@ -99,13 +99,13 @@ describe('useJob', () => {
     await fetchJob()
 
     await resumeJob()
-    expect(DefaultService.resumeJob).toHaveBeenCalledWith(456)
+    expect(DefaultService.putApiV1JobResume).toHaveBeenCalledWith(456)
   })
 
   it('exposes stop action with loading state', async () => {
     const { DefaultService } = await import('../../../src/api')
-    vi.mocked(DefaultService.getJob).mockResolvedValue({ id: 789 })
-    vi.mocked(DefaultService.stopJob).mockResolvedValue(undefined)
+    vi.mocked(DefaultService.getApiV1Job).mockResolvedValue({ id: 789 })
+    vi.mocked(DefaultService.deleteApiV1Job).mockResolvedValue(undefined)
 
     const { useJob } = await import('../../../src/composables/useJob')
     const { stopJob, isStopping, fetchJob } = useJob()
@@ -117,6 +117,6 @@ describe('useJob', () => {
 
     await stopPromise
     expect(isStopping.value).toBe(false)
-    expect(DefaultService.stopJob).toHaveBeenCalledWith(789)
+    expect(DefaultService.deleteApiV1Job).toHaveBeenCalledWith(789)
   })
 })

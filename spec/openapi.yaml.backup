@@ -1,0 +1,574 @@
+openapi: 3.0.0
+info:
+  title: PrusaLink API
+  version: 1.0.0
+  description: API for controlling Prusa 3D printers via PrusaLink
+
+servers:
+  - url: /api/v1
+    description: PrusaLink v1 API (proxied in dev)
+
+paths:
+  /version:
+    get:
+      summary: Get version information
+      operationId: getVersion
+      responses:
+        '200':
+          description: Version info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionResponse'
+
+  /info:
+    get:
+      summary: Get printer info
+      operationId: getInfo
+      responses:
+        '200':
+          description: Printer info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InfoResponse'
+
+  /status:
+    get:
+      summary: Get printer status with telemetry
+      operationId: getStatus
+      responses:
+        '200':
+          description: Printer status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+
+  /job:
+    get:
+      summary: Get current job
+      operationId: getJob
+      responses:
+        '200':
+          description: Current job information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobResponse'
+        '204':
+          description: No job active
+
+  /job/{id}:
+    delete:
+      summary: Stop print job
+      operationId: stopJob
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Job stopped
+
+  /job/{id}/pause:
+    put:
+      summary: Pause print job
+      operationId: pauseJob
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Job paused
+
+  /job/{id}/resume:
+    put:
+      summary: Resume print job
+      operationId: resumeJob
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Job resumed
+
+  /printer/printhead:
+    post:
+      summary: Move printhead
+      operationId: movePrinthead
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrintheadMoveRequest'
+      responses:
+        '204':
+          description: Printhead movement command sent
+        '409':
+          description: Printer busy or not ready
+
+  /printer/home:
+    post:
+      summary: Home printer axes
+      operationId: homeAxes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HomeRequest'
+      responses:
+        '204':
+          description: Homing command sent
+        '409':
+          description: Printer busy
+
+  /printer/stepper:
+    post:
+      summary: Enable or disable stepper motors
+      operationId: controlSteppers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StepperRequest'
+      responses:
+        '204':
+          description: Stepper command sent
+
+  /printer/tool:
+    post:
+      summary: Set nozzle temperature
+      operationId: setNozzleTemp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ToolTempRequest'
+      responses:
+        '204':
+          description: Temperature set
+        '409':
+          description: Printer busy
+
+  /printer/bed:
+    post:
+      summary: Set bed temperature
+      operationId: setBedTemp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BedTempRequest'
+      responses:
+        '204':
+          description: Temperature set
+        '409':
+          description: Printer busy
+
+  /printer/tool/extrude:
+    post:
+      summary: Extrude filament
+      operationId: extrudeFilament
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExtrudeRequest'
+      responses:
+        '204':
+          description: Extrude command sent
+        '409':
+          description: Nozzle too cold or printer busy
+
+  /printer/tool/retract:
+    post:
+      summary: Retract filament
+      operationId: retractFilament
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RetractRequest'
+      responses:
+        '204':
+          description: Retract command sent
+        '409':
+          description: Nozzle too cold or printer busy
+
+  /storage:
+    get:
+      summary: Get available storage locations
+      operationId: getStorages
+      responses:
+        '200':
+          description: List of storages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageResponse'
+
+  /files/{storage}/{path}:
+    get:
+      summary: Get file or folder info
+      operationId: getFiles
+      parameters:
+        - name: storage
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Storage path (e.g., "local" or "usb")
+        - name: path
+          in: path
+          required: true
+          schema:
+            type: string
+          description: File or folder path
+      responses:
+        '200':
+          description: File/folder info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileListResponse'
+    post:
+      summary: Start print from file
+      operationId: startPrint
+      parameters:
+        - name: storage
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: path
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Print started
+    delete:
+      summary: Delete file
+      operationId: deleteFile
+      parameters:
+        - name: storage
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: path
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: File deleted
+
+components:
+  schemas:
+    VersionResponse:
+      type: object
+      properties:
+        api:
+          type: string
+        version:
+          type: string
+        printer:
+          type: string
+        text:
+          type: string
+        firmware:
+          type: string
+
+    InfoResponse:
+      type: object
+      properties:
+        name:
+          type: string
+        location:
+          type: string
+        serial:
+          type: string
+        hostname:
+          type: string
+        nozzle_diameter:
+          type: number
+
+    StatusResponse:
+      type: object
+      required:
+        - printer
+      properties:
+        printer:
+          $ref: '#/components/schemas/PrinterStatus'
+        job:
+          $ref: '#/components/schemas/JobStatus'
+        storage:
+          $ref: '#/components/schemas/StorageStatus'
+
+    PrinterStatus:
+      type: object
+      properties:
+        state:
+          type: string
+          enum: [IDLE, BUSY, PRINTING, PAUSED, FINISHED, STOPPED, ERROR, ATTENTION, READY]
+        temp_nozzle:
+          type: number
+        target_nozzle:
+          type: number
+        temp_bed:
+          type: number
+        target_bed:
+          type: number
+        axis_x:
+          type: number
+        axis_y:
+          type: number
+        axis_z:
+          type: number
+        flow:
+          type: integer
+        speed:
+          type: integer
+        fan_hotend:
+          type: integer
+        fan_print:
+          type: integer
+
+    JobStatus:
+      type: object
+      properties:
+        id:
+          type: integer
+        progress:
+          type: number
+        time_remaining:
+          type: integer
+        time_printing:
+          type: integer
+
+    StorageStatus:
+      type: object
+      properties:
+        path:
+          type: string
+        name:
+          type: string
+        read_only:
+          type: boolean
+
+    JobResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        state:
+          type: string
+        progress:
+          type: number
+        time_remaining:
+          type: integer
+        time_printing:
+          type: integer
+        file:
+          $ref: '#/components/schemas/FileInfo'
+
+    FileInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        display_name:
+          type: string
+        path:
+          type: string
+        size:
+          type: integer
+        m_timestamp:
+          type: integer
+        type:
+          type: string
+          enum: [FOLDER, PRINT_FILE, FILE, FIRMWARE, MOUNT]
+        refs:
+          type: object
+          properties:
+            download:
+              type: string
+            icon:
+              type: string
+            thumbnail:
+              type: string
+
+    Storage:
+      type: object
+      properties:
+        path:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        read_only:
+          type: boolean
+        available:
+          type: boolean
+        free_space:
+          type: integer
+        total_space:
+          type: integer
+
+    StorageResponse:
+      type: object
+      properties:
+        storage_list:
+          type: array
+          items:
+            $ref: '#/components/schemas/Storage'
+
+    FileListResponse:
+      type: object
+      properties:
+        name:
+          type: string
+        path:
+          type: string
+        type:
+          type: string
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileInfo'
+
+    PrintheadMoveRequest:
+      type: object
+      required:
+        - command
+      properties:
+        command:
+          type: string
+          enum: [jog]
+        x:
+          type: number
+          description: X-axis movement in mm (relative)
+        y:
+          type: number
+          description: Y-axis movement in mm (relative)
+        z:
+          type: number
+          description: Z-axis movement in mm (relative)
+        absolute:
+          type: boolean
+          default: false
+          description: Use absolute positioning (true) or relative (false)
+        speed:
+          type: number
+          description: Movement speed in mm/s
+
+    HomeRequest:
+      type: object
+      required:
+        - command
+        - axes
+      properties:
+        command:
+          type: string
+          enum: [home]
+        axes:
+          type: array
+          items:
+            type: string
+            enum: [x, y, z]
+          description: Axes to home (empty array or ['x', 'y', 'z'] for all)
+
+    StepperRequest:
+      type: object
+      required:
+        - command
+      properties:
+        command:
+          type: string
+          enum: [enable, disable]
+          description: Enable or disable stepper motors
+
+    ToolTempRequest:
+      type: object
+      required:
+        - command
+        - targets
+      properties:
+        command:
+          type: string
+          enum: [target]
+        targets:
+          type: object
+          properties:
+            tool0:
+              type: number
+              description: Target temperature in Celsius
+          required:
+            - tool0
+
+    BedTempRequest:
+      type: object
+      required:
+        - command
+        - target
+      properties:
+        command:
+          type: string
+          enum: [target]
+        target:
+          type: number
+          description: Target temperature in Celsius
+
+    ExtrudeRequest:
+      type: object
+      required:
+        - command
+      properties:
+        command:
+          type: string
+          enum: [extrude]
+        amount:
+          type: number
+          description: Amount to extrude in mm (default 5mm)
+          default: 5
+        speed:
+          type: number
+          description: Extrusion speed in mm/s (default 100)
+          default: 100
+
+    RetractRequest:
+      type: object
+      required:
+        - command
+      properties:
+        command:
+          type: string
+          enum: [retract]
+        amount:
+          type: number
+          description: Amount to retract in mm (default 5mm)
+          default: 5
+        speed:
+          type: number
+          description: Retraction speed in mm/s (default 100)
+          default: 100

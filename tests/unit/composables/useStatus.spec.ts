@@ -5,7 +5,7 @@ import { nextTick } from 'vue'
 // Mock the API before importing composable
 vi.mock('../../../src/api', () => ({
   DefaultService: {
-    getStatus: vi.fn()
+    getApiV1Status: vi.fn()
   }
 }))
 
@@ -22,7 +22,7 @@ describe('useStatus', () => {
 
   it('provides reactive printer state', async () => {
     const { DefaultService } = await import('../../../src/api')
-    vi.mocked(DefaultService.getStatus).mockResolvedValue({
+    vi.mocked(DefaultService.getApiV1Status).mockResolvedValue({
       printer: {
         state: 'IDLE',
         temp_nozzle: 25,
@@ -47,7 +47,7 @@ describe('useStatus', () => {
 
   it('provides formatted state for StatusBadge', async () => {
     const { DefaultService } = await import('../../../src/api')
-    vi.mocked(DefaultService.getStatus).mockResolvedValue({
+    vi.mocked(DefaultService.getApiV1Status).mockResolvedValue({
       printer: { state: 'PRINTING' }
     })
 
@@ -62,7 +62,7 @@ describe('useStatus', () => {
 
   it('handles connection errors gracefully', async () => {
     const { DefaultService } = await import('../../../src/api')
-    vi.mocked(DefaultService.getStatus).mockRejectedValue(new Error('Network error'))
+    vi.mocked(DefaultService.getApiV1Status).mockRejectedValue(new Error('Network error'))
 
     const { useStatus } = await import('../../../src/composables/useStatus')
     const { isConnected, connectionError } = useStatus()
@@ -76,7 +76,7 @@ describe('useStatus', () => {
 
   it('starts polling when startPolling is called', async () => {
     const { DefaultService } = await import('../../../src/api')
-    vi.mocked(DefaultService.getStatus).mockResolvedValue({
+    vi.mocked(DefaultService.getApiV1Status).mockResolvedValue({
       printer: { state: 'IDLE' }
     })
 
@@ -86,14 +86,14 @@ describe('useStatus', () => {
     startPolling()
     await vi.advanceTimersByTimeAsync(5000)
 
-    expect(DefaultService.getStatus).toHaveBeenCalled()
+    expect(DefaultService.getApiV1Status).toHaveBeenCalled()
 
     stopPolling()
   })
 
   it('stops polling when stopPolling is called', async () => {
     const { DefaultService } = await import('../../../src/api')
-    vi.mocked(DefaultService.getStatus).mockResolvedValue({
+    vi.mocked(DefaultService.getApiV1Status).mockResolvedValue({
       printer: { state: 'IDLE' }
     })
 
@@ -102,12 +102,12 @@ describe('useStatus', () => {
 
     startPolling()
     await vi.advanceTimersByTimeAsync(1000)
-    const callCount = vi.mocked(DefaultService.getStatus).mock.calls.length
+    const callCount = vi.mocked(DefaultService.getApiV1Status).mock.calls.length
 
     stopPolling()
     await vi.advanceTimersByTimeAsync(10000)
 
     // Should not have made more calls after stopping
-    expect(vi.mocked(DefaultService.getStatus).mock.calls.length).toBe(callCount)
+    expect(vi.mocked(DefaultService.getApiV1Status).mock.calls.length).toBe(callCount)
   })
 })

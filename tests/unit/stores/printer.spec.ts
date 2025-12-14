@@ -44,7 +44,7 @@ describe('printerStore', () => {
 
     // Mock API call using dynamic import mocking
     const { DefaultService } = await import('../../../src/api')
-    vi.spyOn(DefaultService, 'getStatus').mockResolvedValue(mockStatus)
+    vi.spyOn(DefaultService, 'getApiV1Status').mockResolvedValue(mockStatus)
 
     await store.fetchStatus()
     expect(store.status).toEqual(mockStatus.printer)

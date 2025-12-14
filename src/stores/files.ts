@@ -60,7 +60,11 @@ export const useFilesStore = defineStore('files', () => {
       const { DefaultService } = await import('../api')
       const response = await DefaultService.getApiV1Files(storage, path, undefined, 'application/json')
       // Response can be FolderInfo which has children property
-      files.value = (response as any).children || []
+      if ('children' in response) {
+        files.value = response.children || []
+      } else {
+        files.value = []
+      }
       currentPath.value = path
       currentStorage.value = storage
     } catch (error) {
