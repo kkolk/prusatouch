@@ -3,12 +3,51 @@
 /* tslint:disable */
 /* eslint-disable */
 export type Storage = {
-    path?: string;
+    /**
+     * Name of the storage, based on selected language
+     */
     name?: string;
-    type?: string;
-    read_only?: boolean;
-    available?: boolean;
+    /**
+     * Storage source
+     */
+    type: Storage.type;
+    /**
+     * Path to storage (not display path)
+     */
+    path: string;
+    /**
+     * Size of all print files in bytes
+     */
+    print_files?: number;
+    /**
+     * Size of all system files in bytes
+     */
+    system_files?: number;
+    /**
+     * System free space in bytes
+     */
     free_space?: number;
+    /**
+     * System total space in bytes
+     */
     total_space?: number;
+    /**
+     * Whether the storage is available or not
+     */
+    available: boolean;
+    /**
+     * Whether the storage is read only
+     */
+    read_only?: boolean;
 };
+export namespace Storage {
+    /**
+     * Storage source
+     */
+    export enum type {
+        LOCAL = 'LOCAL',
+        SDCARD = 'SDCARD',
+        USB = 'USB',
+    }
+}
 
