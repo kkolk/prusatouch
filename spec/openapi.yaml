@@ -688,168 +688,188 @@ paths:
           $ref: '#/components/responses/BadRequest'
   /api/printer/printhead:
     post:
-      summary: Control printhead movement in XYZ axes
+      summary: Control printhead movement, speed, and steppers
+      description: |
+        Accepts commands for printhead control. The API uses a flat command structure
+        with discriminated unions based on the `command` field.
+
+        **Commands:**
+        - `jog`: Move printhead in X/Y/Z axes (relative movement)
+        - `home`: Home one or more axes to endstops
+        - `speed`: Set print speed factor (percentage)
+        - `feedrate`: Set feedrate factor (percentage, alias for speed)
+        - `disable_steppers`: Disable all stepper motors
+
+        **Note:** 503 responses indicate printer is busy (steppers disabled), but the
+        command is queued and will execute when steppers wake up.
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                jog:
-                  type: object
-                  properties:
-                    command:
-                      type: string
-                      example: jog
-                    x:
-                      type: number
-                      example: 10
-                    y:
-                      type: number
-                      example: -5
-                    z:
-                      type: number
-                      example: 0.02
-                home:
-                  type: object
-                  properties:
-                    command:
-                      type: string
-                      example: home
-                    axes:
-                      type: array
-                      items:
-                        type: string
-                        example: X
-                speed:
-                  type: object
-                  properties:
-                    command:
-                      type: string
-                      example: speed
-                    factor:
-                      type: number
-                      example: 105
-                feedrate:
-                  type: object
-                  properties:
-                    command:
-                      type: string
-                      example: feedrate
-                    factor:
-                      type: number
-                      example: 105
-                disable_steppers:
-                  type: object
-                  properties:
-                    command:
-                      type: string
-                      example: disable_steppers
+              oneOf:
+                - $ref: '#/components/schemas/PrintheadJogCommand'
+                - $ref: '#/components/schemas/PrintheadHomeCommand'
+                - $ref: '#/components/schemas/PrintheadSpeedCommand'
+                - $ref: '#/components/schemas/PrintheadFeedrateCommand'
+                - $ref: '#/components/schemas/PrintheadDisableSteppersCommand'
+              discriminator:
+                propertyName: command
+                mapping:
+                  jog: '#/components/schemas/PrintheadJogCommand'
+                  home: '#/components/schemas/PrintheadHomeCommand'
+                  speed: '#/components/schemas/PrintheadSpeedCommand'
+                  feedrate: '#/components/schemas/PrintheadFeedrateCommand'
+                  disable_steppers: '#/components/schemas/PrintheadDisableSteppersCommand'
+            examples:
+              jog:
+                summary: Jog X axis 10mm
+                value:
+                  command: jog
+                  x: 10
+              jog_multi:
+                summary: Jog multiple axes
+                value:
+                  command: jog
+                  x: 10
+                  y: -5
+                  z: 0.2
+              home_all:
+                summary: Home all axes
+                value:
+                  command: home
+                  axes: [x, y, z]
+              home_z:
+                summary: Home Z axis only
+                value:
+                  command: home
+                  axes: [z]
+              speed:
+                summary: Set speed to 105%
+                value:
+                  command: speed
+                  factor: 105
+              disable:
+                summary: Disable steppers
+                value:
+                  command: disable_steppers
       responses:
         204:
-          description: No Content No Error
+          description: Command accepted and executed successfully
         400:
           $ref: '#/components/responses/BadRequest'
         409:
           $ref: '#/components/responses/Conflict'
+        503:
+          description: Service Unavailable - Printer busy (steppers disabled), command queued
   /api/printer/tool:
     post:
-      summary: Control extruder
+      summary: Control extruder (nozzle) temperature and extrusion
+      description: |
+        Accepts commands for extruder/nozzle control. The API uses a flat command structure
+        with discriminated unions based on the `command` field.
+
+        **Commands:**
+        - `target`: Set target temperature for nozzle (requires nested targets object)
+        - `offset`: Set temperature offset (requires nested offsets object)
+        - `select`: Select active tool (for multi-extruder printers)
+        - `extrude`: Extrude filament by specified amount (mm)
+        - `flowrate`: Set extrusion flowrate factor (percentage)
+
+        **Note:** For `extrude` command, use negative amounts to retract.
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                target:
-                  type: object
-                  properties:
-                    command:
-                      type: string
-                      example: target
-                    targets:
-                      type: object
-                      properties:
-                        tool0:
-                          type: number
-                          example: 220
-                offset:
-                  type: object
-                  properties:
-                    command:
-                      type: string
-                      example: offset
-                    offsets:
-                      type: object
-                      properties:
-                        tool0:
-                          type: number
-                          example: 10
-                select:
-                  type: object
-                  properties:
-                    command:
-                      type: string
-                      example: select
-                    tool:
-                      type: string
-                      example: tool0
-                extrude:
-                  type: object
-                  properties:
-                    command:
-                      type: string
-                      example: extrude
-                    amount:
-                      type: number
-                      example: 5
-                retract:
-                  type: object
-                  properties:
-                    command:
-                      type: string
-                      example: extrude
-                    amount:
-                      type: number
-                      example: -3
-                flowrate:
-                  type: object
-                  properties:
-                    command:
-                      type: string
-                      example: flowrate
-                    amount:
-                      type: number
-                      example: 95
+              oneOf:
+                - $ref: '#/components/schemas/ToolTargetCommand'
+                - $ref: '#/components/schemas/ToolOffsetCommand'
+                - $ref: '#/components/schemas/ToolSelectCommand'
+                - $ref: '#/components/schemas/ToolExtrudeCommand'
+                - $ref: '#/components/schemas/ToolFlowrateCommand'
+              discriminator:
+                propertyName: command
+                mapping:
+                  target: '#/components/schemas/ToolTargetCommand'
+                  offset: '#/components/schemas/ToolOffsetCommand'
+                  select: '#/components/schemas/ToolSelectCommand'
+                  extrude: '#/components/schemas/ToolExtrudeCommand'
+                  flowrate: '#/components/schemas/ToolFlowrateCommand'
+            examples:
+              target:
+                summary: Set nozzle temperature to 220°C
+                value:
+                  command: target
+                  targets:
+                    tool0: 220
+              extrude:
+                summary: Extrude 5mm of filament
+                value:
+                  command: extrude
+                  amount: 5
+              retract:
+                summary: Retract 3mm of filament
+                value:
+                  command: extrude
+                  amount: -3
+              flowrate:
+                summary: Set flowrate to 95%
+                value:
+                  command: flowrate
+                  factor: 95
       responses:
         204:
-          description: No Content No Error
+          description: Command accepted and executed successfully
         400:
           $ref: '#/components/responses/BadRequest'
         409:
           $ref: '#/components/responses/Conflict'
+        503:
+          description: Service Unavailable - Printer busy, command queued
   /api/printer/bed:
     post:
-      summary: Control bed temperature
+      summary: Control heated bed temperature
+      description: |
+        Accepts commands for bed temperature control. The API uses a flat command structure
+        with discriminated unions based on the `command` field.
+
+        **Commands:**
+        - `target`: Set target temperature for heated bed (°C)
+        - `offset`: Set temperature offset (°C)
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                command:
-                  type: string
-                  example: target
-                target:
-                  type: number
-                  example: 75
+              oneOf:
+                - $ref: '#/components/schemas/BedTargetCommand'
+                - $ref: '#/components/schemas/BedOffsetCommand'
+              discriminator:
+                propertyName: command
+                mapping:
+                  target: '#/components/schemas/BedTargetCommand'
+                  offset: '#/components/schemas/BedOffsetCommand'
+            examples:
+              target:
+                summary: Set bed temperature to 75°C
+                value:
+                  command: target
+                  target: 75
+              offset:
+                summary: Set bed temperature offset to +5°C
+                value:
+                  command: offset
+                  offset: 5
       responses:
         204:
-          description: No Content No Error
+          description: Command accepted and executed successfully
         400:
           $ref: '#/components/responses/BadRequest'
         409:
           $ref: '#/components/responses/Conflict'
+        503:
+          description: Service Unavailable - Printer busy, command queued
 components:
   schemas:
     Version:
@@ -911,6 +931,255 @@ components:
       - printer
       - text
       - firmware
+
+    # ========================================
+    # Movement Control Command Schemas
+    # ========================================
+
+    # Printhead Commands
+    PrintheadJogCommand:
+      type: object
+      description: Jog (relative move) printhead in X/Y/Z axes
+      required:
+        - command
+      properties:
+        command:
+          type: string
+          enum: [jog]
+          description: Command type identifier
+        x:
+          type: number
+          description: X axis movement in mm (relative)
+          example: 10
+        y:
+          type: number
+          description: Y axis movement in mm (relative)
+          example: -5
+        z:
+          type: number
+          description: Z axis movement in mm (relative)
+          example: 0.2
+      additionalProperties: false
+
+    PrintheadHomeCommand:
+      type: object
+      description: Home one or more axes to endstops
+      required:
+        - command
+        - axes
+      properties:
+        command:
+          type: string
+          enum: [home]
+          description: Command type identifier
+        axes:
+          type: array
+          description: List of axes to home (lowercase x, y, z)
+          items:
+            type: string
+            enum: [x, y, z]
+          minItems: 1
+          example: [x, y, z]
+      additionalProperties: false
+
+    PrintheadSpeedCommand:
+      type: object
+      description: Set print speed factor (percentage)
+      required:
+        - command
+        - factor
+      properties:
+        command:
+          type: string
+          enum: [speed]
+          description: Command type identifier
+        factor:
+          type: number
+          description: Speed factor as percentage (100 = normal speed)
+          minimum: 1
+          maximum: 200
+          example: 105
+      additionalProperties: false
+
+    PrintheadFeedrateCommand:
+      type: object
+      description: Set feedrate factor (percentage, alias for speed)
+      required:
+        - command
+        - factor
+      properties:
+        command:
+          type: string
+          enum: [feedrate]
+          description: Command type identifier
+        factor:
+          type: number
+          description: Feedrate factor as percentage (100 = normal feedrate)
+          minimum: 1
+          maximum: 200
+          example: 105
+      additionalProperties: false
+
+    PrintheadDisableSteppersCommand:
+      type: object
+      description: Disable all stepper motors
+      required:
+        - command
+      properties:
+        command:
+          type: string
+          enum: [disable_steppers]
+          description: Command type identifier
+      additionalProperties: false
+
+    # Tool (Extruder/Nozzle) Commands
+    ToolTargetCommand:
+      type: object
+      description: Set target temperature for nozzle
+      required:
+        - command
+        - targets
+      properties:
+        command:
+          type: string
+          enum: [target]
+          description: Command type identifier
+        targets:
+          type: object
+          description: Target temperatures for each tool
+          properties:
+            tool0:
+              type: number
+              description: Target temperature for tool0 in °C
+              minimum: 0
+              maximum: 300
+              example: 220
+          required:
+            - tool0
+          additionalProperties: false
+      additionalProperties: false
+
+    ToolOffsetCommand:
+      type: object
+      description: Set temperature offset for nozzle
+      required:
+        - command
+        - offsets
+      properties:
+        command:
+          type: string
+          enum: [offset]
+          description: Command type identifier
+        offsets:
+          type: object
+          description: Temperature offsets for each tool
+          properties:
+            tool0:
+              type: number
+              description: Temperature offset for tool0 in °C
+              minimum: -50
+              maximum: 50
+              example: 5
+          required:
+            - tool0
+          additionalProperties: false
+      additionalProperties: false
+
+    ToolSelectCommand:
+      type: object
+      description: Select active tool (for multi-extruder printers)
+      required:
+        - command
+        - tool
+      properties:
+        command:
+          type: string
+          enum: [select]
+          description: Command type identifier
+        tool:
+          type: string
+          description: Tool identifier to select
+          enum: [tool0, tool1, tool2, tool3]
+          example: tool0
+      additionalProperties: false
+
+    ToolExtrudeCommand:
+      type: object
+      description: Extrude or retract filament (negative amount = retract)
+      required:
+        - command
+        - amount
+      properties:
+        command:
+          type: string
+          enum: [extrude]
+          description: Command type identifier
+        amount:
+          type: number
+          description: Amount to extrude in mm (negative to retract)
+          minimum: -100
+          maximum: 100
+          example: 5
+      additionalProperties: false
+
+    ToolFlowrateCommand:
+      type: object
+      description: Set extrusion flowrate factor (percentage)
+      required:
+        - command
+        - factor
+      properties:
+        command:
+          type: string
+          enum: [flowrate]
+          description: Command type identifier
+        factor:
+          type: number
+          description: Flowrate factor as percentage (100 = normal flowrate)
+          minimum: 75
+          maximum: 125
+          example: 95
+      additionalProperties: false
+
+    # Bed Commands
+    BedTargetCommand:
+      type: object
+      description: Set target temperature for heated bed
+      required:
+        - command
+        - target
+      properties:
+        command:
+          type: string
+          enum: [target]
+          description: Command type identifier
+        target:
+          type: number
+          description: Target temperature in °C
+          minimum: 0
+          maximum: 120
+          example: 75
+      additionalProperties: false
+
+    BedOffsetCommand:
+      type: object
+      description: Set temperature offset for heated bed
+      required:
+        - command
+        - offset
+      properties:
+        command:
+          type: string
+          enum: [offset]
+          description: Command type identifier
+        offset:
+          type: number
+          description: Temperature offset in °C
+          minimum: -50
+          maximum: 50
+          example: 5
+      additionalProperties: false
+
     Storage:
       type: object
       properties:
