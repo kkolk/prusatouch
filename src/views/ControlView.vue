@@ -1,11 +1,20 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { usePrinterStore } from '../stores/printer'
 import DirectionalPad from '../components/DirectionalPad.vue'
 import TouchButton from '../components/TouchButton.vue'
 
 // Store
 const printerStore = usePrinterStore()
+
+// Lifecycle - Start/stop polling when view is mounted/unmounted
+onMounted(() => {
+  printerStore.startPolling()
+})
+
+onUnmounted(() => {
+  printerStore.stopPolling()
+})
 
 // Local state
 const selectedStep = ref(1) // Default to 1mm
