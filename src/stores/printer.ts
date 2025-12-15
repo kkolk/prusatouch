@@ -83,11 +83,11 @@ export const usePrinterStore = defineStore('printer', () => {
       try {
         await DefaultService.postApiPrinterPrinthead(moveRequest)
       } catch (error: any) {
-        // Retry once if 503 (steppers might be disabled, first command wakes them)
+        // 503 = Printer busy (steppers disabled), but command is queued
+        // Don't throw error - movement will execute when steppers wake up
         if (error?.status === 503) {
-          console.log('Printer busy (503), retrying after 500ms...')
-          await new Promise(resolve => setTimeout(resolve, 500))
-          await DefaultService.postApiPrinterPrinthead(moveRequest as any)
+          console.debug('Printer busy (503), command queued for execution')
+          // Command accepted and queued - not an error
         } else {
           throw error
         }
@@ -110,7 +110,19 @@ export const usePrinterStore = defineStore('printer', () => {
         command: 'home',
         axes: axes.map(a => a.toLowerCase())
       } as any // Type assertion: spec is wrong, real API expects flat structure
-      await DefaultService.postApiPrinterPrinthead(homeRequest)
+
+      try {
+        await DefaultService.postApiPrinterPrinthead(homeRequest)
+      } catch (error: any) {
+        // 503 = Printer busy (steppers disabled), but command is queued
+        if (error?.status === 503) {
+          console.debug('Printer busy (503), home command queued for execution')
+          // Command accepted and queued - not an error
+        } else {
+          throw error
+        }
+      }
+
       // Refresh status after homing
       await fetchStatus()
     } catch (error) {
