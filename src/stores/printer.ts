@@ -73,13 +73,12 @@ export const usePrinterStore = defineStore('printer', () => {
   async function moveAxis(axis: 'x' | 'y' | 'z', distance: number) {
     try {
       const { DefaultService } = await import('../api')
-      // Legacy API uses nested command structure
+      // Legacy API uses flat command structure (not nested as OpenAPI spec suggests)
+      // Prusa-Link-Web's actual implementation uses flat structure despite spec
       const moveRequest = {
-        jog: {
-          command: 'jog',
-          [axis]: distance
-        }
-      }
+        command: 'jog',
+        [axis]: distance
+      } as any // Type assertion: spec is wrong, real API expects flat structure
 
       try {
         await DefaultService.postApiPrinterPrinthead(moveRequest)
@@ -88,7 +87,7 @@ export const usePrinterStore = defineStore('printer', () => {
         if (error?.status === 503) {
           console.log('Printer busy (503), retrying after 500ms...')
           await new Promise(resolve => setTimeout(resolve, 500))
-          await DefaultService.postApiPrinterPrinthead(moveRequest)
+          await DefaultService.postApiPrinterPrinthead(moveRequest as any)
         } else {
           throw error
         }
@@ -105,13 +104,12 @@ export const usePrinterStore = defineStore('printer', () => {
   async function homeAxes(axes: ('x' | 'y' | 'z')[]) {
     try {
       const { DefaultService } = await import('../api')
-      // Legacy API uses nested command structure
+      // Legacy API uses flat command structure (not nested as OpenAPI spec suggests)
+      // Prusa-Link-Web's actual implementation uses flat structure despite spec
       const homeRequest = {
-        home: {
-          command: 'home',
-          axes: axes.map(a => a.toUpperCase())
-        }
-      }
+        command: 'home',
+        axes: axes.map(a => a.toLowerCase())
+      } as any // Type assertion: spec is wrong, real API expects flat structure
       await DefaultService.postApiPrinterPrinthead(homeRequest)
       // Refresh status after homing
       await fetchStatus()
