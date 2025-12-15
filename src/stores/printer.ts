@@ -80,7 +80,20 @@ export const usePrinterStore = defineStore('printer', () => {
           [axis]: distance
         }
       }
-      await DefaultService.postApiPrinterPrinthead(moveRequest)
+
+      try {
+        await DefaultService.postApiPrinterPrinthead(moveRequest)
+      } catch (error: any) {
+        // Retry once if 503 (steppers might be disabled, first command wakes them)
+        if (error?.status === 503) {
+          console.log('Printer busy (503), retrying after 500ms...')
+          await new Promise(resolve => setTimeout(resolve, 500))
+          await DefaultService.postApiPrinterPrinthead(moveRequest)
+        } else {
+          throw error
+        }
+      }
+
       // Refresh status after movement
       await fetchStatus()
     } catch (error) {
