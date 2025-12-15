@@ -269,11 +269,23 @@ paths:
         type: string
         example: cs
     get:
-      summary: storage info
-      description: Returns info about each available file storage (e.g. SD Card or local storage)
+      summary: List available storage locations
+      description: |
+        Returns information about each available file storage location.
+
+        **Storage Types:**
+        - `local`: Internal storage (built-in flash/SD card)
+        - `sdcard`: External SD card (if present)
+
+        **Use Cases:**
+        - Initial app load: Check what storage is available
+        - File browser: Show storage selection menu
+        - Upload destination: Select target storage
+
+        **Note:** Storage list is relatively static. No need to poll frequently.
       responses:
         200:
-          description: OK
+          description: Storage locations retrieved successfully
           content:
             application/json:
               schema:
@@ -283,6 +295,33 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Storage'
+              examples:
+                single_storage:
+                  summary: Single local storage
+                  value:
+                    storage_list:
+                      - name: "PrusaLink gcodes"
+                        type: "LOCAL"
+                        path: "/local"
+                        read_only: false
+                        free_space: 26843545600
+                        total_space: 31914983424
+                dual_storage:
+                  summary: Local and SD card
+                  value:
+                    storage_list:
+                      - name: "PrusaLink gcodes"
+                        type: "LOCAL"
+                        path: "/local"
+                        read_only: false
+                        free_space: 26843545600
+                        total_space: 31914983424
+                      - name: "SD Card"
+                        type: "SDCARD"
+                        path: "/sdcard"
+                        read_only: false
+                        free_space: 15728640000
+                        total_space: 16106127360
         401:
           $ref: '#/components/responses/Unauthorized'
   /api/v1/transfer:
@@ -331,29 +370,56 @@ paths:
         example: cs
     - in: header
       name: Accept
-      description: Preferred content-type of response - application/json or text/html, all other are returned as text/plain
+      description: |
+        Preferred content-type of response:
+        - `application/json`: Get file/folder metadata
+        - File download: Use file's actual content type
       schema:
         type: string
-        default: text/plain
+        default: application/json
+        example: application/json
     - in: path
       name: storage
-      description: The target storage
+      description: Storage location identifier (e.g., "local", "sdcard")
       required: true
       schema:
         type: string
-        example: /local
+        example: local
     - in: path
       name: path
-      description: Path to the file
+      description: |
+        Path to the file or folder within the storage.
+        Use "/" for root directory listing.
       required: true
       schema:
         type: string
         example: /examples/Spice_Harvester_0.3mm_PLA_MK3S_12m.gcode
     get:
-      summary: File or folder metadata
+      summary: Get file/folder metadata or download file
+      description: |
+        Multi-purpose endpoint for file operations:
+
+        **With Accept: application/json:**
+        - Returns file or folder metadata
+        - For folders: Returns FolderInfo with children array
+        - For files: Returns PrintFileInfo with size, date, thumbnails
+
+        **For file download:**
+        - Set Accept header to file's content type
+        - Returns file content as binary stream
+
+        **Thumbnails:**
+        - Available via `refs.thumbnail` field in file metadata
+        - Cached on client side (LRU cache recommended)
+        - Multiple sizes may be available
+
+        **Folder Navigation:**
+        - Use path="/" to list root directory
+        - Folders have `children` array in response
+        - Files are sorted: folders first, then alphabetically
       responses:
         200:
-          description: OK
+          description: File or folder metadata retrieved successfully
           content:
             application/json:
               schema:
@@ -362,8 +428,31 @@ paths:
                 - $ref: '#/components/schemas/PrintFileInfo'
                 - $ref: '#/components/schemas/FirmwareFileInfo'
                 - $ref: '#/components/schemas/FolderInfo'
+              examples:
+                folder:
+                  summary: Folder listing
+                  value:
+                    name: "examples"
+                    type: "FOLDER"
+                    ro: false
+                    children:
+                      - name: "test_print.gcode"
+                        type: "PRINT_FILE"
+                        size: 1234567
+                        m_timestamp: 1672531200
+                print_file:
+                  summary: Print file metadata
+                  value:
+                    name: "test_print.gcode"
+                    type: "PRINT_FILE"
+                    size: 1234567
+                    m_timestamp: 1672531200
+                    refs:
+                      thumbnail: "/thumb/local/test_print.gcode"
         401:
           $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
     put:
       summary: upload file or create folder
       requestBody:
@@ -415,20 +504,45 @@ paths:
         409:
           $ref: '#/components/responses/Conflict'
     post:
-      summary: Start print of file if there's no print job running
-      description: Body is ignored
+      summary: Start printing a file
+      description: |
+        Initiates a print job for the specified file.
+
+        **Behavior:**
+        - Validates file is a valid GCODE file
+        - Checks no other job is currently active
+        - Begins heating bed and nozzle to target temperatures
+        - Starts print when temperatures stabilize
+
+        **State Requirements:**
+        - Printer must be in IDLE state
+        - No active print job
+        - File must be a PRINT_FILE type
+
+        **Error Conditions:**
+        - 404: File not found
+        - 409: Printer busy (job already running)
+
+        **Note:** Request body is ignored. File path from URL parameters is used.
+
+        **Timing:** May take 2-5 minutes for temperatures to reach targets before
+        print actually begins. Poll `/api/v1/job` to monitor state.
       requestBody:
         required: false
         content: {}
       responses:
         204:
-          description: No Content
+          description: Print job started successfully (heating)
         401:
           $ref: '#/components/responses/Unauthorized'
         404:
           $ref: '#/components/responses/NotFound'
         409:
-          $ref: '#/components/responses/Conflict'
+          description: Conflict - Printer busy or invalid file type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
     head:
       summary: file presence and state check
       responses:
@@ -455,26 +569,64 @@ paths:
           $ref: '#/components/responses/Conflict'
     delete:
       summary: Delete a file or folder
+      description: |
+        Permanently deletes a file or folder from storage.
+
+        **Behavior:**
+        - Files: Immediately deleted
+        - Empty folders: Deleted immediately
+        - Non-empty folders: Requires `Force: ?1` header
+
+        **Safety Checks:**
+        - Cannot delete currently printing file (returns 409)
+        - Cannot delete read-only files (returns 409)
+        - Non-empty folders require explicit force flag
+
+        **Warning:** This operation is irreversible. Deleted files cannot be recovered.
+        Always prompt user for confirmation before calling.
+
+        **Storage Impact:** Freed space becomes available immediately.
       parameters:
       - in: header
         name: Force
-        description: Whether to force delete non-empty folder
+        description: |
+          Force deletion of non-empty folders.
+          Values according to RFC8941/3.3.6:
+          - `?0`: False (default) - Reject non-empty folders
+          - `?1`: True - Delete folder and all contents recursively
         schema:
           type: string
-          description: ?0=False, ?1=True, according RFC8941/3.3.6
           enum:
           - ?0
           - ?1
           default: ?0
+          example: ?0
       responses:
         204:
-          description: No Content No Error
+          description: File or folder deleted successfully
         401:
           $ref: '#/components/responses/Unauthorized'
         404:
           $ref: '#/components/responses/NotFound'
         409:
-          $ref: '#/components/responses/Conflict'
+          description: |
+            Conflict - Cannot delete:
+            - File is currently being printed
+            - Folder is not empty and Force=?0
+            - File or folder is read-only
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                currently_printing:
+                  summary: File is being printed
+                  value:
+                    error: "Cannot delete file that is currently printing"
+                folder_not_empty:
+                  summary: Folder not empty
+                  value:
+                    error: "Cannot delete non-empty folder without Force header"
   /api/v1/cameras:
     get:
       summary: Get a list of active cameras and its properties
