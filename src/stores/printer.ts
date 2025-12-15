@@ -1,6 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { StatusPrinter } from '../api/models/StatusPrinter'
+import { PrintheadJogCommand } from '../api/models/PrintheadJogCommand'
+import { PrintheadHomeCommand } from '../api/models/PrintheadHomeCommand'
+import { PrintheadDisableSteppersCommand } from '../api/models/PrintheadDisableSteppersCommand'
+import { ToolTargetCommand } from '../api/models/ToolTargetCommand'
+import { ToolExtrudeCommand } from '../api/models/ToolExtrudeCommand'
+import { BedTargetCommand } from '../api/models/BedTargetCommand'
 
 export const usePrinterStore = defineStore('printer', () => {
   // State
@@ -73,12 +79,14 @@ export const usePrinterStore = defineStore('printer', () => {
   async function moveAxis(axis: 'x' | 'y' | 'z', distance: number) {
     try {
       const { DefaultService } = await import('../api')
-      // Legacy API uses flat command structure (not nested as OpenAPI spec suggests)
-      // Prusa-Link-Web's actual implementation uses flat structure despite spec
-      const moveRequest = {
-        command: 'jog',
-        [axis]: distance
-      } as any // Type assertion: spec is wrong, real API expects flat structure
+
+      // Build properly typed jog command using discriminated union
+      const moveRequest: PrintheadJogCommand = {
+        command: PrintheadJogCommand.command.JOG,
+        ...(axis === 'x' && { x: distance }),
+        ...(axis === 'y' && { y: distance }),
+        ...(axis === 'z' && { z: distance })
+      }
 
       try {
         await DefaultService.postApiPrinterPrinthead(moveRequest)
@@ -104,12 +112,12 @@ export const usePrinterStore = defineStore('printer', () => {
   async function homeAxes(axes: ('x' | 'y' | 'z')[]) {
     try {
       const { DefaultService } = await import('../api')
-      // Legacy API uses flat command structure (not nested as OpenAPI spec suggests)
-      // Prusa-Link-Web's actual implementation uses flat structure despite spec
-      const homeRequest = {
-        command: 'home',
-        axes: axes.map(a => a.toLowerCase())
-      } as any // Type assertion: spec is wrong, real API expects flat structure
+
+      // Build properly typed home command using discriminated union
+      const homeRequest: PrintheadHomeCommand = {
+        command: PrintheadHomeCommand.command.HOME,
+        axes: axes
+      }
 
       try {
         await DefaultService.postApiPrinterPrinthead(homeRequest)
@@ -134,12 +142,12 @@ export const usePrinterStore = defineStore('printer', () => {
   async function disableSteppers() {
     try {
       const { DefaultService } = await import('../api')
-      // Legacy API uses nested command structure
-      const disableRequest = {
-        disable_steppers: {
-          command: 'disable_steppers'
-        }
+
+      // Build properly typed disable steppers command
+      const disableRequest: PrintheadDisableSteppersCommand = {
+        command: PrintheadDisableSteppersCommand.command.DISABLE_STEPPERS
       }
+
       await DefaultService.postApiPrinterPrinthead(disableRequest)
     } catch (error) {
       console.error('Failed to disable steppers:', error)
@@ -151,14 +159,16 @@ export const usePrinterStore = defineStore('printer', () => {
   async function setNozzleTemp(target: number) {
     try {
       const { DefaultService } = await import('../api')
-      await DefaultService.postApiPrinterTool({
-        target: {
-          command: 'target',
-          targets: {
-            tool0: target
-          }
+
+      // Build properly typed tool target command
+      const targetRequest: ToolTargetCommand = {
+        command: ToolTargetCommand.command.TARGET,
+        targets: {
+          tool0: target
         }
-      })
+      }
+
+      await DefaultService.postApiPrinterTool(targetRequest)
       // Refresh status to get updated target temp
       await fetchStatus()
     } catch (error) {
@@ -170,10 +180,14 @@ export const usePrinterStore = defineStore('printer', () => {
   async function setBedTemp(target: number) {
     try {
       const { DefaultService } = await import('../api')
-      await DefaultService.postApiPrinterBed({
-        command: 'target',
+
+      // Build properly typed bed target command
+      const targetRequest: BedTargetCommand = {
+        command: BedTargetCommand.command.TARGET,
         target
-      })
+      }
+
+      await DefaultService.postApiPrinterBed(targetRequest)
       // Refresh status to get updated target temp
       await fetchStatus()
     } catch (error) {
@@ -186,12 +200,14 @@ export const usePrinterStore = defineStore('printer', () => {
   async function extrudeFilament(amount: number) {
     try {
       const { DefaultService } = await import('../api')
-      await DefaultService.postApiPrinterTool({
-        extrude: {
-          command: 'extrude',
-          amount: amount
-        }
-      })
+
+      // Build properly typed extrude command
+      const extrudeRequest: ToolExtrudeCommand = {
+        command: ToolExtrudeCommand.command.EXTRUDE,
+        amount: amount
+      }
+
+      await DefaultService.postApiPrinterTool(extrudeRequest)
       // Refresh status after extrusion
       await fetchStatus()
     } catch (error) {
@@ -203,12 +219,14 @@ export const usePrinterStore = defineStore('printer', () => {
   async function retractFilament(amount: number) {
     try {
       const { DefaultService } = await import('../api')
-      await DefaultService.postApiPrinterTool({
-        retract: {
-          command: 'retract',
-          amount: amount
-        }
-      })
+
+      // Build properly typed extrude command (negative amount for retract)
+      const retractRequest: ToolExtrudeCommand = {
+        command: ToolExtrudeCommand.command.EXTRUDE,
+        amount: -amount
+      }
+
+      await DefaultService.postApiPrinterTool(retractRequest)
       // Refresh status after retraction
       await fetchStatus()
     } catch (error) {
