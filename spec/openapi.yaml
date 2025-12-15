@@ -15,35 +15,124 @@ security:
 paths:
   /api/version:
     get:
-      summary: api version information
+      summary: Get API version information
+      description: |
+        Returns version information for PrusaLink API and firmware.
+
+        **Use Cases:**
+        - Initial connection: Verify API compatibility
+        - Feature detection: Check capabilities field
+        - Debug logging: Include version info in bug reports
+
+        **Polling:** This is static information. Only fetch once on app startup.
+
+        **Note:** No authentication required for this endpoint.
       responses:
         200:
-          description: OK
+          description: Version information retrieved successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Version'
+              examples:
+                mk3s:
+                  summary: Prusa MK3S+ with PrusaLink
+                  value:
+                    api: "2.0.0"
+                    server: "2.1.2"
+                    text: "PrusaLink 2.1.2"
+                    firmware: "3.13.3"
+                    sdk: "2.1.2"
+                    capabilities:
+                      upload-by-put: true
         401:
           $ref: '#/components/responses/Unauthorized'
   /api/v1/info:
     get:
-      summary: printer information
+      summary: Get printer information
+      description: |
+        Returns static information about the printer hardware and configuration.
+
+        **Information Includes:**
+        - Printer name and model (e.g., "Original Prusa MK3S+")
+        - Serial number
+        - Network information (hostname, IP)
+        - SD card presence
+        - MMU (multi-material unit) status
+
+        **Use Cases:**
+        - Display printer name in UI header
+        - Identify printer in multi-printer setup
+        - Feature detection (MMU, SD card support)
+
+        **Polling:** This is mostly static. Only fetch once on app startup, or when
+        configuration might change (rare).
+
+        **Note:** Serial number should not be displayed publicly for privacy reasons.
       responses:
         200:
-          description: OK
+          description: Printer information retrieved successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Info'
+              examples:
+                mk3s:
+                  summary: Prusa MK3S+ configuration
+                  value:
+                    name: "My Prusa MK3S+"
+                    location: "Workshop"
+                    farm_mode: false
+                    nozzle_diameter: 0.4
+                    min_extrusion_temp: 170
+                    serial: "CZPX1234X567XC12345"
+                    hostname: "prusa-mk3s"
+                    port: 80
         401:
           $ref: '#/components/responses/Unauthorized'
   /api/v1/status:
     get:
-      summary: printer, job and transfer telemetry info
-      description: All values except printer are optional
+      summary: Get complete printer status (telemetry)
+      description: |
+        Returns real-time status of printer, including temperatures, position,
+        current job progress, and file transfers.
+
+        **This is the PRIMARY POLLING ENDPOINT** for live printer monitoring.
+
+        **Status Includes:**
+        - **printer** (required): State, temps (nozzle/bed), axis positions, fan speed
+        - **job** (optional): Current job progress, time remaining, file being printed
+        - **transfer** (optional): File upload/download progress
+        - **storage** (optional): Storage space usage
+        - **camera** (optional): Camera status if available
+
+        **Adaptive Polling Strategy (CRITICAL for performance):**
+        - **Printing:** Poll every 2000ms (2 seconds) for smooth progress updates
+        - **Idle:** Poll every 5000ms (5 seconds) to conserve CPU
+        - **Offline:** Stop polling, retry connection every 5s
+
+        **Connection Handling:**
+        - First failure: Silent retry after 1s
+        - Second failure: Retry after 2s, show toast notification
+        - Third failure: Show "PrusaLink Offline" banner, stop polling
+        - Recovery: Auto-resume polling when connection restored
+
+        **Temperature Fields:**
+        - All temperatures in Celsius (°C)
+        - Accuracy: ±1°C typical
+        - `actual`: Current measured temperature
+        - `target`: Desired temperature (0 = heater off)
+
+        **Position Fields:**
+        - All positions in millimeters (mm)
+        - Only available when printer is idle (not moving)
+        - May be null during printing or movement
+
+        **Performance Note:** This endpoint is called frequently. Optimize parsing
+        and state updates on client side.
       responses:
         200:
-          description: OK
+          description: Status retrieved successfully
           content:
             application/json:
               schema:
@@ -61,6 +150,46 @@ paths:
                     $ref: '#/components/schemas/StatusCamera'
                 required:
                 - printer
+              examples:
+                printing:
+                  summary: Active print job
+                  value:
+                    printer:
+                      state: PRINTING
+                      temp_nozzle: 215.0
+                      target_nozzle: 215.0
+                      temp_bed: 60.0
+                      target_bed: 60.0
+                      axis_x: 125.5
+                      axis_y: 105.2
+                      axis_z: 45.8
+                      flow: 100
+                      speed: 100
+                      fan_hotend: 0
+                      fan_print: 255
+                    job:
+                      id: 42
+                      progress: 0.45
+                      time_remaining: 3600
+                      time_printing: 1800
+                idle:
+                  summary: Printer idle
+                  value:
+                    printer:
+                      state: IDLE
+                      temp_nozzle: 25.0
+                      target_nozzle: 0.0
+                      temp_bed: 24.0
+                      target_bed: 0.0
+                      axis_x: 0.0
+                      axis_y: 0.0
+                      axis_z: 0.0
+                      flow: 100
+                      speed: 100
+                      fan_hotend: 0
+                      fan_print: 0
+        401:
+          $ref: '#/components/responses/Unauthorized'
   /api/v1/job:
     get:
       summary: Get current job information
