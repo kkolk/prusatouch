@@ -63,103 +63,203 @@ paths:
                 - printer
   /api/v1/job:
     get:
-      summary: job info
-      description: Returns info about current job
+      summary: Get current job information
+      description: |
+        Returns information about the currently active print job, if any.
+
+        **Job States:**
+        - `IDLE`: No job active
+        - `PRINTING`: Job is actively printing
+        - `PAUSED`: Job is paused
+        - `FINISHED`: Job completed successfully
+        - `STOPPED`: Job was cancelled/stopped
+        - `ERROR`: Job failed with error
+
+        **Polling:** Client should poll this endpoint every 2-5 seconds while job is active
+        to get updated progress, time remaining, and state.
+
+        **Returns 204 (No Content)** when no job is active.
       responses:
         200:
-          description: OK
+          description: Job information retrieved successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Job'
+              examples:
+                printing:
+                  summary: Job actively printing
+                  value:
+                    id: 42
+                    state: PRINTING
+                    progress: 0.45
+                    time_remaining: 3600
+                    time_printing: 1800
+                paused:
+                  summary: Job paused
+                  value:
+                    id: 42
+                    state: PAUSED
+                    progress: 0.65
+                    time_printing: 2700
         204:
-          description: No Content
+          description: No active job
         401:
           $ref: '#/components/responses/Unauthorized'
   /api/v1/job/{id}:
     parameters:
     - in: path
       name: id
-      description: job id
+      description: Unique job identifier
       required: true
       schema:
         type: integer
         example: 42
     delete:
-      summary: stop job
-      description: Stop job with given id
+      summary: Stop/cancel print job
+      description: |
+        Immediately stops and cancels the print job with the specified ID.
+
+        **Behavior:**
+        - Stops all movement and heating
+        - Retracts filament (if configured)
+        - Job state transitions to `STOPPED`
+        - Cannot be resumed after stopping
+
+        **State Requirements:**
+        - Job must be in `PRINTING` or `PAUSED` state
+        - Returns 409 Conflict if job is already finished or stopped
+
+        **Safety Note:** This is a destructive operation. Always prompt user for
+        confirmation before calling.
       responses:
         204:
-          description: No Content No Error
+          description: Job stopped successfully
         401:
           $ref: '#/components/responses/Unauthorized'
         404:
           $ref: '#/components/responses/NotFound'
         409:
-          $ref: '#/components/responses/Conflict'
+          description: Conflict - Job cannot be stopped (wrong state)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/v1/job/{id}/pause:
     parameters:
     - in: path
       name: id
-      description: job id
+      description: Unique job identifier
       required: true
       schema:
         type: integer
         example: 42
     put:
-      summary: pause job
-      description: Pause job with given id
+      summary: Pause print job
+      description: |
+        Pauses the active print job, allowing it to be resumed later.
+
+        **Behavior:**
+        - Stops all movement immediately
+        - Maintains current temperatures
+        - Job state transitions to `PAUSED`
+        - Progress and time elapsed are preserved
+
+        **State Requirements:**
+        - Job must be in `PRINTING` state
+        - Returns 409 Conflict if job is not currently printing
+
+        **Use Case:** User wants to temporarily pause print to inspect progress,
+        change filament color, or handle other issues.
       responses:
         204:
-          description: No Content No Error
+          description: Job paused successfully
         401:
           $ref: '#/components/responses/Unauthorized'
         404:
           $ref: '#/components/responses/NotFound'
         409:
-          $ref: '#/components/responses/Conflict'
+          description: Conflict - Job cannot be paused (wrong state)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/v1/job/{id}/resume:
     parameters:
     - in: path
       name: id
-      description: job id
+      description: Unique job identifier
       required: true
       schema:
         type: integer
         example: 42
     put:
-      summary: resume job
-      description: Resume job with given id
+      summary: Resume paused print job
+      description: |
+        Resumes a previously paused print job from where it left off.
+
+        **Behavior:**
+        - Waits for temperatures to stabilize (if changed)
+        - Resumes movement from last position
+        - Job state transitions back to `PRINTING`
+        - Continues from previous progress percentage
+
+        **State Requirements:**
+        - Job must be in `PAUSED` state
+        - Returns 409 Conflict if job is not paused
+
+        **Timing:** May take 30-60 seconds to resume if temperatures need to reheat.
       responses:
         204:
-          description: No Content No Error
+          description: Job resumed successfully (or resuming)
         401:
           $ref: '#/components/responses/Unauthorized'
         404:
           $ref: '#/components/responses/NotFound'
         409:
-          $ref: '#/components/responses/Conflict'
+          description: Conflict - Job cannot be resumed (wrong state)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/v1/job/{id}/continue:
     parameters:
     - in: path
       name: id
-      description: job id
+      description: Unique job identifier
       required: true
       schema:
         type: integer
         example: 42
     put:
-      summary: continue job
-      description: Continue in job with given id after timelapse capture
+      summary: Continue job after timelapse
+      description: |
+        Continues print job after a timelapse photo capture has paused it.
+
+        **Behavior:**
+        - Used specifically for timelapse workflow
+        - Similar to resume, but for timelapse-triggered pauses
+        - Job state transitions back to `PRINTING`
+
+        **State Requirements:**
+        - Job must be paused for timelapse capture
+        - Returns 409 Conflict if not in correct state
+
+        **Note:** This is a specialized endpoint for timelapse features.
+        Most applications will use `/pause` and `/resume` instead.
       responses:
         204:
-          description: No Content No Error
+          description: Job continued successfully
         401:
           $ref: '#/components/responses/Unauthorized'
         404:
           $ref: '#/components/responses/NotFound'
         409:
-          $ref: '#/components/responses/Conflict'
+          description: Conflict - Job cannot be continued (wrong state)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/v1/storage:
     parameters:
     - in: header
