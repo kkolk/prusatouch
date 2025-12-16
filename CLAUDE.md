@@ -165,6 +165,76 @@ recipe-name:
 
 Then commit it so future sessions benefit!
 
+## BD Issue Tracker
+
+**BD (beads)** is a lightweight issue tracker with first-class dependency support, used for task management in this project.
+
+### Quick Reference
+
+**List issues:**
+```bash
+bd list                    # All issues
+bd list --status open      # Open issues only
+bd list --priority 1       # P1 issues
+bd ready                   # Ready to work (no blockers)
+```
+
+**Create issues:**
+```bash
+bd create "Issue title"    # Simple creation
+bd create "Title" \
+  --priority 1 \
+  --type bug \
+  --labels "api,p1" \
+  --description "Details here"
+```
+
+**View and update:**
+```bash
+bd show prusatouch-abc     # Show issue details
+bd update prusatouch-abc --status closed
+bd update prusatouch-abc --priority 2
+```
+
+**Comments:**
+```bash
+bd comment prusatouch-abc "Adding a comment"
+bd comments prusatouch-abc  # View all comments
+```
+
+### Why BD?
+
+- **Context-aware:** Issues are stored in `.beads/` and versioned with git
+- **Dependencies:** Track blockers and relationships between issues
+- **Lightweight:** No external services, works offline
+- **AI-friendly:** Structured data, easy for agents to read/write
+
+### Using BD with Code Review
+
+When code reviewers find issues, they should use bd to track them:
+
+```bash
+# Create issue for code review finding
+bd create "Type assertion in printer.ts line 81" \
+  --priority 1 \
+  --type bug \
+  --labels "code-review,type-safety"
+```
+
+This creates a permanent record that can be referenced in commits and PRs.
+
+### BD + Just Workflow
+
+**Don't wrap bd in just** - bd is already optimized. Use bd commands directly:
+
+```bash
+# Good
+bd list --status open
+
+# Unnecessary
+just bd-list  # Don't create wrappers
+```
+
 ## Architecture
 
 ### Directory Structure
