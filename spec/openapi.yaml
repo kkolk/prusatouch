@@ -1067,6 +1067,540 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         409:
           $ref: '#/components/responses/BadRequest'
+  /api/settings:
+    get:
+      summary: Get all printer settings
+      description: |
+        Returns complete configuration settings for the printer, user account, and API access.
+
+        **Settings Categories:**
+        - **printer**: Name, location, network error chime
+        - **username**: Current username for digest auth
+        - **api-key**: API key for non-interactive access
+
+        **Use Cases:**
+        - Initial app load: Populate settings UI
+        - Settings screen: Display current configuration
+        - Profile management: Show user account details
+
+        **Polling:** This is static configuration. Only fetch when entering settings screen.
+
+        **Note:** Password is never returned for security reasons.
+      responses:
+        200:
+          description: Settings retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Settings'
+              examples:
+                full_config:
+                  summary: Complete settings response
+                  value:
+                    printer:
+                      name: "My Prusa MK3S+"
+                      location: "Workshop"
+                      network_error_chime: true
+                    username: "maker"
+                    api-key: "AbCdEf123456"
+        401:
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      summary: Update printer settings
+      description: |
+        Updates printer configuration and/or user credentials.
+
+        **Update Behavior:**
+        - Only provided fields are updated
+        - Omitted fields remain unchanged
+        - All updates are applied atomically
+
+        **Printer Settings:**
+        - `name`: Printer display name (shown in UI and network discovery)
+        - `location`: Physical location description
+        - `network_error_chime`: Enable/disable sound on network errors
+
+        **User Settings:**
+        - Requires current password to make any user changes
+        - `username`: Change username for digest auth
+        - `new_password`: Set new password
+        - `new_repassword`: Confirm new password (must match)
+
+        **Validation:**
+        - Printer name: Required, 1-64 characters
+        - Location: Required, 1-64 characters
+        - Username: 3-32 alphanumeric characters
+        - Password: Minimum 8 characters
+        - Password confirmation must match exactly
+
+        **Note:** Changes take effect immediately, no restart required.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SettingsUpdate'
+            examples:
+              update_printer:
+                summary: Update printer settings only
+                value:
+                  printer:
+                    name: "Prusa MK3S+ (Workshop)"
+                    location: "Main Workshop - Bay 3"
+                  network_error_chime: false
+              update_username:
+                summary: Change username
+                value:
+                  user:
+                    password: "current-password"
+                    username: "newusername"
+              change_password:
+                summary: Change password
+                value:
+                  user:
+                    password: "current-password"
+                    new_password: "new-secure-password"
+                    new_repassword: "new-secure-password"
+      responses:
+        200:
+          description: Settings updated successfully
+        400:
+          description: Bad Request - Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                password_mismatch:
+                  summary: Password confirmation mismatch
+                  value:
+                    title: "Validation Error"
+                    text: "Password confirmation does not match new password"
+                invalid_username:
+                  summary: Invalid username format
+                  value:
+                    title: "Validation Error"
+                    text: "Username must be 3-32 alphanumeric characters"
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          description: Forbidden - Incorrect current password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/settings/sn:
+    get:
+      summary: Get printer serial number
+      description: |
+        Returns the printer's serial number if configured.
+
+        **Serial Number States:**
+        - Configured: Returns serial number string
+        - Not configured: Returns null or empty string
+        - Error state: Printer may require serial number to be set
+
+        **Use Case:** Display serial number in settings or about screen.
+
+        **Note:** Some printers require serial number to be set for full functionality.
+      responses:
+        200:
+          description: Serial number retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  serial:
+                    type: string
+                    nullable: true
+                    description: Printer serial number, or null if not set
+                    example: "CZPX1234X567XC12345"
+                required:
+                  - serial
+              examples:
+                configured:
+                  summary: Serial number configured
+                  value:
+                    serial: "CZPX1234X567XC12345"
+                not_configured:
+                  summary: Serial number not set
+                  value:
+                    serial: null
+        401:
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      summary: Set printer serial number
+      description: |
+        Sets or updates the printer's serial number.
+
+        **Behavior:**
+        - Can only be set once on some printer models
+        - Once set, serial number may be immutable
+        - Used for warranty tracking and printer identification
+
+        **Validation:**
+        - Format: CZPX####X###XC##### (varies by model)
+        - Must match Prusa serial number format
+        - Cannot be empty or null
+
+        **Use Case:** Initial printer setup or error recovery when serial number is missing.
+
+        **Warning:** This operation may be permanent on some printer models.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                serial:
+                  type: string
+                  description: Printer serial number in Prusa format
+                  example: "CZPX1234X567XC12345"
+              required:
+                - serial
+      responses:
+        200:
+          description: Serial number set successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  serial:
+                    type: string
+                    description: Confirmed serial number
+                    example: "CZPX1234X567XC12345"
+        400:
+          description: Bad Request - Invalid serial number format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        409:
+          description: Conflict - Serial number already set and cannot be changed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/settings/apikey:
+    post:
+      summary: Reset/regenerate API key
+      description: |
+        Generates a new API key and invalidates the old one.
+
+        **Behavior:**
+        - Creates new random API key
+        - Old API key is immediately invalidated
+        - All clients using old key must update
+
+        **Use Cases:**
+        - Security: Rotate API keys periodically
+        - Compromise: Revoke access if key is leaked
+        - Setup: Generate initial API key
+
+        **Security Note:** This operation requires digest authentication.
+        API key alone cannot be used to reset itself.
+      responses:
+        200:
+          description: New API key generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  api-key:
+                    type: string
+                    description: Newly generated API key
+                    example: "XyZ789AbCdEf456"
+                required:
+                  - api-key
+              examples:
+                new_key:
+                  summary: New API key response
+                  value:
+                    api-key: "XyZ789AbCdEf456"
+        401:
+          $ref: '#/components/responses/Unauthorized'
+  /api/logs:
+    get:
+      summary: List available log files
+      description: |
+        Returns a list of available log files with metadata.
+
+        **Log Types:**
+        - PrusaLink application logs
+        - System logs (if available)
+        - Error logs
+
+        **File Information:**
+        - `name`: Log filename
+        - `size`: File size in bytes (null if unknown)
+        - `date`: Last modification timestamp
+
+        **Use Cases:**
+        - Settings/diagnostics screen: Show available logs
+        - Support: Allow users to download logs for troubleshooting
+        - Monitoring: Check log file sizes for disk space management
+
+        **Note:** Log files can be large. Check size before attempting to display inline.
+      responses:
+        200:
+          description: Log files list retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  files:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          description: Log filename
+                          example: "prusalink.log"
+                        size:
+                          type: integer
+                          nullable: true
+                          description: File size in bytes, null if unknown
+                          example: 1048576
+                        date:
+                          type: integer
+                          description: Last modification timestamp (Unix epoch)
+                          example: 1672531200
+                      required:
+                        - name
+                        - size
+                        - date
+                required:
+                  - files
+              examples:
+                log_list:
+                  summary: Available log files
+                  value:
+                    files:
+                      - name: "prusalink.log"
+                        size: 1048576
+                        date: 1672531200
+                      - name: "prusalink.log.1"
+                        size: 2097152
+                        date: 1672444800
+                      - name: "error.log"
+                        size: 512000
+                        date: 1672358400
+        401:
+          $ref: '#/components/responses/Unauthorized'
+  /api/logs/{filename}:
+    parameters:
+    - in: path
+      name: filename
+      description: Log filename to retrieve
+      required: true
+      schema:
+        type: string
+        example: prusalink.log
+    get:
+      summary: Download log file
+      description: |
+        Downloads the specified log file as plain text.
+
+        **Behavior:**
+        - Returns raw log file content
+        - Content-Type: text/plain
+        - Suitable for download or display
+
+        **Size Limits:**
+        - Files larger than 64MB may not be displayable in browser
+        - Consider download-only for very large files
+        - Check file size from `/api/logs` before fetching
+
+        **Use Cases:**
+        - Download logs for support tickets
+        - Display recent logs in diagnostics UI
+        - Automated log collection for monitoring
+
+        **Performance Note:** Large log files can take significant time to transfer
+        on slow networks. Consider streaming or pagination for UI display.
+      responses:
+        200:
+          description: Log file retrieved successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Raw log file content
+                example: |
+                  2024-01-01 12:00:00 INFO Starting PrusaLink...
+                  2024-01-01 12:00:01 INFO Connected to printer
+                  2024-01-01 12:00:02 INFO Ready
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
+  /api/connection:
+    get:
+      summary: Get PrusaConnect connection status
+      description: |
+        Returns status of printer connections to PrusaConnect cloud service and serial port.
+
+        **Connection Types:**
+        - **connect**: PrusaConnect cloud service registration and status
+        - **current**: Serial port connection to printer (for Raspberry Pi installations)
+
+        **PrusaConnect Registration States:**
+        - `NOT_STARTED`: Registration not initiated
+        - `IN_PROGRESS`: Currently registering with PrusaConnect
+        - `FINISHED`: Successfully registered
+        - `FAILED`: Registration failed
+
+        **Use Cases:**
+        - Settings screen: Display cloud connection status
+        - Initial setup: Show registration progress
+        - Diagnostics: Check printer communication status
+
+        **Polling:** Poll every 5-10 seconds during registration, otherwise fetch only when
+        viewing settings screen.
+      responses:
+        200:
+          description: Connection status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionStatus'
+              examples:
+                registered:
+                  summary: Successfully registered to PrusaConnect
+                  value:
+                    connect:
+                      hostname: "connect.prusa3d.com"
+                      port: 0
+                      tls: 1
+                      registration: "FINISHED"
+                    current:
+                      port: "/dev/ttyACM0"
+                      baudrate: 115200
+                not_registered:
+                  summary: Not registered to PrusaConnect
+                  value:
+                    connect:
+                      hostname: ""
+                      port: 0
+                      tls: 0
+                      registration: "NOT_STARTED"
+                    current:
+                      port: "/dev/ttyACM0"
+                      baudrate: 115200
+        401:
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      summary: Register printer with PrusaConnect
+      description: |
+        Initiates registration of printer with PrusaConnect cloud service.
+
+        **Registration Flow:**
+        1. Send hostname, port, and TLS settings
+        2. PrusaLink initiates registration with PrusaConnect
+        3. Server returns URL for user to complete registration in browser
+        4. Poll GET /api/connection to check registration status
+
+        **Required Settings:**
+        - `hostname`: PrusaConnect server hostname
+        - `port`: Server port (0 for default)
+        - `tls`: Use HTTPS (1) or HTTP (0)
+
+        **Timing:** Registration typically takes 10-30 seconds. Poll status endpoint
+        to detect completion.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                connect:
+                  type: object
+                  properties:
+                    hostname:
+                      type: string
+                      description: PrusaConnect server hostname
+                      example: "connect.prusa3d.com"
+                    port:
+                      type: integer
+                      description: Server port (0 for default 443/80)
+                      example: 0
+                    tls:
+                      type: integer
+                      description: Use TLS/HTTPS (1=yes, 0=no)
+                      enum: [0, 1]
+                      example: 1
+                  required:
+                    - hostname
+                    - port
+                    - tls
+              required:
+                - connect
+            examples:
+              register_production:
+                summary: Register with production PrusaConnect
+                value:
+                  connect:
+                    hostname: "connect.prusa3d.com"
+                    port: 0
+                    tls: 1
+      responses:
+        200:
+          description: Registration initiated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    format: uri
+                    description: URL to complete registration in browser
+                    example: "https://connect.prusa3d.com/register?code=ABC123"
+              examples:
+                registration_url:
+                  summary: Registration URL response
+                  value:
+                    url: "https://connect.prusa3d.com/register?code=ABC123"
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+    delete:
+      summary: Unregister printer from PrusaConnect
+      description: |
+        Removes printer registration from PrusaConnect cloud service.
+
+        **Behavior:**
+        - Disconnects from PrusaConnect
+        - Deletes stored registration credentials
+        - Cannot be undone - requires re-registration
+
+        **Use Cases:**
+        - Decommissioning printer
+        - Switching to different PrusaConnect account
+        - Privacy: Disable cloud connectivity
+
+        **Note:** This does not affect local network access to PrusaLink.
+      responses:
+        200:
+          description: Printer unregistered successfully
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        409:
+          description: Conflict - Printer not currently registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/printer/printhead:
     post:
       summary: Control printhead movement, speed, and steppers
@@ -2200,6 +2734,127 @@ components:
           type: string
           description: Package version available for update
           example: 4.2-RC1
+    Settings:
+      type: object
+      description: Complete printer configuration settings
+      properties:
+        printer:
+          type: object
+          description: Printer identification and behavior settings
+          properties:
+            name:
+              type: string
+              description: Printer display name
+              example: "My Prusa MK3S+"
+            location:
+              type: string
+              description: Physical location description
+              example: "Workshop"
+            network_error_chime:
+              type: boolean
+              description: Enable sound alert on network errors
+              example: true
+        username:
+          type: string
+          description: Current username for digest authentication
+          example: "maker"
+        api-key:
+          type: string
+          description: API key for programmatic access
+          example: "AbCdEf123456"
+    SettingsUpdate:
+      type: object
+      description: Settings update request
+      properties:
+        printer:
+          type: object
+          description: Printer settings to update
+          properties:
+            name:
+              type: string
+              description: Printer display name
+              minLength: 1
+              maxLength: 64
+              example: "Prusa MK3S+ (Workshop)"
+            location:
+              type: string
+              description: Physical location description
+              minLength: 1
+              maxLength: 64
+              example: "Main Workshop - Bay 3"
+        network_error_chime:
+          type: boolean
+          description: Enable sound alert on network errors
+          example: false
+        user:
+          type: object
+          description: User credentials to update
+          properties:
+            password:
+              type: string
+              description: Current password (required for any user changes)
+              example: "current-password"
+            username:
+              type: string
+              description: New username
+              minLength: 3
+              maxLength: 32
+              pattern: '^[a-zA-Z0-9]+$'
+              example: "newusername"
+            new_password:
+              type: string
+              description: New password
+              minLength: 8
+              example: "new-secure-password"
+            new_repassword:
+              type: string
+              description: New password confirmation (must match new_password)
+              minLength: 8
+              example: "new-secure-password"
+          required:
+            - password
+    ConnectionStatus:
+      type: object
+      description: PrusaConnect and printer connection status
+      properties:
+        connect:
+          type: object
+          description: PrusaConnect cloud service connection
+          properties:
+            hostname:
+              type: string
+              description: PrusaConnect server hostname
+              example: "connect.prusa3d.com"
+            port:
+              type: integer
+              description: Server port (0 for default)
+              example: 0
+            tls:
+              type: integer
+              description: Use TLS/HTTPS (1=yes, 0=no)
+              enum: [0, 1]
+              example: 1
+            registration:
+              type: string
+              description: Registration status
+              enum:
+                - NOT_STARTED
+                - IN_PROGRESS
+                - FINISHED
+                - FAILED
+              example: "FINISHED"
+        current:
+          type: object
+          description: Serial port connection to printer
+          properties:
+            port:
+              type: string
+              description: Serial port device path
+              example: "/dev/ttyACM0"
+            baudrate:
+              type: integer
+              description: Serial communication baud rate
+              example: 115200
     Transfer:
       type: object
       properties:

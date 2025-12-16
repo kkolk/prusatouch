@@ -7,6 +7,7 @@ import type { BedTargetCommand } from '../models/BedTargetCommand';
 import type { Camera } from '../models/Camera';
 import type { CameraConfig } from '../models/CameraConfig';
 import type { CameraConfigSet } from '../models/CameraConfigSet';
+import type { ConnectionStatus } from '../models/ConnectionStatus';
 import type { FileInfo } from '../models/FileInfo';
 import type { FirmwareFileInfo } from '../models/FirmwareFileInfo';
 import type { FolderInfo } from '../models/FolderInfo';
@@ -19,6 +20,8 @@ import type { PrintheadHomeCommand } from '../models/PrintheadHomeCommand';
 import type { PrintheadJogCommand } from '../models/PrintheadJogCommand';
 import type { PrintheadSpeedCommand } from '../models/PrintheadSpeedCommand';
 import type { PrusaLinkPackage } from '../models/PrusaLinkPackage';
+import type { Settings } from '../models/Settings';
+import type { SettingsUpdate } from '../models/SettingsUpdate';
 import type { StatusCamera } from '../models/StatusCamera';
 import type { StatusJob } from '../models/StatusJob';
 import type { StatusPrinter } from '../models/StatusPrinter';
@@ -1001,6 +1004,403 @@ export class DefaultService {
             errors: {
                 401: `Unauthorized`,
                 409: `Bad Request`,
+            },
+        });
+    }
+    /**
+     * Get all printer settings
+     * Returns complete configuration settings for the printer, user account, and API access.
+     *
+     * **Settings Categories:**
+     * - **printer**: Name, location, network error chime
+     * - **username**: Current username for digest auth
+     * - **api-key**: API key for non-interactive access
+     *
+     * **Use Cases:**
+     * - Initial app load: Populate settings UI
+     * - Settings screen: Display current configuration
+     * - Profile management: Show user account details
+     *
+     * **Polling:** This is static configuration. Only fetch when entering settings screen.
+     *
+     * **Note:** Password is never returned for security reasons.
+     *
+     * @returns Settings Settings retrieved successfully
+     * @throws ApiError
+     */
+    public static getApiSettings(): CancelablePromise<Settings> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/settings',
+            errors: {
+                401: `Unauthorized`,
+            },
+        });
+    }
+    /**
+     * Update printer settings
+     * Updates printer configuration and/or user credentials.
+     *
+     * **Update Behavior:**
+     * - Only provided fields are updated
+     * - Omitted fields remain unchanged
+     * - All updates are applied atomically
+     *
+     * **Printer Settings:**
+     * - `name`: Printer display name (shown in UI and network discovery)
+     * - `location`: Physical location description
+     * - `network_error_chime`: Enable/disable sound on network errors
+     *
+     * **User Settings:**
+     * - Requires current password to make any user changes
+     * - `username`: Change username for digest auth
+     * - `new_password`: Set new password
+     * - `new_repassword`: Confirm new password (must match)
+     *
+     * **Validation:**
+     * - Printer name: Required, 1-64 characters
+     * - Location: Required, 1-64 characters
+     * - Username: 3-32 alphanumeric characters
+     * - Password: Minimum 8 characters
+     * - Password confirmation must match exactly
+     *
+     * **Note:** Changes take effect immediately, no restart required.
+     *
+     * @param requestBody
+     * @returns any Settings updated successfully
+     * @throws ApiError
+     */
+    public static postApiSettings(
+        requestBody: SettingsUpdate,
+    ): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/settings',
+            body: requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: `Bad Request - Validation failed`,
+                401: `Unauthorized`,
+                403: `Forbidden - Incorrect current password`,
+            },
+        });
+    }
+    /**
+     * Get printer serial number
+     * Returns the printer's serial number if configured.
+     *
+     * **Serial Number States:**
+     * - Configured: Returns serial number string
+     * - Not configured: Returns null or empty string
+     * - Error state: Printer may require serial number to be set
+     *
+     * **Use Case:** Display serial number in settings or about screen.
+     *
+     * **Note:** Some printers require serial number to be set for full functionality.
+     *
+     * @returns any Serial number retrieved successfully
+     * @throws ApiError
+     */
+    public static getApiSettingsSn(): CancelablePromise<{
+        /**
+         * Printer serial number, or null if not set
+         */
+        serial: string | null;
+    }> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/settings/sn',
+            errors: {
+                401: `Unauthorized`,
+            },
+        });
+    }
+    /**
+     * Set printer serial number
+     * Sets or updates the printer's serial number.
+     *
+     * **Behavior:**
+     * - Can only be set once on some printer models
+     * - Once set, serial number may be immutable
+     * - Used for warranty tracking and printer identification
+     *
+     * **Validation:**
+     * - Format: CZPX####X###XC##### (varies by model)
+     * - Must match Prusa serial number format
+     * - Cannot be empty or null
+     *
+     * **Use Case:** Initial printer setup or error recovery when serial number is missing.
+     *
+     * **Warning:** This operation may be permanent on some printer models.
+     *
+     * @param requestBody
+     * @returns any Serial number set successfully
+     * @throws ApiError
+     */
+    public static postApiSettingsSn(
+        requestBody: {
+            /**
+             * Printer serial number in Prusa format
+             */
+            serial: string;
+        },
+    ): CancelablePromise<{
+        /**
+         * Confirmed serial number
+         */
+        serial?: string;
+    }> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/settings/sn',
+            body: requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: `Bad Request - Invalid serial number format`,
+                401: `Unauthorized`,
+                409: `Conflict - Serial number already set and cannot be changed`,
+            },
+        });
+    }
+    /**
+     * Reset/regenerate API key
+     * Generates a new API key and invalidates the old one.
+     *
+     * **Behavior:**
+     * - Creates new random API key
+     * - Old API key is immediately invalidated
+     * - All clients using old key must update
+     *
+     * **Use Cases:**
+     * - Security: Rotate API keys periodically
+     * - Compromise: Revoke access if key is leaked
+     * - Setup: Generate initial API key
+     *
+     * **Security Note:** This operation requires digest authentication.
+     * API key alone cannot be used to reset itself.
+     *
+     * @returns any New API key generated successfully
+     * @throws ApiError
+     */
+    public static postApiSettingsApikey(): CancelablePromise<{
+        /**
+         * Newly generated API key
+         */
+        'api-key': string;
+    }> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/settings/apikey',
+            errors: {
+                401: `Unauthorized`,
+            },
+        });
+    }
+    /**
+     * List available log files
+     * Returns a list of available log files with metadata.
+     *
+     * **Log Types:**
+     * - PrusaLink application logs
+     * - System logs (if available)
+     * - Error logs
+     *
+     * **File Information:**
+     * - `name`: Log filename
+     * - `size`: File size in bytes (null if unknown)
+     * - `date`: Last modification timestamp
+     *
+     * **Use Cases:**
+     * - Settings/diagnostics screen: Show available logs
+     * - Support: Allow users to download logs for troubleshooting
+     * - Monitoring: Check log file sizes for disk space management
+     *
+     * **Note:** Log files can be large. Check size before attempting to display inline.
+     *
+     * @returns any Log files list retrieved successfully
+     * @throws ApiError
+     */
+    public static getApiLogs(): CancelablePromise<{
+        files: Array<{
+            /**
+             * Log filename
+             */
+            name: string;
+            /**
+             * File size in bytes, null if unknown
+             */
+            size: number | null;
+            /**
+             * Last modification timestamp (Unix epoch)
+             */
+            date: number;
+        }>;
+    }> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/logs',
+            errors: {
+                401: `Unauthorized`,
+            },
+        });
+    }
+    /**
+     * Download log file
+     * Downloads the specified log file as plain text.
+     *
+     * **Behavior:**
+     * - Returns raw log file content
+     * - Content-Type: text/plain
+     * - Suitable for download or display
+     *
+     * **Size Limits:**
+     * - Files larger than 64MB may not be displayable in browser
+     * - Consider download-only for very large files
+     * - Check file size from `/api/logs` before fetching
+     *
+     * **Use Cases:**
+     * - Download logs for support tickets
+     * - Display recent logs in diagnostics UI
+     * - Automated log collection for monitoring
+     *
+     * **Performance Note:** Large log files can take significant time to transfer
+     * on slow networks. Consider streaming or pagination for UI display.
+     *
+     * @param filename Log filename to retrieve
+     * @returns string Log file retrieved successfully
+     * @throws ApiError
+     */
+    public static getApiLogs1(
+        filename: string,
+    ): CancelablePromise<string> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/logs/{filename}',
+            path: {
+                'filename': filename,
+            },
+            errors: {
+                401: `Unauthorized`,
+                404: `Not Found`,
+            },
+        });
+    }
+    /**
+     * Get PrusaConnect connection status
+     * Returns status of printer connections to PrusaConnect cloud service and serial port.
+     *
+     * **Connection Types:**
+     * - **connect**: PrusaConnect cloud service registration and status
+     * - **current**: Serial port connection to printer (for Raspberry Pi installations)
+     *
+     * **PrusaConnect Registration States:**
+     * - `NOT_STARTED`: Registration not initiated
+     * - `IN_PROGRESS`: Currently registering with PrusaConnect
+     * - `FINISHED`: Successfully registered
+     * - `FAILED`: Registration failed
+     *
+     * **Use Cases:**
+     * - Settings screen: Display cloud connection status
+     * - Initial setup: Show registration progress
+     * - Diagnostics: Check printer communication status
+     *
+     * **Polling:** Poll every 5-10 seconds during registration, otherwise fetch only when
+     * viewing settings screen.
+     *
+     * @returns ConnectionStatus Connection status retrieved successfully
+     * @throws ApiError
+     */
+    public static getApiConnection(): CancelablePromise<ConnectionStatus> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/connection',
+            errors: {
+                401: `Unauthorized`,
+            },
+        });
+    }
+    /**
+     * Register printer with PrusaConnect
+     * Initiates registration of printer with PrusaConnect cloud service.
+     *
+     * **Registration Flow:**
+     * 1. Send hostname, port, and TLS settings
+     * 2. PrusaLink initiates registration with PrusaConnect
+     * 3. Server returns URL for user to complete registration in browser
+     * 4. Poll GET /api/connection to check registration status
+     *
+     * **Required Settings:**
+     * - `hostname`: PrusaConnect server hostname
+     * - `port`: Server port (0 for default)
+     * - `tls`: Use HTTPS (1) or HTTP (0)
+     *
+     * **Timing:** Registration typically takes 10-30 seconds. Poll status endpoint
+     * to detect completion.
+     *
+     * @param requestBody
+     * @returns any Registration initiated successfully
+     * @throws ApiError
+     */
+    public static postApiConnection(
+        requestBody: {
+            connect: {
+                /**
+                 * PrusaConnect server hostname
+                 */
+                hostname: string;
+                /**
+                 * Server port (0 for default 443/80)
+                 */
+                port: number;
+                /**
+                 * Use TLS/HTTPS (1=yes, 0=no)
+                 */
+                tls: 0 | 1;
+            };
+        },
+    ): CancelablePromise<{
+        /**
+         * URL to complete registration in browser
+         */
+        url?: string;
+    }> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/connection',
+            body: requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: `Bad Request`,
+                401: `Unauthorized`,
+            },
+        });
+    }
+    /**
+     * Unregister printer from PrusaConnect
+     * Removes printer registration from PrusaConnect cloud service.
+     *
+     * **Behavior:**
+     * - Disconnects from PrusaConnect
+     * - Deletes stored registration credentials
+     * - Cannot be undone - requires re-registration
+     *
+     * **Use Cases:**
+     * - Decommissioning printer
+     * - Switching to different PrusaConnect account
+     * - Privacy: Disable cloud connectivity
+     *
+     * **Note:** This does not affect local network access to PrusaLink.
+     *
+     * @returns any Printer unregistered successfully
+     * @throws ApiError
+     */
+    public static deleteApiConnection(): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/connection',
+            errors: {
+                401: `Unauthorized`,
+                409: `Conflict - Printer not currently registered`,
             },
         });
     }
