@@ -24,26 +24,146 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Node.js:** 24.x LTS (Krypton) via nvm - Already configured and available globally.
 
-You can use npm commands directly - no special setup needed!
+**IMPORTANT:** Use `just` commands instead of direct npm/bash commands (see Task Runner section below).
 
+## Task Runner: Just (CRITICAL - Use This!)
+
+**IMPORTANT:** This project uses `just` as a task runner to save context and tokens in AI sessions.
+
+**Why Just?**
+- **Context Saving:** Encapsulates complex commands into simple recipes
+- **Token Efficiency:** No need to explain long bash commands or npm scripts repeatedly
+- **Knowledge Persistence:** Common paths, configurations, and workflows are baked in
+- **Faster Development:** One command does everything (build, test, deploy, etc.)
+
+**Core Principle:** Instead of writing or explaining commands, use `just <recipe>`.
+
+### Quick Reference
+
+View all available recipes:
 ```bash
-# Development
-npm install                   # Install dependencies
-npm run dev                   # Start dev server (http://localhost:5173)
-npm run generate:api          # Regenerate API client from spec/openapi.yaml
-
-# Testing
-npm run test:unit             # Run all unit tests with Vitest
-npm run test:unit -- <file>   # Run specific test file (e.g., tests/unit/components/TouchButton.spec.ts)
-npm run test:e2e              # Run E2E tests with Playwright
-
-# Build
-npm run build                 # Production build (outputs to dist/)
-npm run preview               # Preview production build
-
-# Type checking
-npx vue-tsc --noEmit          # Check TypeScript types without emitting
+just          # or: just --list
 ```
+
+### Most Used Commands (Use These!)
+
+**API & Type Checking:**
+```bash
+just api              # Regenerate API client from OpenAPI spec
+just api-update       # Regenerate API + typecheck + test
+just typecheck        # Run TypeScript type checking
+just check            # Quick validation (typecheck + lint)
+just ready            # Pre-commit check (typecheck + test + lint)
+```
+
+**Testing:**
+```bash
+just test             # Run unit tests (fastest)
+just test-watch       # Run tests in watch mode
+just test-e2e         # Run E2E tests
+just ci               # Full CI validation (typecheck + test + build)
+```
+
+**Development:**
+```bash
+just dev              # Start dev server
+just build            # Production build
+just bundle-size      # Check bundle size vs 300KB target
+just verify           # Full verification (typecheck + test + build + size)
+```
+
+**Code Discovery:**
+```bash
+just find "pattern"   # Search for pattern in source files
+just todos            # Find all TODOs/FIXMEs
+just stores           # List all Pinia stores
+just components       # List all components
+just recent           # Recently modified files (last 7 days)
+```
+
+**Deployment:**
+```bash
+just deploy           # Build and deploy to Pi
+just deploy:full      # Build + deploy + restart services
+just pi-status        # Check Pi service status
+just pi-logs          # View Pi logs
+just pi-restart       # Restart auth-helper service
+```
+
+**Git Workflows:**
+```bash
+just status           # Enhanced git status with counts
+just commit feat "add new feature"  # Conventional commit
+just save "quick fix" # Quick commit
+just sync             # Pull rebase + push
+```
+
+
+### For AI Agents: Command Translation
+
+**Old way (verbose):**
+```bash
+# AI has to explain: "I'll regenerate the API client"
+npm run generate:api
+# AI has to explain: "Now I'll run TypeScript type checking"
+npx vue-tsc --noEmit
+# AI has to explain: "Let me run the tests"
+npm run test:unit
+```
+
+**New way (concise):**
+```bash
+just api-update
+```
+
+**Context saved:** ~100+ tokens per command sequence!
+
+### Recipe Categories
+
+Run `just --list` to see all recipes organized by:
+- Quick Info & Status
+- API Generation
+- Type Checking & Linting
+- Testing
+- Development Server
+- Build & Bundle
+- Code Search & Discovery
+- Deployment
+- Raspberry Pi Remote Operations
+- Kiosk Management
+- Git Workflows
+- Performance & Profiling
+- Verification Commands
+
+### When to Use Just
+
+✅ **ALWAYS use just for:**
+- API regeneration (`just api` not `npm run generate:api`)
+- Type checking (`just typecheck` not `npx vue-tsc --noEmit`)
+- Testing (`just test` not `npm run test:unit`)
+- Deployment (`just deploy` not `./scripts/deploy-to-pi.sh`)
+- Code search (`just find "pattern"` not `grep -rn...`)
+- Git operations (`just commit feat "msg"` not manual git commands)
+
+❌ **Don't use bash commands when just recipes exist:**
+- ❌ `ssh pi@host "systemctl status..."`
+- ✅ `just pi-status`
+
+❌ **Don't explain commands when you can use just:**
+- ❌ "I'll run npm run generate:api to regenerate the API client, then npx vue-tsc --noEmit to check types..."
+- ✅ "Running `just api-update`"
+
+### Adding New Recipes
+
+If you find yourself explaining the same command multiple times, add it to `justfile`:
+
+```just
+# Quick description
+recipe-name:
+  command here
+```
+
+Then commit it so future sessions benefit!
 
 ## Architecture
 
@@ -93,7 +213,7 @@ User Interaction → Component → Composable → Pinia Store → API Service �
 
 **To update API:**
 1. Edit `spec/openapi.yaml`
-2. Run `npm run generate:api`
+2. Run `just api`
 3. Commit both the spec and generated files
 
 ### Authentication Architecture (Updated 2025-12-13)
@@ -289,8 +409,7 @@ git show checkpoint-task-N        # View checkpoint details
 
 **Check bundle size:**
 ```bash
-npm run build
-ls -lh dist/assets/*.js
+just bundle-size
 ```
 
 ### Memory Constraints
@@ -307,8 +426,7 @@ ls -lh dist/assets/*.js
 
 **Build and deploy:**
 ```bash
-npm run build
-scp -r dist/* pi@prusa-mk3s.local:/var/www/html/prusatouch/
+just deploy
 ```
 
 **Chromium kiosk mode:**
@@ -342,7 +460,7 @@ chore: maintenance tasks
 
 1. Edit `spec/openapi.yaml`
 2. Add endpoint definition with request/response schemas
-3. Run `npm run generate:api`
+3. Run `just api-update` (regenerates API + typechecks + tests)
 4. Update relevant store to use new service method
 5. Add tests for new functionality
 6. Commit spec + generated code together
