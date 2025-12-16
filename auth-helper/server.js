@@ -380,6 +380,9 @@ app.all('/api/*', async (req, res) => {
   const url = `${PRUSALINK_HOST}${path}`;
 
   console.log(`\n=== Forwarding ${req.method} ${path} to ${url} ===`);
+  if (req.body && req.method === 'POST') {
+    console.log(`Request body: ${JSON.stringify(req.body)}`);
+  }
 
   try {
     // Prepare headers (exclude host)
