@@ -1286,6 +1286,43 @@ export class DefaultService {
         });
     }
     /**
+     * Delete log file
+     * Deletes the specified log file from the system.
+     *
+     * **Behavior:**
+     * - Permanently removes the log file
+     * - Cannot delete currently active log file
+     * - Returns 204 on successful deletion
+     *
+     * **Use Cases:**
+     * - Clean up old rotated log files
+     * - Free up storage space
+     * - Remove logs after download for support
+     *
+     * **Note:** This endpoint may not be supported by all PrusaLink versions.
+     * Check for 404/405 responses to determine availability.
+     *
+     * @param filename Log filename to retrieve
+     * @returns void
+     * @throws ApiError
+     */
+    public static deleteApiLogs(
+        filename: string,
+    ): CancelablePromise<void> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/logs/{filename}',
+            path: {
+                'filename': filename,
+            },
+            errors: {
+                401: `Unauthorized`,
+                404: `Log file not found`,
+                409: `Cannot delete active log file`,
+            },
+        });
+    }
+    /**
      * Get PrusaConnect connection status
      * Returns status of printer connections to PrusaConnect cloud service and serial port.
      *

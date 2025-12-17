@@ -95,23 +95,21 @@ describe('jobStore', () => {
 
       // Set up printer status with speed
       printerStore.status = {
-        printer: {
-          state: 'PRINTING',
-          temp_nozzle: 215,
-          target_nozzle: 215,
-          temp_bed: 60,
-          target_bed: 60,
-          axis_x: 100,
-          axis_y: 100,
-          axis_z: 50,
-          flow: 100,
-          speed: 105,
-          fan_hotend: 0,
-          fan_print: 255
-        }
+        state: 'PRINTING',
+        temp_nozzle: 215,
+        target_nozzle: 215,
+        temp_bed: 60,
+        target_bed: 60,
+        axis_x: 100,
+        axis_y: 100,
+        axis_z: 50,
+        flow: 100,
+        speed: 105,
+        fan_hotend: 0,
+        fan_print: 255
       } as any
 
-      // PrintSpeed comes from printerStore.status.printer.speed
+      // PrintSpeed comes from printerStore.status.speed
       expect(store.printSpeed).toBe(105)
     })
   })

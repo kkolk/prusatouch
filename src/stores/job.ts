@@ -36,7 +36,7 @@ export const useJobStore = defineStore('job', () => {
     // Get real speed from printer status
     // Returns 0 when no job active (will be hidden by UI conditional)
     if (!currentJob.value) return 0
-    return printerStore.status?.printer?.speed ?? 0
+    return printerStore.status?.speed ?? 0
   })
 
   const currentLayer = computed(() => {

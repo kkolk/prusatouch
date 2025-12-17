@@ -1442,6 +1442,40 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         404:
           $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Delete log file
+      description: |
+        Deletes the specified log file from the system.
+
+        **Behavior:**
+        - Permanently removes the log file
+        - Cannot delete currently active log file
+        - Returns 204 on successful deletion
+
+        **Use Cases:**
+        - Clean up old rotated log files
+        - Free up storage space
+        - Remove logs after download for support
+
+        **Note:** This endpoint may not be supported by all PrusaLink versions.
+        Check for 404/405 responses to determine availability.
+      responses:
+        204:
+          description: Log file deleted successfully
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          description: Log file not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        409:
+          description: Cannot delete active log file
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/connection:
     get:
       summary: Get PrusaConnect connection status
