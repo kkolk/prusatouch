@@ -1,5 +1,12 @@
 <template>
   <div class="app">
+    <!-- Offline Banner -->
+    <OfflineBanner
+      :visible="!printerStore.isConnected && printerStore.connection.retryCount > 0"
+      :retry-count="printerStore.connection.retryCount"
+      @retry="handleRetryConnection"
+    />
+
     <!-- Top Bar -->
     <header class="top-bar">
       <div class="top-bar-content">
@@ -68,6 +75,17 @@
         <span class="nav-label">{{ tab.label }}</span>
       </button>
     </nav>
+
+    <!-- Toast Notifications -->
+    <Toast
+      v-for="toast in notificationsStore.toasts"
+      :key="toast.id"
+      :visible="true"
+      :message="toast.message"
+      :type="toast.type"
+      :duration="toast.duration"
+      @close="notificationsStore.removeToast(toast.id)"
+    />
   </div>
 </template>
 
@@ -75,10 +93,14 @@
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { usePrinterStore } from './stores/printer'
+import { useNotificationsStore } from './stores/notifications'
+import OfflineBanner from './components/OfflineBanner.vue'
+import Toast from './components/Toast.vue'
 
 const router = useRouter()
 const route = useRoute()
 const printerStore = usePrinterStore()
+const notificationsStore = useNotificationsStore()
 
 const tabs = [
   { name: 'home', route: '/', icon: '🏠', label: 'Home' },
@@ -120,6 +142,10 @@ function goToSettings() {
 
 function goToDebug() {
   router.push('/debug')
+}
+
+function handleRetryConnection() {
+  printerStore.fetchStatus()
 }
 </script>
 
