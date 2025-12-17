@@ -64,12 +64,14 @@
 
     <!-- Bottom Navigation -->
     <nav class="bottom-nav">
+      <div class="nav-indicator" :style="indicatorStyle"></div>
       <button
-        v-for="tab in tabs"
+        v-for="(tab, index) in tabs"
         :key="tab.name"
         class="nav-tab"
         :class="{ active: isActive(tab.route) }"
         @click="navigate(tab.route)"
+        :data-index="index"
       >
         <span class="nav-icon">{{ tab.icon }}</span>
         <span class="nav-label">{{ tab.label }}</span>
@@ -111,6 +113,20 @@ const tabs = [
 
 const isControlView = computed(() => route.path === '/control')
 const isHomeView = computed(() => route.path === '/')
+
+// Sliding tab indicator position (GPU-accelerated with transform)
+const activeTabIndex = computed(() => {
+  return tabs.findIndex(tab => tab.route === route.path)
+})
+
+const indicatorStyle = computed(() => {
+  const index = activeTabIndex.value >= 0 ? activeTabIndex.value : 0
+  const width = 100 / tabs.length
+  return {
+    transform: `translateX(${index * 100}%)`,
+    width: `${width}%`
+  }
+})
 
 const position = computed(() => ({
   x: printerStore.status?.axis_x ?? 0,
@@ -283,12 +299,25 @@ function handleRetryConnection() {
 
 /* Bottom Navigation - 60px */
 .bottom-nav {
+  position: relative;
   height: var(--touch-comfortable);
   min-height: var(--touch-comfortable);
   background: var(--bg-secondary);
   border-top: 1px solid var(--bg-tertiary);
   display: flex;
   align-items: stretch;
+}
+
+/* GPU-accelerated sliding indicator */
+.nav-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background: var(--prusa-orange);
+  transition: transform var(--transition-normal);
+  will-change: transform;
+  z-index: 1;
 }
 
 .nav-tab {
@@ -300,11 +329,11 @@ function handleRetryConnection() {
   gap: 2px;
   background: transparent;
   border: none;
-  border-top: 3px solid transparent;
   color: var(--text-secondary);
   cursor: pointer;
   transition: transform var(--transition-fast);
   font-family: inherit;
+  position: relative;
 }
 
 .nav-tab:active {
@@ -312,7 +341,6 @@ function handleRetryConnection() {
 }
 
 .nav-tab.active {
-  border-top-color: var(--prusa-orange);
   color: var(--prusa-orange);
 }
 
