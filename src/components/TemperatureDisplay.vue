@@ -59,11 +59,11 @@ const stateClass = computed(() => {
   padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-md);
   min-height: var(--touch-comfortable);
-  transition: transform var(--transition-fast), background var(--transition-fast);
+  transition: transform var(--transition-fast);
 }
 
 .temperature-display.tappable:hover {
-  background: var(--bg-secondary);
+  /* Remove background animation - not GPU accelerated */
 }
 
 .temperature-display.tappable:active {

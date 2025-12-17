@@ -173,7 +173,7 @@ function handleCancel() {
   border: 2px solid var(--bg-tertiary);
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: transform var(--transition-fast), border-color var(--transition-fast);
+  transition: transform var(--transition-fast);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -182,7 +182,7 @@ function handleCancel() {
 }
 
 .preset-button:hover {
-  border-color: var(--prusa-orange);
+  /* Remove border-color animation - not GPU accelerated */
 }
 
 .preset-button:active {
@@ -222,7 +222,6 @@ function handleCancel() {
   font-size: 18px;
   font-weight: bold;
   font-family: inherit;
-  transition: border-color var(--transition-fast);
 }
 
 .custom-input input:focus {
