@@ -79,6 +79,20 @@ src/
 2. Run `just api-update`
 3. Commit spec + generated files together
 
+**CRITICAL: Flat Command Structure**
+
+Movement commands MUST use flat structure, NOT nested:
+
+```typescript
+// ✅ CORRECT (flat structure)
+{ command: "jog", z: 1 }
+
+// ❌ WRONG (nested structure - won't work!)
+{ jog: { command: "jog", z: 1 } }
+```
+
+**See:** `spec/README.md` for complete maintenance guide and common pitfalls
+
 ### Authentication
 
 **Kiosk Mode:** Server-side auth via auth-helper (Node.js proxy at :8080) handles HTTP Digest with PrusaLink. Browser makes unauthenticated requests to `/api/v1/*`.
@@ -142,9 +156,12 @@ Only animate `transform` and `opacity`. NEVER animate width, height, margin, pad
 
 **DO NOT:**
 - ❌ Edit `src/api/` directly (auto-generated)
+- ❌ Use nested command structures in OpenAPI spec (use flat structure)
+- ❌ Change `/api/settings` to `/api/v1/settings` (different prefixes are intentional)
 - ❌ Animate anything except `transform` and `opacity`
 - ❌ Add component libraries (breaks bundle size)
 - ❌ Poll faster than 2s (overloads Pi CPU)
+- ❌ Forget to run `just api-update` after editing `spec/openapi.yaml`
 
 **DO:**
 - ✅ Use `just` commands not npm/bash
@@ -152,6 +169,8 @@ Only animate `transform` and `opacity`. NEVER animate width, height, margin, pad
 - ✅ Clean up intervals/timers in `onUnmounted`
 - ✅ Use `bd` for issue tracking
 - ✅ Follow TDD workflow
+- ✅ Verify endpoint structures against Prusa-Link-Web source code
+- ✅ See `spec/README.md` for OpenAPI maintenance guide
 
 ## Development Workflow
 
@@ -166,4 +185,5 @@ Only animate `transform` and `opacity`. NEVER animate width, height, margin, pad
 - **Design spec:** `../prusatouch-design-doc.md`
 - **Implementation plans:** `docs/plans/`
 - **Deployment:** `docs/deployment.md`
+- **OpenAPI maintenance:** `spec/README.md`
 - **Active issues:** `bd list`
