@@ -127,4 +127,4 @@ When updating the spec, verify against these Prusa-Link-Web sources:
 See also:
 - `/home/kkolk/prusatouch/CLAUDE.md` - Project-wide guidelines
 - `/home/kkolk/prusatouch/docs/deployment.md` - Deployment and auth setup
-- Prusa-Link-Web repository - Canonical source of truth for API behavior
+- [Prusa-Link-Web repository](https://github.com/prusa3d/Prusa-Link-Web) - Canonical source of truth for API behavior

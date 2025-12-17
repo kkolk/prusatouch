@@ -5,6 +5,7 @@
       <div class="top-bar-content">
         <h1 class="app-title">PrusaTouch</h1>
         <!-- Position Display (Control View Only) -->
+        <!-- Note: Position values use 1 decimal place for compact display in top bar -->
         <div v-if="isControlView" class="position-compact">
           <span class="pos-item">
             <span class="pos-label">X:</span>
