@@ -110,6 +110,10 @@ export const useFilesStore = defineStore('files', () => {
     return thumbnailCache.value.get(path) || null
   }
 
+  function clearThumbnailCache() {
+    thumbnailCache.value.clear()
+  }
+
   return {
     // State
     storages,
@@ -128,6 +132,7 @@ export const useFilesStore = defineStore('files', () => {
     startPrint,
     deleteFile,
     cacheThumbnail,
-    getThumbnail
+    getThumbnail,
+    clearThumbnailCache
   }
 })
