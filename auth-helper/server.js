@@ -9,6 +9,7 @@ const PRUSALINK_USER = process.env.PRUSALINK_USER;
 const PRUSALINK_PASS = process.env.PRUSALINK_PASS;
 const PRUSALINK_HOST = 'http://127.0.0.1:80';
 const SPA_PATH = process.env.SPA_PATH || '/opt/prusatouch/dist';
+const DEBUG = process.env.DEBUG === 'true';
 
 // Validate required environment variables
 if (!PRUSALINK_USER || !PRUSALINK_PASS) {
@@ -52,7 +53,9 @@ function parseWWWAuthenticate(header) {
     challenge[key] = value;
   }
 
-  console.log('Parsed WWW-Authenticate challenge:', challenge);
+  if (DEBUG) {
+    console.log('Parsed WWW-Authenticate challenge:', challenge);
+  }
 
   return challenge;
 }
@@ -94,20 +97,28 @@ function computeDigestResponse(method, uri, username, password, realm, nonce, cn
     // MD5-sess: HA1 = MD5(MD5(username:realm:password):nonce:cnonce)
     const ha1_base = md5(`${username}:${realm}:${password}`);
     ha1 = md5(`${ha1_base}:${nonce}:${cnonce}`);
-    console.log(`HA1 (MD5-sess) = MD5(MD5(${username}:${realm}:****):${nonce}:${cnonce}) = ${ha1}`);
+    if (DEBUG) {
+      console.log(`HA1 (MD5-sess) = MD5(MD5(${username}:${realm}:****):${nonce}:${cnonce}) = ${ha1}`);
+    }
   } else {
     // MD5: HA1 = MD5(username:realm:password)
     ha1 = md5(`${username}:${realm}:${password}`);
-    console.log(`HA1 (MD5) = MD5(${username}:${realm}:****) = ${ha1}`);
+    if (DEBUG) {
+      console.log(`HA1 (MD5) = MD5(${username}:${realm}:****) = ${ha1}`);
+    }
   }
 
   // HA2 = MD5(method:uri)
   const ha2 = md5(`${method}:${uri}`);
-  console.log(`HA2 = MD5(${method}:${uri}) = ${ha2}`);
+  if (DEBUG) {
+    console.log(`HA2 = MD5(${method}:${uri}) = ${ha2}`);
+  }
 
   // response = MD5(HA1:nonce:nc:cnonce:qop:HA2)
   const response = md5(`${ha1}:${nonce}:${nc}:${cnonce}:${qop}:${ha2}`);
-  console.log(`response = MD5(${ha1}:${nonce}:${nc}:${cnonce}:${qop}:${ha2}) = ${response}`);
+  if (DEBUG) {
+    console.log(`response = MD5(${ha1}:${nonce}:${nc}:${cnonce}:${qop}:${ha2}) = ${response}`);
+  }
 
   return response;
 }
@@ -144,7 +155,9 @@ function buildAuthorizationHeader(username, realm, nonce, uri, qop, cnonce, nc, 
 
   const header = parts.join(', ');
 
-  console.log('Built Authorization header:', header);
+  if (DEBUG) {
+    console.log('Built Authorization header:', header);
+  }
 
   return header;
 }
@@ -162,7 +175,9 @@ async function requestWithDigest(method, url, headers, data) {
 
   // Try with cached nonce first (if available)
   if (nonceCache.nonce && nonceCache.nc > 0) {
-    console.log(`Attempting request with cached nonce (nc=${nonceCache.nc})`);
+    if (DEBUG) {
+      console.log(`Attempting request with cached nonce (nc=${nonceCache.nc})`);
+    }
 
     try {
       const nc = (++nonceCache.nc).toString(16).padStart(8, '0');
@@ -219,24 +234,34 @@ async function requestWithDigest(method, url, headers, data) {
       });
 
       if (cachedResponse.status !== 401) {
-        console.log(`Cached nonce worked! Status: ${cachedResponse.status}`);
+        if (DEBUG) {
+          console.log(`Cached nonce worked! Status: ${cachedResponse.status}`);
+        }
         return cachedResponse;
       }
 
-      console.log('Cached nonce failed (401), will retry with fresh challenge');
+      if (DEBUG) {
+        console.log('Cached nonce failed (401), will retry with fresh challenge');
+      }
 
       // Check for stale nonce
       const wwwAuth = cachedResponse.headers['www-authenticate'];
       if (wwwAuth && wwwAuth.includes('stale=true')) {
-        console.log('Nonce is stale, clearing cache');
+        if (DEBUG) {
+          console.log('Nonce is stale, clearing cache');
+        }
       }
     } catch (error) {
-      console.log('Cached nonce request failed:', error.message);
+      if (DEBUG) {
+        console.log('Cached nonce request failed:', error.message);
+      }
     }
   }
 
   // Make initial request without auth to get challenge
-  console.log(`Making initial request to get WWW-Authenticate challenge`);
+  if (DEBUG) {
+    console.log(`Making initial request to get WWW-Authenticate challenge`);
+  }
   const initialResponse = await axios({
     method,
     url,
@@ -260,7 +285,9 @@ async function requestWithDigest(method, url, headers, data) {
 
   if (initialResponse.status !== 401) {
     // No auth required or unexpected response
-    console.log(`Initial request succeeded without auth (status ${initialResponse.status})`);
+    if (DEBUG) {
+      console.log(`Initial request succeeded without auth (status ${initialResponse.status})`);
+    }
     return initialResponse;
   }
 
@@ -270,7 +297,9 @@ async function requestWithDigest(method, url, headers, data) {
     throw new Error('401 response missing WWW-Authenticate header');
   }
 
-  console.log('Received 401 with WWW-Authenticate:', wwwAuth);
+  if (DEBUG) {
+    console.log('Received 401 with WWW-Authenticate:', wwwAuth);
+  }
   const challenge = parseWWWAuthenticate(wwwAuth);
 
   const { realm, nonce, qop = 'auth', algorithm = 'MD5', opaque = null } = challenge;
@@ -318,7 +347,9 @@ async function requestWithDigest(method, url, headers, data) {
   );
 
   // Retry request with Authorization header
-  console.log(`Retrying request with digest authentication`);
+  if (DEBUG) {
+    console.log(`Retrying request with digest authentication`);
+  }
 
   try {
     const authResponse = await axios({
@@ -341,7 +372,9 @@ async function requestWithDigest(method, url, headers, data) {
           try {
             return JSON.parse(data);
           } catch (e) {
-            console.log('Failed to parse JSON response, returning as text');
+            if (DEBUG) {
+              console.log('Failed to parse JSON response, returning as text');
+            }
             return data;
           }
         }
@@ -379,9 +412,11 @@ app.all('/api/*', async (req, res) => {
   const path = req.url;
   const url = `${PRUSALINK_HOST}${path}`;
 
-  console.log(`\n=== Forwarding ${req.method} ${path} to ${url} ===`);
-  if (req.body && req.method === 'POST') {
-    console.log(`Request body: ${JSON.stringify(req.body)}`);
+  if (DEBUG) {
+    console.log(`\n=== Forwarding ${req.method} ${path} to ${url} ===`);
+    if (req.body && req.method === 'POST') {
+      console.log(`Request body: ${JSON.stringify(req.body)}`);
+    }
   }
 
   try {
@@ -399,7 +434,9 @@ app.all('/api/*', async (req, res) => {
       req.body
     );
 
-    console.log(`Response status: ${response.status}`);
+    if (DEBUG) {
+      console.log(`Response status: ${response.status}`);
+    }
 
     // Forward response headers (exclude some)
     Object.entries(response.headers).forEach(([key, value]) => {
