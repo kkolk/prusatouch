@@ -57,14 +57,6 @@ describe('HomeView', () => {
     expect(wrapper.findComponent({ name: 'StatusBadge' }).exists()).toBe(true)
   })
 
-  it('displays temperature displays', () => {
-    const wrapper = mount(HomeView, {
-      global: { plugins: [router] }
-    })
-    const tempDisplays = wrapper.findAllComponents({ name: 'TemperatureDisplay' })
-    expect(tempDisplays.length).toBe(2) // nozzle and bed
-  })
-
   it('shows idle state content when not printing', () => {
     const wrapper = mount(HomeView, {
       global: { plugins: [router] }

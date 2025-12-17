@@ -19,6 +19,21 @@
             <span class="pos-value">{{ position.z.toFixed(1) }}</span>
           </span>
         </div>
+        <!-- Temperature Display (Home View Only) -->
+        <div v-if="isHomeView" class="temps-compact">
+          <span class="temp-item">
+            <span class="temp-icon">🔥</span>
+            <span class="temp-value">{{ nozzleTemp.current }}°</span>
+            <span class="temp-separator">/</span>
+            <span class="temp-target">{{ nozzleTemp.target }}°</span>
+          </span>
+          <span class="temp-item">
+            <span class="temp-icon">🛏️</span>
+            <span class="temp-value">{{ bedTemp.current }}°</span>
+            <span class="temp-separator">/</span>
+            <span class="temp-target">{{ bedTemp.target }}°</span>
+          </span>
+        </div>
         <div class="top-bar-actions">
           <button class="settings-btn" @click="goToDebug" aria-label="Debug">
             <span class="settings-icon">🐛</span>
@@ -72,11 +87,22 @@ const tabs = [
 ]
 
 const isControlView = computed(() => route.path === '/control')
+const isHomeView = computed(() => route.path === '/')
 
 const position = computed(() => ({
   x: printerStore.status?.axis_x ?? 0,
   y: printerStore.status?.axis_y ?? 0,
   z: printerStore.status?.axis_z ?? 0
+}))
+
+const nozzleTemp = computed(() => ({
+  current: Math.round(printerStore.status?.temp_nozzle ?? 0),
+  target: Math.round(printerStore.status?.target_nozzle ?? 0)
+}))
+
+const bedTemp = computed(() => ({
+  current: Math.round(printerStore.status?.temp_bed ?? 0),
+  target: Math.round(printerStore.status?.target_bed ?? 0)
 }))
 
 function isActive(path: string): boolean {
@@ -159,6 +185,40 @@ function goToDebug() {
   color: var(--prusa-orange);
   font-family: monospace;
   min-width: 40px;
+}
+
+/* Temperature Display (Compact) */
+.temps-compact {
+  display: flex;
+  gap: var(--space-md);
+  align-items: center;
+}
+
+.temp-item {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.temp-icon {
+  font-size: 16px;
+}
+
+.temp-value {
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.temp-separator {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.temp-target {
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--text-secondary);
 }
 
 .top-bar-actions {

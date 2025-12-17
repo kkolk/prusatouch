@@ -3,18 +3,6 @@
     <!-- Status Header -->
     <div class="status-header">
       <StatusBadge :state="printerState" />
-      <div class="temperatures">
-        <TemperatureDisplay
-          :current="nozzleTemp.current"
-          :target="nozzleTemp.target"
-          type="nozzle"
-        />
-        <TemperatureDisplay
-          :current="bedTemp.current"
-          :target="bedTemp.target"
-          type="bed"
-        />
-      </div>
     </div>
 
     <!-- Connection Error Banner -->
@@ -123,7 +111,6 @@ import { useStatus, useJob } from '../composables'
 import { useFilesStore } from '../stores/files'
 import type { FileInfo } from '../api/models/FileInfo'
 import StatusBadge from '../components/StatusBadge.vue'
-import TemperatureDisplay from '../components/TemperatureDisplay.vue'
 import ProgressRing from '../components/ProgressRing.vue'
 import TouchButton from '../components/TouchButton.vue'
 import BottomSheet from '../components/BottomSheet.vue'
@@ -134,8 +121,6 @@ const filesStore = useFilesStore()
 // Composables
 const {
   printerState,
-  nozzleTemp,
-  bedTemp,
   connectionError,
   startPolling,
   stopPolling
@@ -219,11 +204,6 @@ async function handleStop() {
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.temperatures {
-  display: flex;
-  gap: var(--space-lg);
 }
 
 /* Error Banner */
