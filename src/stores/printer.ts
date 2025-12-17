@@ -8,6 +8,14 @@ import { ToolTargetCommand } from '../api/models/ToolTargetCommand'
 import { ToolExtrudeCommand } from '../api/models/ToolExtrudeCommand'
 import { BedTargetCommand } from '../api/models/BedTargetCommand'
 
+export interface TemperatureDataPoint {
+  timestamp: number
+  nozzle: number
+  bed: number
+  nozzleTarget: number
+  bedTarget: number
+}
+
 export const usePrinterStore = defineStore('printer', () => {
   // State
   const status = ref<StatusPrinter | null>(null)
@@ -21,6 +29,7 @@ export const usePrinterStore = defineStore('printer', () => {
     enabled: false,
     timerId: null as number | null
   })
+  const temperatureHistory = ref<TemperatureDataPoint[]>([])
 
   // Getters
   const isConnected = computed(() => connection.value.connected)
@@ -40,6 +49,24 @@ export const usePrinterStore = defineStore('printer', () => {
       connection.value.connected = true
       connection.value.lastUpdate = new Date()
       connection.value.retryCount = 0
+
+      // Record temperature data point
+      if (status.value) {
+        const dataPoint: TemperatureDataPoint = {
+          timestamp: Date.now(),
+          nozzle: status.value.temp_nozzle || 0,
+          bed: status.value.temp_bed || 0,
+          nozzleTarget: status.value.target_nozzle || 0,
+          bedTarget: status.value.target_bed || 0
+        }
+
+        temperatureHistory.value.push(dataPoint)
+
+        // Keep only last 100 data points (10 minutes at 2s intervals when printing)
+        if (temperatureHistory.value.length > 100) {
+          temperatureHistory.value = temperatureHistory.value.slice(-100)
+        }
+      }
     } catch (error) {
       connection.value.connected = false
       connection.value.retryCount++
@@ -240,6 +267,7 @@ export const usePrinterStore = defineStore('printer', () => {
     status,
     connection,
     polling,
+    temperatureHistory,
 
     // Getters
     isConnected,

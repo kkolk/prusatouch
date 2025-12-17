@@ -46,6 +46,15 @@
         </p>
       </div>
 
+      <!-- Temperature Graph -->
+      <div v-if="printerStore.temperatureHistory.length > 0" class="temperature-graph-container">
+        <TemperatureGraph
+          :data="printerStore.temperatureHistory"
+          :width="760"
+          :height="180"
+        />
+      </div>
+
       <div class="job-controls">
         <TouchButton
           v-if="printerState === 'PRINTING'"
@@ -121,6 +130,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useStatus, useJob } from '../composables'
 import { useFilesStore } from '../stores/files'
 import { useJobStore } from '../stores/job'
+import { usePrinterStore } from '../stores/printer'
 import type { FileInfo } from '../api/models/FileInfo'
 import StatusBadge from '../components/StatusBadge.vue'
 import ProgressRing from '../components/ProgressRing.vue'
@@ -128,9 +138,11 @@ import TouchButton from '../components/TouchButton.vue'
 import BottomSheet from '../components/BottomSheet.vue'
 import FileBrowser from '../components/FileBrowser.vue'
 import ConfirmDialog from '../components/ConfirmDialog.vue'
+import TemperatureGraph from '../components/TemperatureGraph.vue'
 
 const filesStore = useFilesStore()
 const jobStore = useJobStore()
+const printerStore = usePrinterStore()
 
 // Composables
 const {
@@ -349,6 +361,13 @@ async function handleStop() {
   font-size: 14px;
   color: var(--text-tertiary);
   margin: var(--space-xs) 0 0 0;
+}
+
+.temperature-graph-container {
+  width: 100%;
+  max-width: 760px;
+  overflow-x: auto;
+  margin-top: var(--space-md);
 }
 
 .job-controls {
