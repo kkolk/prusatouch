@@ -14,21 +14,6 @@ describe('ControlView', () => {
     expect(wrapper.find('.control-view').exists()).toBe(true)
   })
 
-  it('displays position coordinates', () => {
-    const printerStore = usePrinterStore()
-    printerStore.status = {
-      axis_x: 100,
-      axis_y: 50,
-      axis_z: 10
-    }
-
-    const wrapper = mount(ControlView)
-
-    expect(wrapper.text()).toContain('100.00')
-    expect(wrapper.text()).toContain('50.00')
-    expect(wrapper.text()).toContain('10.00')
-  })
-
   it('renders DirectionalPad component', () => {
     const wrapper = mount(ControlView)
     expect(wrapper.findComponent({ name: 'DirectionalPad' }).exists()).toBe(true)

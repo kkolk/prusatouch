@@ -4,6 +4,21 @@
     <header class="top-bar">
       <div class="top-bar-content">
         <h1 class="app-title">PrusaTouch</h1>
+        <!-- Position Display (Control View Only) -->
+        <div v-if="isControlView" class="position-compact">
+          <span class="pos-item">
+            <span class="pos-label">X:</span>
+            <span class="pos-value">{{ position.x.toFixed(1) }}</span>
+          </span>
+          <span class="pos-item">
+            <span class="pos-label">Y:</span>
+            <span class="pos-value">{{ position.y.toFixed(1) }}</span>
+          </span>
+          <span class="pos-item">
+            <span class="pos-label">Z:</span>
+            <span class="pos-value">{{ position.z.toFixed(1) }}</span>
+          </span>
+        </div>
         <div class="top-bar-actions">
           <button class="settings-btn" @click="goToDebug" aria-label="Debug">
             <span class="settings-icon">🐛</span>
@@ -41,10 +56,13 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { usePrinterStore } from './stores/printer'
 
 const router = useRouter()
 const route = useRoute()
+const printerStore = usePrinterStore()
 
 const tabs = [
   { name: 'home', route: '/', icon: '🏠', label: 'Home' },
@@ -52,6 +70,14 @@ const tabs = [
   { name: 'control', route: '/control', icon: '🎮', label: 'Control' },
   { name: 'settings', route: '/settings', icon: '⚙️', label: 'Settings' }
 ]
+
+const isControlView = computed(() => route.path === '/control')
+
+const position = computed(() => ({
+  x: printerStore.status?.axis_x ?? 0,
+  y: printerStore.status?.axis_y ?? 0,
+  z: printerStore.status?.axis_z ?? 0
+}))
 
 function isActive(path: string): boolean {
   return route.path === path
@@ -106,6 +132,33 @@ function goToDebug() {
   font-weight: bold;
   color: var(--prusa-orange);
   margin: 0;
+}
+
+/* Position Display (Compact) */
+.position-compact {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.pos-item {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+}
+
+.pos-label {
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--text-secondary);
+}
+
+.pos-value {
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--prusa-orange);
+  font-family: monospace;
+  min-width: 40px;
 }
 
 .top-bar-actions {
