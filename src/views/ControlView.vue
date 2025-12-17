@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { usePrinterStore } from '../stores/printer'
 import DirectionalPad from '../components/DirectionalPad.vue'
 import TouchButton from '../components/TouchButton.vue'
+import ExtruderControl from '../components/ExtruderControl.vue'
 
 // Store
 const printerStore = usePrinterStore()
@@ -21,6 +22,13 @@ const selectedStep = ref(1) // Default to 1mm
 const stepOptions = [0.1, 1, 10, 100]
 const errorMessage = ref<string>('')
 const isLoading = ref(false)
+const showExtruderControl = ref(false)
+
+// Computed
+const nozzleTemp = computed(() => ({
+  current: printerStore.status?.temp_nozzle || 0,
+  target: printerStore.status?.target_nozzle || 0
+}))
 
 // Methods
 function selectStep(step: number) {
@@ -66,6 +74,53 @@ async function handleDisableSteppers() {
     isLoading.value = false
   }
 }
+
+function openExtruderControl() {
+  showExtruderControl.value = true
+}
+
+function closeExtruderControl() {
+  showExtruderControl.value = false
+}
+
+async function handleExtrude(amount: number) {
+  try {
+    errorMessage.value = ''
+    isLoading.value = true
+    await printerStore.extrudeFilament(amount)
+  } catch (error) {
+    console.error('Failed to extrude:', error)
+    errorMessage.value = 'Failed to extrude filament. Please try again.'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+async function handleRetract(amount: number) {
+  try {
+    errorMessage.value = ''
+    isLoading.value = true
+    await printerStore.retractFilament(amount)
+  } catch (error) {
+    console.error('Failed to retract:', error)
+    errorMessage.value = 'Failed to retract filament. Please try again.'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+async function handleSetTemp(temp: number) {
+  try {
+    errorMessage.value = ''
+    isLoading.value = true
+    await printerStore.setNozzleTemp(temp)
+  } catch (error) {
+    console.error('Failed to set nozzle temperature:', error)
+    errorMessage.value = 'Failed to set nozzle temperature. Please try again.'
+  } finally {
+    isLoading.value = false
+  }
+}
 </script>
 
 <template>
@@ -105,7 +160,25 @@ async function handleDisableSteppers() {
           Disable Steppers
         </TouchButton>
       </div>
+
+      <!-- Extruder Controls Button -->
+      <div class="extruder-button-container">
+        <TouchButton variant="primary" @click="openExtruderControl">
+          Extruder Controls
+        </TouchButton>
+      </div>
     </div>
+
+    <!-- Extruder Control Bottom Sheet -->
+    <ExtruderControl
+      :visible="showExtruderControl"
+      :current="nozzleTemp.current"
+      :target="nozzleTemp.target"
+      @close="closeExtruderControl"
+      @extrude="handleExtrude"
+      @retract="handleRetract"
+      @set-temp="handleSetTemp"
+    />
   </div>
 </template>
 
@@ -183,5 +256,12 @@ async function handleDisableSteppers() {
   gap: var(--space-md);
   justify-content: center;
   margin-top: var(--space-sm);
+}
+
+/* Extruder Button Container */
+.extruder-button-container {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-md);
 }
 </style>

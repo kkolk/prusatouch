@@ -110,4 +110,53 @@ describe('ControlView', () => {
 
     expect(disableSteppersSpy).toHaveBeenCalled()
   })
+
+  it('renders Extruder Controls button', () => {
+    const wrapper = mount(ControlView)
+    const extruderButton = wrapper.findAll('button').find(btn =>
+      btn.text().includes('Extruder Controls')
+    )
+    expect(extruderButton?.exists()).toBe(true)
+  })
+
+  it('shows ExtruderControl component', () => {
+    const wrapper = mount(ControlView)
+    expect(wrapper.findComponent({ name: 'ExtruderControl' }).exists()).toBe(true)
+  })
+
+  it('calls extrudeFilament when ExtruderControl emits extrude', async () => {
+    const printerStore = usePrinterStore()
+    const extrudeSpy = vi.spyOn(printerStore, 'extrudeFilament').mockResolvedValue()
+
+    const wrapper = mount(ControlView)
+    const extruderControl = wrapper.findComponent({ name: 'ExtruderControl' })
+
+    await extruderControl.vm.$emit('extrude', 5)
+
+    expect(extrudeSpy).toHaveBeenCalledWith(5)
+  })
+
+  it('calls retractFilament when ExtruderControl emits retract', async () => {
+    const printerStore = usePrinterStore()
+    const retractSpy = vi.spyOn(printerStore, 'retractFilament').mockResolvedValue()
+
+    const wrapper = mount(ControlView)
+    const extruderControl = wrapper.findComponent({ name: 'ExtruderControl' })
+
+    await extruderControl.vm.$emit('retract', 10)
+
+    expect(retractSpy).toHaveBeenCalledWith(10)
+  })
+
+  it('calls setNozzleTemp when ExtruderControl emits set-temp', async () => {
+    const printerStore = usePrinterStore()
+    const setTempSpy = vi.spyOn(printerStore, 'setNozzleTemp').mockResolvedValue()
+
+    const wrapper = mount(ControlView)
+    const extruderControl = wrapper.findComponent({ name: 'ExtruderControl' })
+
+    await extruderControl.vm.$emit('set-temp', 215)
+
+    expect(setTempSpy).toHaveBeenCalledWith(215)
+  })
 })
