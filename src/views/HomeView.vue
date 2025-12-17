@@ -102,21 +102,35 @@
       @close="closeFileBrowser"
       @file-selected="handleFileSelected"
     />
+
+    <!-- Start Print Confirmation -->
+    <ConfirmDialog
+      :visible="showStartPrintConfirm"
+      title="Start Print"
+      :message="confirmMessage"
+      confirm-text="Start Print"
+      cancel-text="Cancel"
+      @confirm="handleConfirmStartPrint"
+      @cancel="handleCancelStartPrint"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useStatus, useJob } from '../composables'
 import { useFilesStore } from '../stores/files'
+import { useJobStore } from '../stores/job'
 import type { FileInfo } from '../api/models/FileInfo'
 import StatusBadge from '../components/StatusBadge.vue'
 import ProgressRing from '../components/ProgressRing.vue'
 import TouchButton from '../components/TouchButton.vue'
 import BottomSheet from '../components/BottomSheet.vue'
 import FileBrowser from '../components/FileBrowser.vue'
+import ConfirmDialog from '../components/ConfirmDialog.vue'
 
 const filesStore = useFilesStore()
+const jobStore = useJobStore()
 
 // Composables
 const {
@@ -144,6 +158,19 @@ const {
 // Local state
 const showStopConfirm = ref(false)
 const showFileBrowser = ref(false)
+const showStartPrintConfirm = ref(false)
+const selectedFile = ref<FileInfo | null>(null)
+
+// Computed
+const confirmMessage = computed(() => {
+  if (!selectedFile.value) return ''
+
+  const file = selectedFile.value
+  const fileName = file.display_name || file.name
+  const fileSize = formatFileSize(file.size)
+
+  return `File: ${fileName}\nSize: ${fileSize}\n\nStart printing this file?`
+})
 
 // Lifecycle
 onMounted(() => {
@@ -154,6 +181,19 @@ onUnmounted(() => {
   stopPolling()
 })
 
+// Helpers
+function formatFileSize(size: number | undefined): string {
+  if (!size) return 'Unknown'
+
+  if (size < 1024) return `${size} B`
+  if (size < 1024 * 1024) {
+    const kb = size / 1024
+    return kb % 1 === 0 ? `${kb} KB` : `${kb.toFixed(1)} KB`
+  }
+  if (size < 1024 * 1024 * 1024) return `${(size / (1024 * 1024)).toFixed(1)} MB`
+  return `${(size / (1024 * 1024 * 1024)).toFixed(1)} GB`
+}
+
 // Actions
 function openFileBrowser() {
   showFileBrowser.value = true
@@ -163,16 +203,35 @@ function closeFileBrowser() {
   showFileBrowser.value = false
 }
 
-async function handleFileSelected(file: FileInfo) {
+function handleFileSelected(file: FileInfo) {
+  selectedFile.value = file
+  showStartPrintConfirm.value = true
+}
+
+function handleCancelStartPrint() {
+  showStartPrintConfirm.value = false
+  selectedFile.value = null
+}
+
+async function handleConfirmStartPrint() {
+  if (!selectedFile.value) return
+
   try {
     // Construct the full path from current path and file name
     const fullPath = filesStore.currentPath === '/'
-      ? file.name
-      : `${filesStore.currentPath}/${file.name}`
-    await filesStore.startPrint(filesStore.currentStorage, fullPath)
+      ? selectedFile.value.name
+      : `${filesStore.currentPath}/${selectedFile.value.name}`
+
+    // Use jobStore.startPrint instead of filesStore.startPrint
+    await jobStore.startPrint(filesStore.currentStorage, fullPath)
+
+    // Close dialogs
+    showStartPrintConfirm.value = false
     showFileBrowser.value = false
+    selectedFile.value = null
   } catch (error) {
     console.error('Failed to start print:', error)
+    // Keep dialogs open so user can retry
   }
 }
 

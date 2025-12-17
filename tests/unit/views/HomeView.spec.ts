@@ -101,4 +101,18 @@ describe('HomeView - Interactive Elements', () => {
     // Verify pause/resume logic is present
     expect(wrapper.text()).toContain('Printer Ready')
   })
+
+  it('shows ConfirmDialog component for start print confirmation', () => {
+    const wrapper = mount(HomeView, {
+      global: { plugins: [router] }
+    })
+    expect(wrapper.findComponent({ name: 'ConfirmDialog' }).exists()).toBe(true)
+  })
+
+  it('displays FileBrowser component', () => {
+    const wrapper = mount(HomeView, {
+      global: { plugins: [router] }
+    })
+    expect(wrapper.findComponent({ name: 'FileBrowser' }).exists()).toBe(true)
+  })
 })
