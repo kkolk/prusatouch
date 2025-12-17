@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useJobStore } from '../../../src/stores/job'
+import { usePrinterStore } from '../../../src/stores/printer'
 
 describe('jobStore', () => {
   beforeEach(() => {
@@ -80,6 +81,9 @@ describe('jobStore', () => {
 
     it('returns speed from printer status when job is active', () => {
       const store = useJobStore()
+      const printerStore = usePrinterStore()
+
+      // Set job first
       store.currentJob = {
         id: 123,
         state: 'PRINTING',
@@ -89,9 +93,26 @@ describe('jobStore', () => {
         file: { name: 'test.gcode', path: '/test.gcode', size: 1024, m_timestamp: Date.now() }
       }
 
-      // PrintSpeed should come from printerStore, not jobStore
-      // For now, return 100 as default (will be implemented later)
-      expect(store.printSpeed).toBe(100)
+      // Set up printer status with speed
+      printerStore.status = {
+        printer: {
+          state: 'PRINTING',
+          temp_nozzle: 215,
+          target_nozzle: 215,
+          temp_bed: 60,
+          target_bed: 60,
+          axis_x: 100,
+          axis_y: 100,
+          axis_z: 50,
+          flow: 100,
+          speed: 105,
+          fan_hotend: 0,
+          fan_print: 255
+        }
+      } as any
+
+      // PrintSpeed comes from printerStore.status.printer.speed
+      expect(store.printSpeed).toBe(105)
     })
   })
 

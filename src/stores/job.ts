@@ -1,8 +1,10 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Job } from '../api/models/Job'
+import { usePrinterStore } from './printer'
 
 export const useJobStore = defineStore('job', () => {
+  const printerStore = usePrinterStore()
   // State
   const currentJob = ref<Job | null>(null)
   const history = ref<Job[]>([])
@@ -31,10 +33,10 @@ export const useJobStore = defineStore('job', () => {
   })
 
   const printSpeed = computed(() => {
-    // Speed comes from printerStore, default to 100%
-    // This will be enhanced when we integrate with printerStore
+    // Get real speed from printer status
+    // Returns 0 when no job active (will be hidden by UI conditional)
     if (!currentJob.value) return 0
-    return 100
+    return printerStore.status?.printer?.speed ?? 0
   })
 
   const currentLayer = computed(() => {
