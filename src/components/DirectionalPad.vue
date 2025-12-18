@@ -107,8 +107,8 @@ function handleMove(axis: 'x' | 'y' | 'z', direction: number) {
 }
 
 .pad-center {
-  width: 60px;
-  height: 60px;
+  width: 70px;
+  height: 70px;
   background: var(--bg-tertiary);
   border-radius: var(--radius-md);
 }
@@ -130,10 +130,10 @@ function handleMove(axis: 'x' | 'y' | 'z', direction: number) {
 
 /* Pad Buttons */
 .pad-button {
-  min-width: 60px;
-  min-height: 60px;
-  width: 60px;
-  height: 60px;
+  min-width: 70px;
+  min-height: 70px;
+  width: 70px;
+  height: 70px;
   border: none;
   border-radius: var(--radius-md);
   background: var(--bg-secondary);

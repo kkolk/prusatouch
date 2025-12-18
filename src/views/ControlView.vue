@@ -187,7 +187,7 @@ async function handleSetTemp(temp: number) {
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: var(--space-sm);
+  padding: var(--space-xs);
   gap: var(--space-xs);
   overflow-y: auto;
 }
@@ -247,7 +247,6 @@ async function handleSetTemp(temp: number) {
 .pad-container {
   display: flex;
   justify-content: center;
-  padding: var(--space-xs) 0;
 }
 
 /* Action Buttons */
