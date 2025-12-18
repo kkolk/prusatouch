@@ -82,7 +82,7 @@ function handleMove(axis: 'x' | 'y' | 'z', direction: number) {
 <style scoped>
 .directional-pad {
   display: flex;
-  gap: var(--space-xl);
+  gap: var(--space-md);
   align-items: center;
   justify-content: center;
 }
@@ -107,8 +107,8 @@ function handleMove(axis: 'x' | 'y' | 'z', direction: number) {
 }
 
 .pad-center {
-  width: 80px;
-  height: 80px;
+  width: 60px;
+  height: 60px;
   background: var(--bg-tertiary);
   border-radius: var(--radius-md);
 }
@@ -122,7 +122,7 @@ function handleMove(axis: 'x' | 'y' | 'z', direction: number) {
 }
 
 .z-label {
-  font-size: 20px;
+  font-size: var(--font-md);
   font-weight: bold;
   color: var(--text-secondary);
   padding: var(--space-xs);
@@ -130,15 +130,15 @@ function handleMove(axis: 'x' | 'y' | 'z', direction: number) {
 
 /* Pad Buttons */
 .pad-button {
-  min-width: 80px;
-  min-height: 80px;
-  width: 80px;
-  height: 80px;
+  min-width: 60px;
+  min-height: 60px;
+  width: 60px;
+  height: 60px;
   border: none;
   border-radius: var(--radius-md);
   background: var(--bg-secondary);
   color: var(--text-primary);
-  font-size: 32px;
+  font-size: 28px;
   cursor: pointer;
   display: flex;
   align-items: center;

@@ -187,8 +187,8 @@ async function handleSetTemp(temp: number) {
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: var(--space-md);
-  gap: var(--space-lg);
+  padding: var(--space-sm);
+  gap: var(--space-xs);
   overflow-y: auto;
 }
 
@@ -208,7 +208,7 @@ async function handleSetTemp(temp: number) {
 .movement-section {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: var(--space-xs);
 }
 
 /* Step Selector */
@@ -247,21 +247,19 @@ async function handleSetTemp(temp: number) {
 .pad-container {
   display: flex;
   justify-content: center;
-  padding: var(--space-md) 0;
+  padding: var(--space-xs) 0;
 }
 
 /* Action Buttons */
 .action-buttons {
   display: flex;
-  gap: var(--space-md);
+  gap: var(--space-sm);
   justify-content: center;
-  margin-top: var(--space-sm);
 }
 
 /* Extruder Button Container */
 .extruder-button-container {
   display: flex;
   justify-content: center;
-  margin-top: var(--space-md);
 }
 </style>
