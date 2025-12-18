@@ -62,6 +62,45 @@ async function handleHomeAll() {
   }
 }
 
+async function handleHomeX() {
+  try {
+    errorMessage.value = ''
+    isLoading.value = true
+    await printerStore.homeAxes(['x'])
+  } catch (error) {
+    console.error('Failed to home X axis:', error)
+    errorMessage.value = 'Failed to home X axis. Please try again.'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+async function handleHomeY() {
+  try {
+    errorMessage.value = ''
+    isLoading.value = true
+    await printerStore.homeAxes(['y'])
+  } catch (error) {
+    console.error('Failed to home Y axis:', error)
+    errorMessage.value = 'Failed to home Y axis. Please try again.'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+async function handleHomeZ() {
+  try {
+    errorMessage.value = ''
+    isLoading.value = true
+    await printerStore.homeAxes(['z'])
+  } catch (error) {
+    console.error('Failed to home Z axis:', error)
+    errorMessage.value = 'Failed to home Z axis. Please try again.'
+  } finally {
+    isLoading.value = false
+  }
+}
+
 async function handleDisableSteppers() {
   try {
     errorMessage.value = ''
@@ -130,41 +169,47 @@ async function handleSetTemp(temp: number) {
       {{ errorMessage }}
     </div>
 
-    <!-- Movement Controls -->
-    <div class="movement-section">
-
-      <!-- Step Selector -->
-      <div class="step-selector">
-        <button
-          v-for="step in stepOptions"
-          :key="step"
-          class="step-button"
-          :class="{ active: selectedStep === step }"
-          @click="selectStep(step)"
-        >
-          {{ step }}mm
-        </button>
+    <!-- 3-Column Layout -->
+    <div class="control-container">
+      <!-- LEFT Column: Distance Controls -->
+      <div class="column column-left">
+        <div class="step-selector">
+          <button
+            v-for="step in stepOptions"
+            :key="step"
+            class="step-button"
+            :class="{ active: selectedStep === step }"
+            @click="selectStep(step)"
+          >
+            {{ step }}mm
+          </button>
+        </div>
       </div>
 
-      <!-- Directional Pad -->
-      <div class="pad-container">
+      <!-- CENTER Column: Directional Pad -->
+      <div class="column column-center">
         <DirectionalPad @move="handleMove" />
       </div>
 
-      <!-- Action Buttons -->
-      <div class="action-buttons">
+      <!-- RIGHT Column: Action Buttons -->
+      <div class="column column-right">
         <TouchButton variant="secondary" size="small" :loading="isLoading" @click="handleHomeAll">
           Home All
         </TouchButton>
-        <TouchButton variant="secondary" size="small" :loading="isLoading" @click="handleDisableSteppers">
-          Disable Steppers
+        <TouchButton variant="secondary" size="small" :loading="isLoading" @click="handleHomeX">
+          Home X
         </TouchButton>
-      </div>
-
-      <!-- Extruder Controls Button -->
-      <div class="extruder-button-container">
+        <TouchButton variant="secondary" size="small" :loading="isLoading" @click="handleHomeY">
+          Home Y
+        </TouchButton>
+        <TouchButton variant="secondary" size="small" :loading="isLoading" @click="handleHomeZ">
+          Home Z
+        </TouchButton>
         <TouchButton variant="primary" size="small" @click="openExtruderControl">
           Extruder Controls
+        </TouchButton>
+        <TouchButton variant="secondary" size="small" :loading="isLoading" @click="handleDisableSteppers">
+          Disable Steppers
         </TouchButton>
       </div>
     </div>
@@ -189,7 +234,7 @@ async function handleSetTemp(temp: number) {
   height: 100%;
   padding: var(--space-xs);
   gap: var(--space-xs);
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 /* Error Banner */
@@ -204,33 +249,66 @@ async function handleSetTemp(temp: number) {
   text-align: center;
 }
 
-/* Movement Section */
-.movement-section {
+/* 3-Column Control Container */
+.control-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--space-md);
+  height: 100%;
+  align-items: center;
+  padding: var(--space-sm);
+}
+
+/* Column Base Styles */
+.column {
   display: flex;
   flex-direction: column;
-  gap: var(--space-xs);
+  gap: var(--space-sm);
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+/* Left Column: Step Selector */
+.column-left {
+  justify-content: center;
+}
+
+/* Center Column: Directional Pad */
+.column-center {
+  justify-content: center;
+}
+
+/* Right Column: Action Buttons */
+.column-right {
+  justify-content: flex-start;
+  padding-top: var(--space-md);
 }
 
 /* Step Selector */
 .step-selector {
   display: flex;
+  flex-direction: column;
   gap: var(--space-sm);
+  align-items: center;
   justify-content: center;
 }
 
 .step-button {
   min-width: var(--touch-comfortable);
   min-height: var(--touch-min);
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--space-xs) var(--space-md);
   border: 2px solid var(--bg-tertiary);
   border-radius: var(--radius-md);
   background: var(--bg-secondary);
   color: var(--text-primary);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: bold;
   cursor: pointer;
   transition: transform var(--transition-fast);
   font-family: inherit;
+  width: 70px;
+  text-align: center;
 }
 
 .step-button:active {
@@ -241,24 +319,5 @@ async function handleSetTemp(temp: number) {
   border-color: var(--prusa-orange);
   background: var(--bg-tertiary);
   color: var(--prusa-orange);
-}
-
-/* Pad Container */
-.pad-container {
-  display: flex;
-  justify-content: center;
-}
-
-/* Action Buttons */
-.action-buttons {
-  display: flex;
-  gap: var(--space-sm);
-  justify-content: center;
-}
-
-/* Extruder Button Container */
-.extruder-button-container {
-  display: flex;
-  justify-content: center;
 }
 </style>
