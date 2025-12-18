@@ -19,7 +19,7 @@
 <script setup lang="ts">
 interface Props {
   variant?: 'primary' | 'secondary' | 'danger'
-  size?: 'medium' | 'large'
+  size?: 'small' | 'medium' | 'large'
   loading?: boolean
   disabled?: boolean
 }
@@ -99,6 +99,13 @@ function handleClick() {
 
 .touch-button--danger:hover:not(:disabled) {
   background: #ff0000;
+}
+
+/* Size: Small */
+.touch-button--small {
+  min-height: var(--touch-min);
+  font-size: var(--font-sm);
+  padding: var(--space-xs) var(--space-md);
 }
 
 /* Size: Large */

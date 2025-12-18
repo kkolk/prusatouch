@@ -153,17 +153,17 @@ async function handleSetTemp(temp: number) {
 
       <!-- Action Buttons -->
       <div class="action-buttons">
-        <TouchButton variant="secondary" :loading="isLoading" @click="handleHomeAll">
+        <TouchButton variant="secondary" size="small" :loading="isLoading" @click="handleHomeAll">
           Home All
         </TouchButton>
-        <TouchButton variant="secondary" :loading="isLoading" @click="handleDisableSteppers">
+        <TouchButton variant="secondary" size="small" :loading="isLoading" @click="handleDisableSteppers">
           Disable Steppers
         </TouchButton>
       </div>
 
       <!-- Extruder Controls Button -->
       <div class="extruder-button-container">
-        <TouchButton variant="primary" @click="openExtruderControl">
+        <TouchButton variant="primary" size="small" @click="openExtruderControl">
           Extruder Controls
         </TouchButton>
       </div>
