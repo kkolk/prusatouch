@@ -93,6 +93,13 @@ Movement commands MUST use flat structure, NOT nested:
 
 **See:** `spec/README.md` for complete maintenance guide and common pitfalls
 
+**Settings Endpoints:** Single `/api/settings` endpoint (not separate sub-endpoints)
+- GET/POST `/api/settings` - All printer/user/network settings via nested objects
+- GET/POST `/api/settings/sn` - Serial number management
+- POST `/api/settings/apikey` - API key rotation
+- ❌ NO `/api/settings/network`, `/api/settings/printer`, or `/api/settings/camera` endpoints
+- Verified against Prusa-Link-Web source: `settingsActions.js` uses only these 3 patterns
+
 ### Authentication
 
 **Kiosk Mode:** Server-side auth via auth-helper (Node.js proxy at :8080) handles HTTP Digest with PrusaLink. Browser makes unauthenticated requests to `/api/v1/*`.
