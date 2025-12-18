@@ -32,6 +32,13 @@
   --space-md: 20px;
   --space-lg: 40px;
 
+  /* Font Sizes */
+  --font-xs: 12px;
+  --font-sm: 14px;
+  --font-md: 16px;
+  --font-lg: 18px;
+  --font-xl: 24px;
+
   /* Border Radius */
   --radius-sm: 4px;
   --radius-md: 8px;

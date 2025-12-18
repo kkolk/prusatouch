@@ -136,7 +136,7 @@ onMounted(async () => {
 
 <style scoped>
 .file-browser {
-  min-height: 300px;
+  min-height: calc(3 * var(--touch-comfortable) + 2 * var(--space-md));
   max-height: 60vh;
   display: flex;
   flex-direction: column;
@@ -150,7 +150,7 @@ onMounted(async () => {
   border: 2px solid rgba(255, 0, 0, 0.3);
   border-radius: var(--radius-md);
   color: #ff6b6b;
-  font-size: 14px;
+  font-size: var(--font-sm);
   font-weight: 500;
   text-align: center;
 }
@@ -170,7 +170,7 @@ onMounted(async () => {
   color: var(--text-primary);
   border: 1px solid var(--bg-tertiary);
   border-radius: var(--radius-md);
-  font-size: 16px;
+  font-size: var(--font-md);
   font-family: inherit;
   cursor: pointer;
 }
@@ -192,8 +192,8 @@ onMounted(async () => {
 }
 
 .spinner {
-  width: 40px;
-  height: 40px;
+  width: var(--space-lg);
+  height: var(--space-lg);
   border: 4px solid var(--bg-tertiary);
   border-top-color: var(--prusa-orange);
   border-radius: 50%;
@@ -227,7 +227,7 @@ onMounted(async () => {
 
 .empty-state p {
   margin: 0;
-  font-size: 18px;
+  font-size: var(--font-lg);
 }
 
 /* Close Button */

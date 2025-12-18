@@ -172,12 +172,12 @@ function handleClose() {
 }
 
 .temp-reading .label {
-  font-size: 14px;
+  font-size: var(--font-sm);
   color: var(--text-secondary);
 }
 
 .temp-reading .value {
-  font-size: 24px;
+  font-size: var(--font-xl);
   font-weight: bold;
   color: var(--prusa-orange);
   font-family: monospace;
@@ -193,7 +193,7 @@ function handleClose() {
 }
 
 .status-text {
-  font-size: 16px;
+  font-size: var(--font-md);
   font-weight: bold;
 }
 
@@ -231,7 +231,7 @@ function handleClose() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-xs);
   transition: transform var(--transition-fast);
   font-family: inherit;
 }
@@ -241,12 +241,12 @@ function handleClose() {
 }
 
 .preset-label {
-  font-size: 14px;
+  font-size: var(--font-sm);
   font-weight: bold;
 }
 
 .preset-temp {
-  font-size: 12px;
+  font-size: var(--font-xs);
   color: var(--text-secondary);
 }
 
@@ -257,7 +257,7 @@ function handleClose() {
   color: var(--status-error);
   border-radius: var(--radius-md);
   text-align: center;
-  font-size: 14px;
+  font-size: var(--font-sm);
   margin-bottom: var(--space-md);
 }
 
@@ -268,7 +268,7 @@ function handleClose() {
 
 .section-label {
   display: block;
-  font-size: 14px;
+  font-size: var(--font-sm);
   color: var(--text-secondary);
   margin-bottom: var(--space-sm);
 }
@@ -286,7 +286,7 @@ function handleClose() {
   border-radius: var(--radius-md);
   background: var(--bg-secondary);
   color: var(--text-primary);
-  font-size: 16px;
+  font-size: var(--font-md);
   font-weight: bold;
   cursor: pointer;
   transition: transform var(--transition-fast);
