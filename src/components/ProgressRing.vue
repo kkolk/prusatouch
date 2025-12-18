@@ -75,9 +75,9 @@ svg {
   transform: scaleY(-1); /* Flip to make rotation work correctly */
 }
 
-/* Smooth transition on progress updates - GPU-accelerated */
+/* Progress updates are instant to avoid non-GPU-accelerated stroke-dasharray animation */
 .progress {
-  transition: stroke-dasharray var(--transition-slow);
+  /* Note: stroke-dasharray is not GPU-accelerated, so we avoid transitioning it */
 }
 
 .center-content {
