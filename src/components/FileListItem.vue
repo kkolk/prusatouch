@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useFilesStore } from '@/stores/files'
 import type { FileItem } from '@/stores/files'
 
 interface Props {
@@ -17,9 +18,11 @@ const emit = defineEmits<{
   click: [file: FileItem]
 }>()
 
+const filesStore = useFilesStore()
+
 // Thumbnail loading state
 const imgRef = ref<HTMLImageElement | null>(null)
-const loadedThumbnail = ref<string | null>(null)
+const cachedBlobUrl = ref<string | null>(null)
 let observer: IntersectionObserver | null = null
 
 // Detect if item is a folder
@@ -41,9 +44,16 @@ const formattedSize = computed(() => {
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
 })
 
-// Load thumbnail with cache busting
+// Load thumbnail with cache integration
 async function loadThumbnail(url: string) {
   try {
+    // Check if thumbnail is already cached in store
+    const cached = filesStore.getThumbnail(props.file.name)
+    if (cached) {
+      cachedBlobUrl.value = cached
+      return cached
+    }
+
     // Add cache busting with m_timestamp
     const cacheBustUrl = `${url}?ct=${props.file.m_timestamp || Date.now()}`
     const response = await fetch(cacheBustUrl)
@@ -51,7 +61,10 @@ async function loadThumbnail(url: string) {
 
     const blob = await response.blob()
     const objectUrl = URL.createObjectURL(blob)
-    loadedThumbnail.value = objectUrl
+
+    // Store in cache for future use
+    filesStore.cacheThumbnail(props.file.name, url, objectUrl)
+    cachedBlobUrl.value = objectUrl
 
     return objectUrl
   } catch (error) {
@@ -66,7 +79,7 @@ onMounted(() => {
   observer = new IntersectionObserver(
     (entries) => {
       entries.forEach(async (entry) => {
-        if (entry.isIntersecting && props.thumbnailUrl && !loadedThumbnail.value) {
+        if (entry.isIntersecting && props.thumbnailUrl && !cachedBlobUrl.value) {
           await loadThumbnail(props.thumbnailUrl)
         }
       })
@@ -81,10 +94,8 @@ onUnmounted(() => {
   if (observer) {
     observer.disconnect()
   }
-  // Cleanup blob URL
-  if (loadedThumbnail.value) {
-    URL.revokeObjectURL(loadedThumbnail.value)
-  }
+  // Do NOT revoke blob URL - it's managed by the store cache
+  // The store will handle cleanup via clearThumbnailCache()
 })
 
 function handleClick() {
@@ -106,7 +117,7 @@ function handleClick() {
       <img
         v-else-if="thumbnailUrl"
         ref="imgRef"
-        :src="loadedThumbnail || '/placeholder-file.svg'"
+        :src="cachedBlobUrl || '/placeholder-file.svg'"
         :alt="file.name"
         class="thumbnail"
         loading="lazy"

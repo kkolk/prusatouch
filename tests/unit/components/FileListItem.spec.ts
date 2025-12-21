@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { createPinia, setActivePinia } from 'pinia'
 import FileListItem from '../../../src/components/FileListItem.vue'
 
 // Mock IntersectionObserver
@@ -20,6 +21,7 @@ describe('FileListItem', () => {
   }
 
   beforeEach(() => {
+    setActivePinia(createPinia())
     vi.clearAllMocks()
   })
 

@@ -54,7 +54,7 @@
           v-for="file in filesStore.sortedFiles"
           :key="file.name"
           :file="file"
-          :thumbnail-url="(file as any).refs?.thumbnail"
+          :thumbnail-url="hasThumbnailRef(file) ? file.refs.thumbnail : undefined"
           @click="handleFileClick"
         />
       </div>
@@ -81,6 +81,11 @@ const selectedStorage = ref('local')
 const errorMessage = ref<string>('')
 
 const hasFiles = computed(() => filesStore.sortedFiles.length > 0)
+
+// Type guard for checking if file has refs with thumbnail
+function hasThumbnailRef(file: FileItem): file is FileItem & { refs: { thumbnail: string } } {
+  return 'refs' in file && file.refs !== undefined && 'thumbnail' in file.refs
+}
 
 onMounted(async () => {
   try {
@@ -178,7 +183,7 @@ async function navigateToBreadcrumb(index: number) {
   background: rgba(255, 0, 0, 0.1);
   border: 2px solid rgba(255, 0, 0, 0.3);
   border-radius: var(--radius-md);
-  color: #ff6b6b;
+  color: var(--status-error);
   font-size: var(--font-sm);
   font-weight: 500;
   text-align: center;

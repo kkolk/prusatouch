@@ -87,6 +87,14 @@ export const useFilesStore = defineStore('files', () => {
     }
   }
 
+  async function resetFiles() {
+    // Clear thumbnail cache when resetting
+    clearThumbnailCache()
+    files.value = []
+    currentPath.value = '/'
+    currentStorage.value = 'local'
+  }
+
   async function startPrint(storage: string, path: string) {
     try {
       const { DefaultService } = await import('../api')
@@ -158,6 +166,7 @@ export const useFilesStore = defineStore('files', () => {
     // Actions
     fetchStorages,
     fetchFiles,
+    resetFiles,
     startPrint,
     deleteFile,
     cacheThumbnail,
