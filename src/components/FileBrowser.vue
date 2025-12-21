@@ -34,8 +34,33 @@ function handleClose() {
   emit('close')
 }
 
-function handleFileClick(file: FileInfo) {
-  emit('file-selected', file)
+async function handleItemClick(file: FileInfo) {
+  const isFolder = file.size === 0 || file.size === undefined
+
+  if (isFolder) {
+    // Navigate into folder
+    try {
+      await filesStore.fetchFiles(selectedStorage.value, file.path || '/')
+    } catch (error) {
+      console.error('Failed to navigate to folder:', error)
+      errorMessage.value = 'Failed to open folder. Please try again.'
+    }
+  } else {
+    // Emit file selection event
+    emit('file-selected', file)
+  }
+}
+
+async function navigateToBreadcrumb(index: number) {
+  try {
+    const breadcrumb = filesStore.breadcrumbs[index]
+    if (breadcrumb) {
+      await filesStore.fetchFiles(selectedStorage.value, breadcrumb.path)
+    }
+  } catch (error) {
+    console.error('Failed to navigate to breadcrumb:', error)
+    errorMessage.value = 'Failed to navigate. Please try again.'
+  }
 }
 
 async function handleStorageChange() {
@@ -106,14 +131,27 @@ onMounted(async () => {
         <p>Loading files...</p>
       </div>
 
-      <!-- File List -->
-      <div v-else-if="hasFiles" class="file-list">
+      <!-- Breadcrumb Navigation -->
+      <div v-if="hasFiles" class="breadcrumb-nav">
+        <button
+          v-for="(segment, index) in filesStore.breadcrumbs"
+          :key="index"
+          @click="navigateToBreadcrumb(index)"
+          class="breadcrumb-item"
+        >
+          {{ segment.name }}
+          <span v-if="index < filesStore.breadcrumbs.length - 1">/</span>
+        </button>
+      </div>
+
+    <!-- File List -->
+      <div v-if="hasFiles" class="file-list">
         <FileListItem
           v-for="file in filesStore.sortedFiles"
           :key="file.name"
           :file="file"
           :thumbnail-url="file.refs?.thumbnail"
-          @click="handleFileClick"
+          @click="handleItemClick"
         />
       </div>
 
@@ -140,12 +178,13 @@ onMounted(async () => {
   max-height: 60vh;
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: 0;
 }
 
 /* Error Banner */
 .error-banner {
   padding: var(--space-md);
+  margin: var(--space-md);
   background: rgba(255, 0, 0, 0.1);
   border: 2px solid rgba(255, 0, 0, 0.3);
   border-radius: var(--radius-md);
@@ -160,6 +199,8 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+  padding: var(--space-md);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .storage-selector {
@@ -204,13 +245,44 @@ onMounted(async () => {
   to { transform: rotate(360deg); }
 }
 
+/* Breadcrumb Navigation */
+.breadcrumb-nav {
+  display: flex;
+  gap: var(--space-xs);
+  padding: var(--space-sm);
+  border-bottom: 1px solid var(--border-color);
+  overflow-x: auto;
+  flex-wrap: wrap;
+}
+
+.breadcrumb-item {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: var(--space-xs);
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: var(--font-md);
+  font-family: inherit;
+}
+
+.breadcrumb-item:last-child {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.breadcrumb-item:hover {
+  color: var(--prusa-orange);
+}
+
 /* File List */
 .file-list {
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
   overflow-y: auto;
-  max-height: 50vh;
+  flex: 1;
+  padding: var(--space-sm);
 }
 
 /* Empty State */

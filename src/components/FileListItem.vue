@@ -22,6 +22,11 @@ const imgRef = ref<HTMLImageElement | null>(null)
 const loadedThumbnail = ref<string | null>(null)
 let observer: IntersectionObserver | null = null
 
+// Detect if item is a folder
+const isFolder = computed(() => {
+  return props.file.size === 0 || props.file.size === undefined
+})
+
 // Format file size
 const formattedSize = computed(() => {
   if (!props.file.size) return '---'
@@ -93,10 +98,13 @@ function handleClick() {
     :class="{ selected }"
     @click="handleClick"
   >
-    <!-- Thumbnail -->
+    <!-- Thumbnail or Folder Icon -->
     <div class="thumbnail-container">
+      <div v-if="isFolder" class="folder-icon">
+        📁
+      </div>
       <img
-        v-if="thumbnailUrl"
+        v-else-if="thumbnailUrl"
         ref="imgRef"
         :src="loadedThumbnail || '/placeholder-file.svg'"
         :alt="file.name"
@@ -163,6 +171,13 @@ function handleClick() {
 .thumbnail-placeholder {
   font-size: 32px;
   opacity: 0.5;
+}
+
+.folder-icon {
+  font-size: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .file-info {
