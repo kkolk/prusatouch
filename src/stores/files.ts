@@ -3,13 +3,20 @@ import { ref, computed } from 'vue'
 import type { FileInfo } from '../api/models/FileInfo'
 import type { Storage } from '../api/models/Storage'
 
+// Cache interface for thumbnails with blob URL tracking
+interface CachedThumbnail {
+  url: string
+  blobUrl: string
+  timestamp: number
+}
+
 export const useFilesStore = defineStore('files', () => {
   // State
   const storages = ref<Storage[]>([])
   const currentPath = ref('/')
   const currentStorage = ref('local')
   const files = ref<FileInfo[]>([])
-  const thumbnailCache = ref(new Map<string, string>())
+  const thumbnailCache = ref(new Map<string, CachedThumbnail>())
   const loading = ref(false)
 
   // Getters
@@ -97,20 +104,34 @@ export const useFilesStore = defineStore('files', () => {
     }
   }
 
-  function cacheThumbnail(path: string, dataUrl: string) {
-    // LRU cache: Remove oldest if at capacity
-    if (thumbnailCache.value.size >= 50) {
-      const firstKey = thumbnailCache.value.keys().next().value as string
-      thumbnailCache.value.delete(firstKey)
+  const MAX_CACHE_SIZE = 50
+
+  function cacheThumbnail(fileId: string, url: string, blobUrl: string) {
+    // LRU eviction - remove oldest if at capacity
+    if (thumbnailCache.value.size >= MAX_CACHE_SIZE) {
+      const oldestKey = thumbnailCache.value.keys().next().value
+      const oldest = thumbnailCache.value.get(oldestKey)
+      if (oldest) {
+        URL.revokeObjectURL(oldest.blobUrl)
+      }
+      thumbnailCache.value.delete(oldestKey)
     }
-    thumbnailCache.value.set(path, dataUrl)
+
+    thumbnailCache.value.set(fileId, {
+      url,
+      blobUrl,
+      timestamp: Date.now()
+    })
   }
 
-  function getThumbnail(path: string): string | null {
-    return thumbnailCache.value.get(path) || null
+  function getThumbnail(fileId: string): string | null {
+    return thumbnailCache.value.get(fileId)?.blobUrl || null
   }
 
   function clearThumbnailCache() {
+    thumbnailCache.value.forEach(cached => {
+      URL.revokeObjectURL(cached.blobUrl)
+    })
     thumbnailCache.value.clear()
   }
 

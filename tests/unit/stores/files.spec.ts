@@ -43,19 +43,21 @@ describe('filesStore', () => {
   it('caches thumbnails with LRU policy', () => {
     const store = useFilesStore()
 
-    store.cacheThumbnail('/file1.gcode', 'data:image/png;base64,ABC')
-    expect(store.getThumbnail('/file1.gcode')).toBe('data:image/png;base64,ABC')
+    const blobUrl = 'blob:http://localhost/abc123'
+    store.cacheThumbnail('/file1.gcode', 'http://api/thumbnail.jpg', blobUrl)
+    expect(store.getThumbnail('/file1.gcode')).toBe(blobUrl)
   })
 
   it('limits thumbnail cache to 50 items', () => {
     const store = useFilesStore()
 
     for (let i = 0; i < 60; i++) {
-      store.cacheThumbnail(`/file${i}.gcode`, `data${i}`)
+      const blobUrl = `blob:http://localhost/file${i}`
+      store.cacheThumbnail(`/file${i}.gcode`, `http://api/file${i}.jpg`, blobUrl)
     }
 
     // First 10 should be evicted
     expect(store.getThumbnail('/file0.gcode')).toBeNull()
-    expect(store.getThumbnail('/file50.gcode')).toBe('data50')
+    expect(store.getThumbnail('/file50.gcode')).toBe('blob:http://localhost/file50')
   })
 })

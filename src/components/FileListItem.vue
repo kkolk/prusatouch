@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import type { FileInfo } from '@/api'
 
 interface Props {
@@ -17,6 +17,11 @@ const emit = defineEmits<{
   click: [file: FileInfo]
 }>()
 
+// Thumbnail loading state
+const imgRef = ref<HTMLImageElement | null>(null)
+const loadedThumbnail = ref<string | null>(null)
+let observer: IntersectionObserver | null = null
+
 // Format file size
 const formattedSize = computed(() => {
   if (!props.file.size) return '---'
@@ -29,6 +34,52 @@ const formattedSize = computed(() => {
   }
   if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
+})
+
+// Load thumbnail with cache busting
+async function loadThumbnail(url: string) {
+  try {
+    // Add cache busting with m_timestamp
+    const cacheBustUrl = `${url}?ct=${props.file.m_timestamp || Date.now()}`
+    const response = await fetch(cacheBustUrl)
+    if (!response.ok) throw new Error('Failed to load thumbnail')
+
+    const blob = await response.blob()
+    const objectUrl = URL.createObjectURL(blob)
+    loadedThumbnail.value = objectUrl
+
+    return objectUrl
+  } catch (error) {
+    console.warn('Failed to load thumbnail:', error)
+    return null
+  }
+}
+
+onMounted(() => {
+  if (!imgRef.value || !props.thumbnailUrl) return
+
+  observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach(async (entry) => {
+        if (entry.isIntersecting && props.thumbnailUrl && !loadedThumbnail.value) {
+          await loadThumbnail(props.thumbnailUrl)
+        }
+      })
+    },
+    { rootMargin: '50px' }
+  )
+
+  observer.observe(imgRef.value)
+})
+
+onUnmounted(() => {
+  if (observer) {
+    observer.disconnect()
+  }
+  // Cleanup blob URL
+  if (loadedThumbnail.value) {
+    URL.revokeObjectURL(loadedThumbnail.value)
+  }
 })
 
 function handleClick() {
@@ -46,7 +97,8 @@ function handleClick() {
     <div class="thumbnail-container">
       <img
         v-if="thumbnailUrl"
-        :src="thumbnailUrl"
+        ref="imgRef"
+        :src="loadedThumbnail || '/placeholder-file.svg'"
         :alt="file.name"
         class="thumbnail"
         loading="lazy"

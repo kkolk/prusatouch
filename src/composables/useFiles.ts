@@ -58,7 +58,8 @@ export function useFiles() {
   }
 
   function cacheThumbnail(path: string, dataUrl: string) {
-    store.cacheThumbnail(path, dataUrl)
+    // For backward compatibility, treat dataUrl as both URL and blobUrl
+    store.cacheThumbnail(path, dataUrl, dataUrl)
   }
 
   // Fetch storages

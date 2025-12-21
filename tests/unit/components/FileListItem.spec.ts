@@ -1,6 +1,15 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import FileListItem from '../../../src/components/FileListItem.vue'
+
+// Mock IntersectionObserver
+class MockIntersectionObserver {
+  observe = vi.fn()
+  unobserve = vi.fn()
+  disconnect = vi.fn()
+}
+
+window.IntersectionObserver = MockIntersectionObserver as any
 
 describe('FileListItem', () => {
   const mockFile = {
@@ -9,6 +18,10 @@ describe('FileListItem', () => {
     size: 1024 * 1024, // 1MB
     m_timestamp: 1638316800
   }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
 
   it('renders filename', () => {
     const wrapper = mount(FileListItem, {
@@ -23,7 +36,9 @@ describe('FileListItem', () => {
     })
     const img = wrapper.find('img.thumbnail')
     expect(img.exists()).toBe(true)
-    expect(img.attributes('src')).toBe('data:image/png;base64,test')
+    // With lazy loading, the image starts with placeholder and loads on intersection
+    // So it should initially show placeholder-file.svg
+    expect(img.attributes('src')).toBe('/placeholder-file.svg')
   })
 
   it('shows placeholder when thumbnailUrl is null', () => {

@@ -112,7 +112,7 @@ onMounted(async () => {
           v-for="file in filesStore.sortedFiles"
           :key="file.name"
           :file="file"
-          :thumbnail-url="filesStore.getThumbnail(file.name || '')"
+          :thumbnail-url="file.refs?.thumbnail"
           @click="handleFileClick"
         />
       </div>
