@@ -54,7 +54,7 @@
           v-for="file in filesStore.sortedFiles"
           :key="file.name"
           :file="file"
-          :thumbnail-url="file.refs?.thumbnail"
+          :thumbnail-url="(file as any).refs?.thumbnail"
           @click="handleFileClick"
         />
       </div>
@@ -74,8 +74,7 @@
 import { ref, onMounted, computed } from 'vue'
 import FileListItem from '@/components/FileListItem.vue'
 import TouchButton from '@/components/TouchButton.vue'
-import { useFilesStore } from '@/stores/files'
-import type { FileInfo } from '@/api/models/FileInfo'
+import { useFilesStore, type FileItem } from '@/stores/files'
 
 const filesStore = useFilesStore()
 const selectedStorage = ref('local')
@@ -113,12 +112,15 @@ async function handleRefresh() {
   }
 }
 
-async function handleFileClick(file: FileInfo) {
+async function handleFileClick(file: FileItem) {
   const isFolder = file.size === 0 || file.size === undefined
 
   if (isFolder) {
     try {
-      await filesStore.fetchFiles(selectedStorage.value, file.path || '/')
+      const newPath = filesStore.currentPath === '/'
+        ? `/${file.name}`
+        : `${filesStore.currentPath}/${file.name}`
+      await filesStore.fetchFiles(selectedStorage.value, newPath)
     } catch (error) {
       console.error('Failed to navigate to folder:', error)
       errorMessage.value = 'Failed to open folder. Please try again.'

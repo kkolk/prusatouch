@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import type { FileInfo } from '@/api'
+import type { FileItem } from '@/stores/files'
 
 interface Props {
-  file: FileInfo
+  file: FileItem
   thumbnailUrl?: string | null
   selected?: boolean
 }
@@ -14,7 +14,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{
-  click: [file: FileInfo]
+  click: [file: FileItem]
 }>()
 
 // Thumbnail loading state

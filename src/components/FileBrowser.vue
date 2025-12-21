@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { useFilesStore } from '../stores/files'
-import type { FileInfo } from '../api/models/FileInfo'
+import { useFilesStore, type FileItem } from '../stores/files'
 import BottomSheet from './BottomSheet.vue'
 import FileListItem from './FileListItem.vue'
 import TouchButton from './TouchButton.vue'
@@ -17,7 +16,7 @@ defineProps<Props>()
 // Emits
 const emit = defineEmits<{
   close: []
-  'file-selected': [file: FileInfo]
+  'file-selected': [file: FileItem]
 }>()
 
 // Store
@@ -35,13 +34,16 @@ function handleClose() {
   emit('close')
 }
 
-async function handleItemClick(file: FileInfo) {
+async function handleItemClick(file: FileItem) {
   const isFolder = file.size === 0 || file.size === undefined
 
   if (isFolder) {
-    // Navigate into folder
+    // Navigate into folder - construct path from current path and file name
     try {
-      await filesStore.fetchFiles(selectedStorage.value, file.path || '/')
+      const newPath = filesStore.currentPath === '/'
+        ? `/${file.name}`
+        : `${filesStore.currentPath}/${file.name}`
+      await filesStore.fetchFiles(selectedStorage.value, newPath)
     } catch (error) {
       console.error('Failed to navigate to folder:', error)
       errorMessage.value = 'Failed to open folder. Please try again.'
@@ -151,7 +153,7 @@ onMounted(async () => {
           v-for="file in filesStore.sortedFiles"
           :key="file.name"
           :file="file"
-          :thumbnail-url="file.refs?.thumbnail"
+          :thumbnail-url="(file as any).refs?.thumbnail"
           @click="handleItemClick"
         />
       </div>

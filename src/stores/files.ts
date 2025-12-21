@@ -1,7 +1,13 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { FileInfo } from '../api/models/FileInfo'
+import type { FirmwareFileInfoBasic } from '../api/models/FirmwareFileInfoBasic'
+import type { PrintFileInfoBasic } from '../api/models/PrintFileInfoBasic'
+import type { FolderInfo } from '../api/models/FolderInfo'
 import type { Storage } from '../api/models/Storage'
+
+// Union type for all possible file items
+export type FileItem = FileInfo | PrintFileInfoBasic | FirmwareFileInfoBasic | FolderInfo
 
 // Cache interface for thumbnails with blob URL tracking
 interface CachedThumbnail {
@@ -15,7 +21,7 @@ export const useFilesStore = defineStore('files', () => {
   const storages = ref<Storage[]>([])
   const currentPath = ref('/')
   const currentStorage = ref('local')
-  const files = ref<FileInfo[]>([])
+  const files = ref<FileItem[]>([])
   const thumbnailCache = ref(new Map<string, CachedThumbnail>())
   const loading = ref(false)
 
@@ -109,12 +115,14 @@ export const useFilesStore = defineStore('files', () => {
   function cacheThumbnail(fileId: string, url: string, blobUrl: string) {
     // LRU eviction - remove oldest if at capacity
     if (thumbnailCache.value.size >= MAX_CACHE_SIZE) {
-      const oldestKey = thumbnailCache.value.keys().next().value
-      const oldest = thumbnailCache.value.get(oldestKey)
-      if (oldest) {
-        URL.revokeObjectURL(oldest.blobUrl)
+      const oldestKey = thumbnailCache.value.keys().next().value as string
+      if (oldestKey) {
+        const oldest = thumbnailCache.value.get(oldestKey)
+        if (oldest) {
+          URL.revokeObjectURL(oldest.blobUrl)
+        }
+        thumbnailCache.value.delete(oldestKey)
       }
-      thumbnailCache.value.delete(oldestKey)
     }
 
     thumbnailCache.value.set(fileId, {
