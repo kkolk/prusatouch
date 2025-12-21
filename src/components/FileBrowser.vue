@@ -9,6 +9,7 @@ import TouchButton from './TouchButton.vue'
 // Props
 interface Props {
   visible: boolean
+  isFullScreen?: boolean
 }
 
 defineProps<Props>()
@@ -102,7 +103,7 @@ onMounted(async () => {
     title="Select File to Print"
     @close="handleClose"
   >
-    <div class="file-browser">
+    <div class="file-browser" :class="{ 'full-screen': isFullScreen }">
       <!-- Error Message -->
       <div v-if="errorMessage" class="error-banner">
         {{ errorMessage }}
@@ -174,11 +175,20 @@ onMounted(async () => {
 
 <style scoped>
 .file-browser {
-  min-height: calc(3 * var(--touch-comfortable) + 2 * var(--space-md));
-  max-height: 60vh;
   display: flex;
   flex-direction: column;
   gap: 0;
+}
+
+/* BottomSheet mode - constrain height */
+.file-browser:not(.full-screen) {
+  min-height: calc(3 * var(--touch-comfortable) + 2 * var(--space-md));
+  max-height: 60vh;
+}
+
+/* Full-screen mode - take all available space */
+.file-browser.full-screen {
+  height: 100%;
 }
 
 /* Error Banner */
