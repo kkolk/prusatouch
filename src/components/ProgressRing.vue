@@ -10,8 +10,8 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  size: 200,
-  strokeWidth: 10,
+  size: 250,    // 240-260px range, use middle value
+  strokeWidth: 14,  // 12-16px range, use middle value
   color: 'var(--prusa-orange)',
   frozen: false
 })
@@ -111,5 +111,16 @@ svg.frozen .progress {
   left: 50%;
   transform: translate(-50%, -50%);
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Progress text styling */
+:deep(.progress-text) {
+  font-size: 52px; /* 48-56px range, use middle value */
+  font-weight: bold;
+  color: var(--text-primary);
 }
 </style>

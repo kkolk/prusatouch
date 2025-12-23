@@ -34,7 +34,9 @@
 
       <div class="status-content">
         <div class="progress-column">
-          <ProgressRing :progress="progress" :size="200" :stroke-width="10" :frozen="isFrozen" />
+          <ProgressRing :progress="progress" :size="250" :stroke-width="14" :frozen="isFrozen">
+            <div class="progress-text">{{ progress }}%</div>
+          </ProgressRing>
         </div>
 
         <div class="metadata-column">
@@ -706,6 +708,13 @@ async function adjustBedTemp(delta: number) {
   display: flex;
   justify-content: center;
   align-items: center;
+  min-width: 280px; /* Accommodate 250px ring + padding */
+}
+
+.progress-text {
+  font-size: 52px; /* 48-56px range, use middle value */
+  font-weight: bold;
+  color: var(--text-primary);
 }
 
 .metadata-column {
