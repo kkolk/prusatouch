@@ -24,8 +24,35 @@
       </div>
     </div>
 
-    <!-- Printing State -->
-    <div v-else class="printing-content">
+    <!-- Printing State - Status Screen (tap-anywhere to open controls) -->
+    <div
+      v-if="isStatusScreenVisible"
+      class="status-screen"
+      @click="openControlSheet"
+    >
+      <StatusBadge :state="printerState" />
+
+      <div class="status-content">
+        <div class="progress-column">
+          <ProgressRing :progress="progress" :size="200" :stroke-width="10" />
+        </div>
+
+        <div class="metadata-column">
+          <div class="thumbnail-placeholder">
+            <span class="watermark">P</span>
+          </div>
+
+          <div class="file-name">{{ fileName }}</div>
+
+          <div class="time-remaining">
+            ⏱ {{ timeRemaining || 'Calculating...' }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fallback: Printing State (used when status-screen not visible) -->
+    <div v-if="!isStatusScreenVisible && hasActiveJob" class="printing-content">
       <div class="progress-container">
         <ProgressRing :progress="progress" :size="280" :stroke-width="12">
           <div class="progress-info">
@@ -80,6 +107,20 @@
         </TouchButton>
       </div>
     </div>
+
+    <!-- Control Bottom Sheet -->
+    <BottomSheet
+      :visible="showControlSheet"
+      title="Print Controls"
+      @close="closeControlSheet"
+    >
+      <div class="control-sheet-content">
+        <!-- Print controls placeholder (Task 2) -->
+        <div class="print-controls">
+          <p class="placeholder-text">Controls coming in Task 2</p>
+        </div>
+      </div>
+    </BottomSheet>
 
     <!-- Stop Confirmation -->
     <BottomSheet
@@ -171,9 +212,15 @@ const {
 const showStopConfirm = ref(false)
 const showFileBrowser = ref(false)
 const showStartPrintConfirm = ref(false)
+const showControlSheet = ref(false)
 const selectedFile = ref<FileInfo | null>(null)
 
 // Computed
+const isStatusScreenVisible = computed(() => {
+  // Show status screen when printing or paused
+  return hasActiveJob.value && (printerState.value === 'PRINTING' || printerState.value === 'PAUSED')
+})
+
 const confirmMessage = computed(() => {
   if (!selectedFile.value) return ''
 
@@ -258,6 +305,15 @@ async function handleResume() {
 async function handleStop() {
   await stopJob()
   showStopConfirm.value = false
+}
+
+// Control sheet handlers
+function openControlSheet() {
+  showControlSheet.value = true
+}
+
+function closeControlSheet() {
+  showControlSheet.value = false
 }
 </script>
 
@@ -374,5 +430,89 @@ async function handleStop() {
   display: flex;
   gap: var(--space-md);
   margin-top: var(--space-md);
+}
+
+/* Status Screen (tap-anywhere interaction) */
+.status-screen {
+  cursor: pointer;
+  user-select: none;
+  padding: var(--space-md);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.status-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-lg);
+  align-items: center;
+}
+
+.progress-column {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.metadata-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.thumbnail-placeholder {
+  width: 150px;
+  height: 150px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.watermark {
+  opacity: 0.25;
+  font-size: 48px;
+  font-weight: bold;
+  color: var(--text-secondary);
+}
+
+.file-name {
+  font-size: var(--font-size-lg);
+  font-weight: 500;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.time-remaining {
+  font-size: var(--font-size-md);
+  color: var(--text-secondary);
+}
+
+/* Control Sheet Content */
+.control-sheet-content {
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.print-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.placeholder-text {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  margin: 0;
 }
 </style>
