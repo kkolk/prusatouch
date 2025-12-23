@@ -79,4 +79,62 @@ describe('ProgressRing', () => {
     const dasharray = circle.attributes('stroke-dasharray')
     expect(dasharray).toMatch(/^565/)
   })
+
+  it('stops animation when frozen', () => {
+    const wrapper = mount(ProgressRing, {
+      props: { progress: 50, frozen: true }
+    })
+    const svg = wrapper.find('svg')
+    expect(svg.classes()).toContain('frozen')
+  })
+
+  it('applies animating class when not frozen and progress > 0', () => {
+    const wrapper = mount(ProgressRing, {
+      props: { progress: 50, frozen: false }
+    })
+    const circle = wrapper.find('circle.progress')
+    expect(circle.classes()).toContain('animating')
+  })
+
+  it('does not apply animating class when frozen', () => {
+    const wrapper = mount(ProgressRing, {
+      props: { progress: 50, frozen: true }
+    })
+    const circle = wrapper.find('circle.progress')
+    expect(circle.classes()).not.toContain('animating')
+  })
+
+  it('does not apply animating class when progress is 0', () => {
+    const wrapper = mount(ProgressRing, {
+      props: { progress: 0, frozen: false }
+    })
+    const circle = wrapper.find('circle.progress')
+    expect(circle.classes()).not.toContain('animating')
+  })
+
+  it('uses custom size from props', () => {
+    const wrapper = mount(ProgressRing, {
+      props: { progress: 50, size: 300, strokeWidth: 15 }
+    })
+    const svg = wrapper.find('svg')
+    expect(svg.attributes('width')).toBe('300')
+    expect(svg.attributes('height')).toBe('300')
+  })
+
+  it('defaults to size 250 when not specified', () => {
+    const wrapper = mount(ProgressRing, {
+      props: { progress: 50 }
+    })
+    const svg = wrapper.find('svg')
+    expect(svg.attributes('width')).toBe('250')
+    expect(svg.attributes('height')).toBe('250')
+  })
+
+  it('defaults to stroke width 14 when not specified', () => {
+    const wrapper = mount(ProgressRing, {
+      props: { progress: 50 }
+    })
+    const circle = wrapper.find('circle.progress')
+    expect(circle.attributes('stroke-width')).toBe('14')
+  })
 })
