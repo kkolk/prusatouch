@@ -115,12 +115,42 @@
       @close="closeControlSheet"
     >
       <div class="control-sheet-content">
-        <!-- Print controls placeholder (Task 2) -->
+        <!-- Section 1: Print Controls -->
         <div class="print-controls">
-          <p class="placeholder-text">Controls coming in Task 2</p>
+          <!-- Pause/Resume Button -->
+          <TouchButton
+            :label="isPrinting ? 'Pause Print' : 'Resume Print'"
+            :variant="isPrinting ? 'secondary' : 'primary'"
+            size="large"
+            :loading="pauseResumeLoading"
+            :disabled="pauseResumeLoading"
+            @click="handlePauseResume"
+          />
+
+          <!-- Cancel Print Button -->
+          <TouchButton
+            label="Cancel Print"
+            variant="danger"
+            size="large"
+            :loading="cancelLoading"
+            :disabled="cancelLoading"
+            @click="showCancelConfirm = true"
+          />
         </div>
       </div>
     </BottomSheet>
+
+    <!-- Cancel Confirmation Dialog -->
+    <ConfirmDialog
+      :visible="showCancelConfirm"
+      title="Cancel Print?"
+      message="This will cancel the current print job. This action cannot be undone."
+      confirm-text="Cancel Print"
+      cancel-text="Keep Printing"
+      variant="danger"
+      @confirm="handleCancelPrint"
+      @cancel="showCancelConfirm = false"
+    />
 
     <!-- Stop Confirmation -->
     <BottomSheet
@@ -213,6 +243,9 @@ const showStopConfirm = ref(false)
 const showFileBrowser = ref(false)
 const showStartPrintConfirm = ref(false)
 const showControlSheet = ref(false)
+const showCancelConfirm = ref(false)
+const pauseResumeLoading = ref(false)
+const cancelLoading = ref(false)
 const selectedFile = ref<FileInfo | null>(null)
 
 // Computed
@@ -230,6 +263,9 @@ const confirmMessage = computed(() => {
 
   return `File: ${fileName}\nSize: ${fileSize}\n\nStart printing this file?`
 })
+
+// Print controls
+const isPrinting = computed(() => printerState.value === 'PRINTING')
 
 // Lifecycle
 onMounted(() => {
@@ -314,6 +350,36 @@ function openControlSheet() {
 
 function closeControlSheet() {
   showControlSheet.value = false
+}
+
+async function handlePauseResume() {
+  pauseResumeLoading.value = true
+
+  try {
+    if (isPrinting.value) {
+      await pauseJob()
+    } else {
+      await resumeJob()
+    }
+  } catch (error) {
+    console.error('Failed to pause/resume print:', error)
+  } finally {
+    pauseResumeLoading.value = false
+  }
+}
+
+async function handleCancelPrint() {
+  showCancelConfirm.value = false
+  cancelLoading.value = true
+
+  try {
+    await stopJob()
+    closeControlSheet()
+  } catch (error) {
+    console.error('Failed to cancel print:', error)
+  } finally {
+    cancelLoading.value = false
+  }
 }
 </script>
 
