@@ -255,6 +255,7 @@ import { useStatus, useJob } from '../composables'
 import { useFilesStore } from '../stores/files'
 import { useJobStore } from '../stores/job'
 import { usePrinterStore } from '../stores/printer'
+import { useNotificationsStore } from '../stores/notifications'
 import type { FileInfo } from '../api/models/FileInfo'
 import StatusBadge from '../components/StatusBadge.vue'
 import ProgressRing from '../components/ProgressRing.vue'
@@ -267,6 +268,7 @@ import TemperatureGraph from '../components/TemperatureGraph.vue'
 const filesStore = useFilesStore()
 const jobStore = useJobStore()
 const printerStore = usePrinterStore()
+const notificationsStore = useNotificationsStore()
 
 // Composables
 const {
@@ -438,11 +440,14 @@ async function handlePauseResume() {
   try {
     if (isPrinting.value) {
       await pauseJob()
+      notificationsStore.showSuccess('Print paused')
     } else {
       await resumeJob()
+      notificationsStore.showSuccess('Print resumed')
     }
   } catch (error) {
     console.error('Failed to pause/resume print:', error)
+    notificationsStore.showError('Failed to pause/resume print')
   } finally {
     pauseResumeLoading.value = false
   }
@@ -454,9 +459,11 @@ async function handleCancelPrint() {
 
   try {
     await stopJob()
+    notificationsStore.showSuccess('Print cancelled')
     closeControlSheet()
   } catch (error) {
     console.error('Failed to cancel print:', error)
+    notificationsStore.showError('Failed to cancel print')
   } finally {
     cancelLoading.value = false
   }
@@ -475,8 +482,10 @@ async function adjustNozzleTemp(delta: number) {
 
   try {
     await printerStore.setNozzleTemp(newTarget)
+    notificationsStore.showSuccess(`Nozzle temperature set to ${newTarget}°`)
   } catch (error) {
     console.error('Failed to set nozzle temperature:', error)
+    notificationsStore.showError('Failed to adjust nozzle temperature')
   } finally {
     nozzleTempLoading.value = false
   }
@@ -494,8 +503,10 @@ async function adjustBedTemp(delta: number) {
 
   try {
     await printerStore.setBedTemp(newTarget)
+    notificationsStore.showSuccess(`Bed temperature set to ${newTarget}°`)
   } catch (error) {
     console.error('Failed to set bed temperature:', error)
+    notificationsStore.showError('Failed to adjust bed temperature')
   } finally {
     bedTempLoading.value = false
   }
