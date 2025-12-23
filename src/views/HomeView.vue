@@ -137,6 +137,59 @@
             @click="showCancelConfirm = true"
           />
         </div>
+
+        <!-- Section 2: Temperature Controls -->
+        <div class="temperature-controls">
+          <h3>Temperature Adjustments</h3>
+
+          <!-- Nozzle Temperature -->
+          <div class="temp-control-row">
+            <span class="temp-label">Nozzle</span>
+            <TouchButton
+              label="−5"
+              variant="secondary"
+              size="small"
+              :disabled="!canDecreaseNozzle || nozzleTempLoading"
+              :loading="nozzleTempLoading"
+              @click="adjustNozzleTemp(-5)"
+            />
+            <div class="temp-display">
+              {{ nozzleTemp }}° / {{ nozzleTarget }}°
+            </div>
+            <TouchButton
+              label="+5"
+              variant="secondary"
+              size="small"
+              :disabled="!canIncreaseNozzle || nozzleTempLoading"
+              :loading="nozzleTempLoading"
+              @click="adjustNozzleTemp(5)"
+            />
+          </div>
+
+          <!-- Bed Temperature -->
+          <div class="temp-control-row">
+            <span class="temp-label">Bed</span>
+            <TouchButton
+              label="−5"
+              variant="secondary"
+              size="small"
+              :disabled="!canDecreaseBed || bedTempLoading"
+              :loading="bedTempLoading"
+              @click="adjustBedTemp(-5)"
+            />
+            <div class="temp-display">
+              {{ bedTemp }}° / {{ bedTarget }}°
+            </div>
+            <TouchButton
+              label="+5"
+              variant="secondary"
+              size="small"
+              :disabled="!canIncreaseBed || bedTempLoading"
+              :loading="bedTempLoading"
+              @click="adjustBedTemp(5)"
+            />
+          </div>
+        </div>
       </div>
     </BottomSheet>
 
@@ -246,6 +299,8 @@ const showControlSheet = ref(false)
 const showCancelConfirm = ref(false)
 const pauseResumeLoading = ref(false)
 const cancelLoading = ref(false)
+const nozzleTempLoading = ref(false)
+const bedTempLoading = ref(false)
 const selectedFile = ref<FileInfo | null>(null)
 
 // Computed
@@ -266,6 +321,24 @@ const confirmMessage = computed(() => {
 
 // Print controls
 const isPrinting = computed(() => printerState.value === 'PRINTING')
+
+// Temperature controls - Current temperatures
+const nozzleTemp = computed(() => printerStore.status?.temp_nozzle || 0)
+const nozzleTarget = computed(() => printerStore.status?.target_nozzle || 0)
+const bedTemp = computed(() => printerStore.status?.temp_bed || 0)
+const bedTarget = computed(() => printerStore.status?.target_bed || 0)
+
+// Temperature constraints
+const MIN_NOZZLE_TEMP = 0
+const MAX_NOZZLE_TEMP = 300
+const MIN_BED_TEMP = 0
+const MAX_BED_TEMP = 120
+
+// Can adjust checks
+const canIncreaseNozzle = computed(() => nozzleTarget.value + 5 <= MAX_NOZZLE_TEMP)
+const canDecreaseNozzle = computed(() => nozzleTarget.value - 5 >= MIN_NOZZLE_TEMP)
+const canIncreaseBed = computed(() => bedTarget.value + 5 <= MAX_BED_TEMP)
+const canDecreaseBed = computed(() => bedTarget.value - 5 >= MIN_BED_TEMP)
 
 // Lifecycle
 onMounted(() => {
@@ -379,6 +452,45 @@ async function handleCancelPrint() {
     console.error('Failed to cancel print:', error)
   } finally {
     cancelLoading.value = false
+  }
+}
+
+// Temperature adjustment methods
+async function adjustNozzleTemp(delta: number) {
+  const newTarget = nozzleTarget.value + delta
+
+  // Bounds check
+  if (newTarget < MIN_NOZZLE_TEMP || newTarget > MAX_NOZZLE_TEMP) {
+    return
+  }
+
+  nozzleTempLoading.value = true
+
+  try {
+    await printerStore.setNozzleTemp(newTarget)
+  } catch (error) {
+    console.error('Failed to set nozzle temperature:', error)
+  } finally {
+    nozzleTempLoading.value = false
+  }
+}
+
+async function adjustBedTemp(delta: number) {
+  const newTarget = bedTarget.value + delta
+
+  // Bounds check
+  if (newTarget < MIN_BED_TEMP || newTarget > MAX_BED_TEMP) {
+    return
+  }
+
+  bedTempLoading.value = true
+
+  try {
+    await printerStore.setBedTemp(newTarget)
+  } catch (error) {
+    console.error('Failed to set bed temperature:', error)
+  } finally {
+    bedTempLoading.value = false
   }
 }
 </script>
@@ -580,5 +692,38 @@ async function handleCancelPrint() {
   color: var(--text-secondary);
   font-size: var(--font-size-sm);
   margin: 0;
+}
+
+/* Temperature Controls */
+.temperature-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.temperature-controls h3 {
+  margin: 0;
+  font-size: var(--font-size-md);
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.temp-control-row {
+  display: grid;
+  grid-template-columns: 80px 60px 1fr 60px;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.temp-label {
+  font-size: var(--font-size-md);
+  color: var(--text-secondary);
+}
+
+.temp-display {
+  text-align: center;
+  font-size: var(--font-size-md);
+  color: var(--text-primary);
+  font-weight: 500;
 }
 </style>
