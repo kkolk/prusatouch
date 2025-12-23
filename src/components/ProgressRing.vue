@@ -6,12 +6,14 @@ interface Props {
   size?: number         // diameter in pixels
   strokeWidth?: number
   color?: string
+  frozen?: boolean      // When true, stops animation
 }
 
 const props = withDefaults(defineProps<Props>(), {
   size: 200,
   strokeWidth: 10,
-  color: 'var(--prusa-orange)'
+  color: 'var(--prusa-orange)',
+  frozen: false
 })
 
 // Clamp progress to valid range (0-100)
@@ -26,11 +28,14 @@ const dashArray = computed(() => {
   const progressLength = (clampedProgress.value / 100) * circumference.value
   return `${progressLength} ${circumference.value}`
 })
+
+// Stop animation when frozen
+const shouldAnimate = computed(() => !props.frozen && props.progress > 0)
 </script>
 
 <template>
   <div class="progress-ring" :style="{ width: `${size}px`, height: `${size}px` }">
-    <svg :width="size" :height="size">
+    <svg :width="size" :height="size" :class="{ 'frozen': frozen }">
       <!-- Background circle -->
       <circle
         class="background"
@@ -55,6 +60,7 @@ const dashArray = computed(() => {
         stroke-linecap="round"
         transform-origin="center"
         transform="rotate(-90)"
+        :class="{ 'animating': shouldAnimate }"
       />
     </svg>
 
@@ -77,7 +83,26 @@ svg {
 
 /* Progress updates are instant to avoid non-GPU-accelerated stroke-dasharray animation */
 .progress {
-  /* Note: stroke-dasharray is not GPU-accelerated, so we avoid transitioning it */
+  transition: stroke-dashoffset 0.3s ease;
+}
+
+/* Subtle rotation animation (GPU-only) */
+.progress.animating {
+  animation: rotate 2s linear infinite;
+}
+
+/* Stop animation when frozen */
+svg.frozen .progress {
+  animation: none;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .center-content {

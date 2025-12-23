@@ -34,7 +34,7 @@
 
       <div class="status-content">
         <div class="progress-column">
-          <ProgressRing :progress="progress" :size="200" :stroke-width="10" />
+          <ProgressRing :progress="progress" :size="200" :stroke-width="10" :frozen="isFrozen" />
         </div>
 
         <div class="metadata-column">
@@ -305,8 +305,15 @@ const selectedFile = ref<FileInfo | null>(null)
 
 // Computed
 const isStatusScreenVisible = computed(() => {
-  // Show status screen when printing or paused
-  return hasActiveJob.value && (printerState.value === 'PRINTING' || printerState.value === 'PAUSED')
+  // Show status screen when printing, paused, or error
+  const state = printerState.value
+  return hasActiveJob.value && (state === 'PRINTING' || state === 'PAUSED' || state === 'ERROR')
+})
+
+const isFrozen = computed(() => {
+  // Freeze ring when paused or in error state
+  const state = printerState.value
+  return state === 'PAUSED' || state === 'ERROR'
 })
 
 const confirmMessage = computed(() => {
