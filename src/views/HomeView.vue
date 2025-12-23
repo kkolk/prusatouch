@@ -38,14 +38,34 @@
         </div>
 
         <div class="metadata-column">
-          <div class="thumbnail-placeholder">
-            <span class="watermark">P</span>
+          <!-- Thumbnail Preview -->
+          <div class="thumbnail-preview">
+            <!-- Real thumbnail if available from job data -->
+            <img
+              v-if="thumbnailUrl"
+              :src="thumbnailUrl"
+              alt="Print preview"
+              class="thumbnail-image"
+            />
+
+            <!-- Fallback: Prusa logo watermark -->
+            <div v-else class="thumbnail-fallback">
+              <img
+                src="@/assets/prusa-logo.svg"
+                alt="Prusa"
+                class="prusa-watermark"
+              />
+            </div>
           </div>
 
-          <div class="file-name">{{ fileName }}</div>
+          <!-- File name -->
+          <div class="file-name">
+            {{ getFileName() }}
+          </div>
 
+          <!-- Time remaining -->
           <div class="time-remaining">
-            ⏱ {{ timeRemaining || 'Calculating...' }}
+            ⏱ {{ timeRemainingFormatted || 'Calculating...' }}
           </div>
         </div>
       </div>
@@ -312,6 +332,31 @@ const isStatusScreenVisible = computed(() => {
   return hasActiveJob.value && (state === 'PRINTING' || state === 'PAUSED' || state === 'ERROR')
 })
 
+const thumbnailUrl = computed(() => {
+  // Try to get thumbnail from current job
+  const job = jobStore.currentJob
+  if (!job) return null
+
+  // Type guard: Check if job has file property (JobFilePrint)
+  if (!('file' in job) || !job.file) return null
+
+  // Check if job has file with thumbnail reference
+  // PrusaLink provides thumbnail URLs in file metadata
+  const file = job.file
+  if (!file.refs || !('thumbnail' in file.refs)) return null
+
+  return file.refs.thumbnail
+})
+
+const timeRemainingFormatted = computed(() => {
+  const tr = timeRemaining.value
+  if (!tr || tr === 'Calculating...') return tr
+
+  // Parse the time string and format it
+  // timeRemaining is already formatted, so return it as-is
+  return tr
+})
+
 const isFrozen = computed(() => {
   // Freeze ring when paused or in error state
   const state = printerState.value
@@ -348,6 +393,17 @@ const canIncreaseNozzle = computed(() => nozzleTarget.value + 5 <= MAX_NOZZLE_TE
 const canDecreaseNozzle = computed(() => nozzleTarget.value - 5 >= MIN_NOZZLE_TEMP)
 const canIncreaseBed = computed(() => bedTarget.value + 5 <= MAX_BED_TEMP)
 const canDecreaseBed = computed(() => bedTarget.value - 5 >= MIN_BED_TEMP)
+
+// Helper functions
+function getFileName(): string {
+  const job = jobStore.currentJob
+  if (!job) return 'Unknown'
+
+  // Type guard: Check if job has file property (JobFilePrint)
+  if (!('file' in job) || !job.file) return 'Unknown'
+
+  return job.file.display_name || job.file.name || 'Unknown'
+}
 
 // Lifecycle
 onMounted(() => {
@@ -658,22 +714,35 @@ async function adjustBedTemp(delta: number) {
   gap: var(--space-sm);
 }
 
-.thumbnail-placeholder {
-  width: 150px;
-  height: 150px;
+.thumbnail-preview {
+  width: 220px;
+  height: 220px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
   background: var(--bg-tertiary);
+  overflow: hidden;
+  flex-shrink: 0; /* Prevent size changes */
+}
+
+.thumbnail-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumbnail-fallback {
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: var(--bg-tertiary);
 }
 
-.watermark {
-  opacity: 0.25;
-  font-size: 48px;
-  font-weight: bold;
-  color: var(--text-secondary);
+.prusa-watermark {
+  opacity: 0.25; /* 25% opacity per spec */
+  width: 80px;
+  height: auto;
 }
 
 .file-name {
