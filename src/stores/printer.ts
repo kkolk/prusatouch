@@ -67,10 +67,26 @@ export const usePrinterStore = defineStore('printer', () => {
           temperatureHistory.value = temperatureHistory.value.slice(-100)
         }
       }
+
+      // Also fetch job data to keep currentJob in sync
+      // This ensures status screen displays when printer is printing
+      await fetchJobData()
     } catch (error) {
       connection.value.connected = false
       connection.value.retryCount++
       console.error('Failed to fetch status:', error)
+    }
+  }
+
+  async function fetchJobData() {
+    try {
+      const { useJobStore } = await import('./job')
+      const jobStore = useJobStore()
+      await jobStore.fetchJob()
+    } catch (error) {
+      // Job fetch is non-critical - printer status is more important
+      // Silently handle job fetch errors (e.g., when no job is active)
+      console.debug('Failed to fetch job data:', error)
     }
   }
 

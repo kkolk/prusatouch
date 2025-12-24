@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { createRouter, createMemoryHistory } from 'vue-router'
@@ -8,28 +8,32 @@ import { usePrinterStore } from '../../../src/stores/printer'
 import { useJobStore } from '../../../src/stores/job'
 import type { JobFilePrint } from '../../../src/api/models/JobFilePrint'
 
-// Mock composables
+// Mock composables by default
+const mockUseStatus = vi.fn(() => ({
+  printerState: computed(() => 'IDLE'),
+  nozzleTemp: computed(() => ({ current: 25, target: 0 })),
+  bedTemp: computed(() => ({ current: 22, target: 0 })),
+  isConnected: computed(() => true),
+  connectionError: computed(() => null),
+  startPolling: vi.fn(),
+  stopPolling: vi.fn()
+}))
+
+const mockUseJob = vi.fn(() => ({
+  hasActiveJob: computed(() => false),
+  progress: computed(() => 0),
+  timeRemaining: computed(() => ''),
+  fileName: computed(() => ''),
+  isPausing: computed(() => false),
+  isStopping: computed(() => false),
+  pauseJob: vi.fn(),
+  resumeJob: vi.fn(),
+  stopJob: vi.fn()
+}))
+
 vi.mock('../../../src/composables', () => ({
-  useStatus: () => ({
-    printerState: computed(() => 'IDLE'),
-    nozzleTemp: computed(() => ({ current: 25, target: 0 })),
-    bedTemp: computed(() => ({ current: 22, target: 0 })),
-    isConnected: computed(() => true),
-    connectionError: computed(() => null),
-    startPolling: vi.fn(),
-    stopPolling: vi.fn()
-  }),
-  useJob: () => ({
-    hasActiveJob: computed(() => false),
-    progress: computed(() => 0),
-    timeRemaining: computed(() => ''),
-    fileName: computed(() => ''),
-    isPausing: computed(() => false),
-    isStopping: computed(() => false),
-    pauseJob: vi.fn(),
-    resumeJob: vi.fn(),
-    stopJob: vi.fn()
-  })
+  useStatus: () => mockUseStatus(),
+  useJob: () => mockUseJob()
 }))
 
 describe('HomeView', () => {
@@ -171,5 +175,165 @@ describe('HomeView - Status Screen and Thumbnails', () => {
       global: { plugins: [router] }
     })
     expect(wrapper.findComponent({ name: 'StatusBadge' }).exists()).toBe(true)
+  })
+})
+
+describe('HomeView - Active Print Status Screen Display', () => {
+  let router: ReturnType<typeof createRouter>
+  let pinia: ReturnType<typeof createPinia>
+
+  beforeEach(() => {
+    pinia = createPinia()
+    setActivePinia(pinia)
+
+    router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', name: 'home', component: HomeView },
+        { path: '/files', name: 'files', component: { template: '<div>Files</div>' } }
+      ]
+    })
+  })
+
+  afterEach(() => {
+    // Reset mocks after each test
+    vi.clearAllMocks()
+  })
+
+  it('shows status screen when printer is printing with active job', async () => {
+    // Set up stores with printing state
+    const printerStore = usePrinterStore()
+    const jobStore = useJobStore()
+
+    // Mock printer status - PRINTING state
+    printerStore.status = {
+      state: 'PRINTING',
+      temp_nozzle: 210,
+      target_nozzle: 215,
+      temp_bed: 60,
+      target_bed: 60,
+      speed: 100
+    } as any
+
+    // Mock active job
+    const mockJob: JobFilePrint = {
+      id: 1,
+      progress: 0.45,
+      time_remaining: 1800,
+      time_printing: 600,
+      file: {
+        name: 'test_print.gcode',
+        display_name: 'test_print.gcode',
+        path: '/test_print.gcode',
+        type: 'PRINT_FILE',
+        refs: {}
+      }
+    } as any
+
+    jobStore.currentJob = mockJob
+
+    // Mock composables to return printing state
+    mockUseStatus.mockReturnValueOnce({
+      printerState: computed(() => 'PRINTING'),
+      nozzleTemp: computed(() => ({ current: 210, target: 215 })),
+      bedTemp: computed(() => ({ current: 60, target: 60 })),
+      isConnected: computed(() => true),
+      connectionError: computed(() => null),
+      startPolling: vi.fn(),
+      stopPolling: vi.fn()
+    })
+
+    mockUseJob.mockReturnValueOnce({
+      hasActiveJob: computed(() => true),
+      progress: computed(() => 45),
+      timeRemaining: computed(() => '30m'),
+      fileName: computed(() => 'test_print.gcode'),
+      currentLayer: computed(() => 0),
+      totalLayers: computed(() => 0),
+      printSpeed: computed(() => 100),
+      isPausing: computed(() => false),
+      isStopping: computed(() => false),
+      pauseJob: vi.fn(),
+      resumeJob: vi.fn(),
+      stopJob: vi.fn()
+    })
+
+    const wrapper = mount(HomeView, {
+      global: { plugins: [pinia, router] }
+    })
+
+    await flushPromises()
+
+    // Verify status screen is visible (not idle content)
+    expect(wrapper.find('.status-screen').exists()).toBe(true)
+    expect(wrapper.find('.idle-content').exists()).toBe(false)
+
+    // Verify progress is displayed
+    expect(wrapper.text()).toContain('45%')
+  })
+
+  it('hides idle content when printer is printing', async () => {
+    const printerStore = usePrinterStore()
+    const jobStore = useJobStore()
+
+    printerStore.status = {
+      state: 'PRINTING',
+      temp_nozzle: 210,
+      target_nozzle: 215,
+      temp_bed: 60,
+      target_bed: 60,
+      speed: 100
+    } as any
+
+    const mockJob: JobFilePrint = {
+      id: 1,
+      progress: 0.45,
+      time_remaining: 1800,
+      time_printing: 600,
+      file: {
+        name: 'test_print.gcode',
+        display_name: 'test_print.gcode',
+        path: '/test_print.gcode',
+        type: 'PRINT_FILE',
+        refs: {}
+      }
+    } as any
+
+    jobStore.currentJob = mockJob
+
+    // Mock composables to return printing state
+    mockUseStatus.mockReturnValueOnce({
+      printerState: computed(() => 'PRINTING'),
+      nozzleTemp: computed(() => ({ current: 210, target: 215 })),
+      bedTemp: computed(() => ({ current: 60, target: 60 })),
+      isConnected: computed(() => true),
+      connectionError: computed(() => null),
+      startPolling: vi.fn(),
+      stopPolling: vi.fn()
+    })
+
+    mockUseJob.mockReturnValueOnce({
+      hasActiveJob: computed(() => true),
+      progress: computed(() => 45),
+      timeRemaining: computed(() => '30m'),
+      fileName: computed(() => 'test_print.gcode'),
+      currentLayer: computed(() => 0),
+      totalLayers: computed(() => 0),
+      printSpeed: computed(() => 100),
+      isPausing: computed(() => false),
+      isStopping: computed(() => false),
+      pauseJob: vi.fn(),
+      resumeJob: vi.fn(),
+      stopJob: vi.fn()
+    })
+
+    const wrapper = mount(HomeView, {
+      global: { plugins: [pinia, router] }
+    })
+
+    await flushPromises()
+
+    // Should NOT show "Select File to Print" button
+    expect(wrapper.text()).not.toContain('Select File to Print')
   })
 })
