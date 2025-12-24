@@ -68,9 +68,12 @@ export const usePrinterStore = defineStore('printer', () => {
         }
       }
 
-      // Also fetch job data to keep currentJob in sync
-      // This ensures status screen displays when printer is printing
-      await fetchJobData()
+      // Only fetch job data when printer state suggests a job might exist
+      // This avoids unnecessary API calls when IDLE/READY/BUSY with non-job operations
+      const jobStates = ['PRINTING', 'PAUSED', 'FINISHED', 'STOPPED', 'ERROR']
+      if (status.value && jobStates.includes(status.value.state)) {
+        await fetchJobData()
+      }
     } catch (error) {
       connection.value.connected = false
       connection.value.retryCount++
