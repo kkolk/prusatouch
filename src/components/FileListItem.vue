@@ -54,10 +54,17 @@ async function loadThumbnail(url: string) {
       return cached
     }
 
+    // Ensure URL starts with /api if it's a relative path
+    // PrusaLink may return /thumbnails/... or /api/thumbnails/...
+    let normalizedUrl = url
+    if (url.startsWith('/') && !url.startsWith('/api/')) {
+      normalizedUrl = `/api${url}`
+    }
+
     // Add cache busting with m_timestamp
-    const cacheBustUrl = `${url}?ct=${props.file.m_timestamp || Date.now()}`
+    const cacheBustUrl = `${normalizedUrl}?ct=${props.file.m_timestamp || Date.now()}`
     const response = await fetch(cacheBustUrl)
-    if (!response.ok) throw new Error('Failed to load thumbnail')
+    if (!response.ok) throw new Error(`Failed to load thumbnail: ${response.status} ${response.statusText}`)
 
     const blob = await response.blob()
     const objectUrl = URL.createObjectURL(blob)
@@ -68,7 +75,7 @@ async function loadThumbnail(url: string) {
 
     return objectUrl
   } catch (error) {
-    console.warn('Failed to load thumbnail:', error)
+    console.warn('Failed to load thumbnail for', props.file.name, ':', error)
     return null
   }
 }
@@ -84,10 +91,24 @@ onMounted(() => {
         }
       })
     },
-    { rootMargin: '50px' }
+    { rootMargin: '50px', threshold: 0.01 }
   )
 
   observer.observe(imgRef.value)
+
+  // Check if element is already in viewport and load immediately
+  // This handles the case where the element is visible on initial render
+  const rect = imgRef.value.getBoundingClientRect()
+  const isInViewport = (
+    rect.top >= -50 &&
+    rect.left >= 0 &&
+    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) + 50 &&
+    rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+  )
+
+  if (isInViewport && !cachedBlobUrl.value) {
+    loadThumbnail(props.thumbnailUrl)
+  }
 })
 
 onUnmounted(() => {
