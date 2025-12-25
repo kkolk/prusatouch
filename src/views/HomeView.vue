@@ -347,7 +347,21 @@ const thumbnailUrl = computed(() => {
   const file = job.file
   if (!file.refs || !('thumbnail' in file.refs)) return null
 
-  return file.refs.thumbnail
+  const url = file.refs.thumbnail
+
+  // Normalize thumbnail URL to handle double slashes and missing /api prefix
+  if (!url) return null
+
+  // Ensure URL starts with /api if it's a relative path
+  let normalizedUrl = url
+  if (url.startsWith('/') && !url.startsWith('/api/')) {
+    normalizedUrl = `/api${url}`
+  }
+
+  // Remove double slashes (can happen if PrusaLink returns paths with leading slashes)
+  normalizedUrl = normalizedUrl.replace(/\/+/g, '/')
+
+  return normalizedUrl
 })
 
 const timeRemainingFormatted = computed(() => {

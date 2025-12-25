@@ -54,12 +54,21 @@ async function loadThumbnail(url: string) {
       return cached
     }
 
-    // Ensure URL starts with /api if it's a relative path
-    // PrusaLink may return /thumbnails/... or /api/thumbnails/...
+    // Normalize thumbnail URL
+    // PrusaLink may return various formats:
+    // - /api/thumbnails/storage/path/file.gcode.orig.png (new format)
+    // - /thumb/local/file.gcode (legacy format)
+    // - /thumbnails/local/file.gcode.orig.png (without /api prefix)
     let normalizedUrl = url
+
+    // Ensure URL starts with /api if it's a relative path
     if (url.startsWith('/') && !url.startsWith('/api/')) {
       normalizedUrl = `/api${url}`
     }
+
+    // Remove double slashes (can happen if PrusaLink returns paths with leading slashes)
+    // Example: /api/thumbnails/storage//path becomes /api/thumbnails/storage/path
+    normalizedUrl = normalizedUrl.replace(/\/+/g, '/')
 
     // Add cache busting with m_timestamp
     const cacheBustUrl = `${normalizedUrl}?ct=${props.file.m_timestamp || Date.now()}`
