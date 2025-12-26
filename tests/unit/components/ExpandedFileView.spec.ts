@@ -44,6 +44,9 @@ describe('ExpandedFileView', () => {
       }
     })
     expect(wrapper.text()).toContain('PRINT TIME')
+    // Should show value after label
+    const printTimeSection = wrapper.text().match(/PRINT TIME(\w+)/)
+    expect(printTimeSection).toBeTruthy()
   })
 
   it('renders filament label and value', () => {
@@ -56,6 +59,8 @@ describe('ExpandedFileView', () => {
       }
     })
     expect(wrapper.text()).toContain('FILAMENT')
+    // Should show value with "=" separator
+    expect(wrapper.text()).toContain('=')
   })
 
   it('renders layer height label and value', () => {

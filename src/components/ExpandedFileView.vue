@@ -40,7 +40,7 @@ const printTime = computed(() => {
   const minutes = Math.floor((seconds % 3600) / 60)
 
   if (hours > 0) {
-    return `${hours}H ${minutes}MIN`
+    return `${hours} HOUR ${minutes} MIN`
   }
   return `${minutes} MIN`
 })
@@ -48,25 +48,29 @@ const printTime = computed(() => {
 const filamentLength = computed(() => {
   const mm = detailedInfo.value?.meta?.['filament used [mm]']
   if (!mm) return 'Unknown'
-  return `${Math.round(mm)}M`
+  const meters = (mm / 1000).toFixed(1)
+  return `${meters} m`
 })
 
 const filamentWeight = computed(() => {
   const g = detailedInfo.value?.meta?.['filament used [g]']
   if (!g) return 'Unknown'
-  return `${Math.round(g)}G`
+  const grams = parseFloat(g).toFixed(1)
+  return `${grams} g`
 })
 
 const layerHeight = computed(() => {
   const height = detailedInfo.value?.meta?.layer_height
   if (!height) return 'Unknown'
-  return `${height}MM`
+  const formattedHeight = parseFloat(height).toFixed(1)
+  return `${formattedHeight} mm`
 })
 
 const nozzleSize = computed(() => {
   const diameter = detailedInfo.value?.meta?.nozzle_diameter
   if (!diameter) return 'Unknown'
-  return `${diameter}MM`
+  const formattedDiameter = parseFloat(diameter).toFixed(1)
+  return `${formattedDiameter} mm`
 })
 
 // Load thumbnail
@@ -205,7 +209,7 @@ onMounted(() => {
           <!-- Filament Used -->
           <div class="metadata-item">
             <div class="label">FILAMENT</div>
-            <div class="value">{{ filamentLength }} · {{ filamentWeight }}</div>
+            <div class="value">{{ filamentLength }} = {{ filamentWeight }}</div>
           </div>
 
           <!-- Print Settings -->
