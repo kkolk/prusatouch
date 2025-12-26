@@ -42,7 +42,6 @@
 
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { usePrinterStore } from './stores/printer'
 import { useNotificationsStore } from './stores/notifications'
 import OfflineBanner from './components/OfflineBanner.vue'
@@ -50,7 +49,6 @@ import KioskHeader from './components/KioskHeader.vue'
 import KioskNav from './components/KioskNav.vue'
 import Toast from './components/Toast.vue'
 
-const router = useRouter()
 const printerStore = usePrinterStore()
 const notificationsStore = useNotificationsStore()
 
@@ -61,20 +59,6 @@ onMounted(async () => {
     printerStore.fetchVersion()
   ])
 })
-
-// User-friendly state labels for status display
-const STATE_LABELS: Record<string, string> = {
-  'IDLE': 'Idle',
-  'PRINTING': 'Printing',
-  'PAUSED': 'Paused',
-  'FINISHED': 'Complete',
-  'STOPPED': 'Stopped',
-  'ERROR': 'Error',
-  'READY': 'Ready',
-  'BUSY': 'Busy',
-  'ATTENTION': 'Attention',
-  'DISCONNECTED': 'Offline'
-}
 
 const nozzleTemp = computed(() => ({
   current: Math.round(printerStore.status?.temp_nozzle ?? 0),

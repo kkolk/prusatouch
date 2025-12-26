@@ -5,6 +5,8 @@ import StatusBadge from './StatusBadge.vue'
 import TemperatureDisplay from './TemperatureDisplay.vue'
 import ConnectStatusIndicator from './ConnectStatusIndicator.vue'
 
+type PrinterState = 'IDLE' | 'PRINTING' | 'PAUSED' | 'ERROR' | 'FINISHED'
+
 interface Props {
   nozzleTemp: { current: number; target: number }
   bedTemp: { current: number; target: number }
@@ -16,22 +18,21 @@ const props = defineProps<Props>()
 
 const router = useRouter()
 
-// Map printer state to StatusBadge type
-const displayState = computed(() => {
-  const STATE_LABELS: Record<string, string> = {
-    'IDLE': 'Idle',
-    'PRINTING': 'Printing',
-    'PAUSED': 'Paused',
-    'FINISHED': 'Complete',
-    'STOPPED': 'Stopped',
-    'ERROR': 'Error',
-    'READY': 'Ready',
-    'BUSY': 'Busy',
-    'ATTENTION': 'Attention',
-    'DISCONNECTED': 'Offline'
+// Map printer state to PrinterState type for StatusBadge
+const displayState = computed((): PrinterState => {
+  const STATE_MAP: Record<string, PrinterState> = {
+    'IDLE': 'IDLE',
+    'PRINTING': 'PRINTING',
+    'PAUSED': 'PAUSED',
+    'FINISHED': 'FINISHED',
+    'STOPPED': 'FINISHED',
+    'READY': 'IDLE',
+    'BUSY': 'PRINTING',
+    'ATTENTION': 'ERROR',
+    'DISCONNECTED': 'ERROR'
   }
   const state = props.printerState || 'DISCONNECTED'
-  return STATE_LABELS[state] || state
+  return STATE_MAP[state] || 'ERROR'
 })
 
 // Navigate to settings
