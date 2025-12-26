@@ -168,7 +168,7 @@
             <TouchButton
               label="−5"
               variant="secondary"
-              size="small"
+              size="min"
               :disabled="!canDecreaseNozzle || nozzleTempLoading"
               :loading="nozzleTempLoading"
               @click="adjustNozzleTemp(-5)"
@@ -179,7 +179,7 @@
             <TouchButton
               label="+5"
               variant="secondary"
-              size="small"
+              size="min"
               :disabled="!canIncreaseNozzle || nozzleTempLoading"
               :loading="nozzleTempLoading"
               @click="adjustNozzleTemp(5)"
@@ -192,7 +192,7 @@
             <TouchButton
               label="−5"
               variant="secondary"
-              size="small"
+              size="min"
               :disabled="!canDecreaseBed || bedTempLoading"
               :loading="bedTempLoading"
               @click="adjustBedTemp(-5)"
@@ -203,7 +203,7 @@
             <TouchButton
               label="+5"
               variant="secondary"
-              size="small"
+              size="min"
               :disabled="!canIncreaseBed || bedTempLoading"
               :loading="bedTempLoading"
               @click="adjustBedTemp(5)"

@@ -18,15 +18,15 @@
 
 <script setup lang="ts">
 interface Props {
-  variant?: 'primary' | 'secondary' | 'danger'
-  size?: 'small' | 'medium' | 'large'
+  variant?: 'primary' | 'secondary' | 'tertiary' | 'danger'
+  size?: 'min' | 'comfortable' | 'large'
   loading?: boolean
   disabled?: boolean
 }
 
 withDefaults(defineProps<Props>(), {
   variant: 'primary',
-  size: 'medium',
+  size: 'comfortable',
   loading: false,
   disabled: false
 })
@@ -101,8 +101,18 @@ function handleClick() {
   background: #ff0000;
 }
 
-/* Size: Small */
-.touch-button--small {
+/* Variant: Tertiary */
+.touch-button--tertiary {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.touch-button--tertiary:hover:not(:disabled) {
+  background: var(--bg-secondary);
+}
+
+/* Size: Min */
+.touch-button--min {
   min-height: var(--touch-min);
   font-size: var(--font-sm);
   padding: var(--space-xs) var(--space-md);

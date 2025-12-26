@@ -193,22 +193,22 @@ async function handleSetTemp(temp: number) {
 
       <!-- RIGHT Column: Action Buttons -->
       <div class="column column-right">
-        <TouchButton variant="secondary" size="small" :loading="isLoading" @click="handleHomeAll">
+        <TouchButton variant="secondary" size="min" :loading="isLoading" @click="handleHomeAll">
           Home All
         </TouchButton>
-        <TouchButton variant="secondary" size="small" :loading="isLoading" @click="handleHomeX">
+        <TouchButton variant="secondary" size="min" :loading="isLoading" @click="handleHomeX">
           Home X
         </TouchButton>
-        <TouchButton variant="secondary" size="small" :loading="isLoading" @click="handleHomeY">
+        <TouchButton variant="secondary" size="min" :loading="isLoading" @click="handleHomeY">
           Home Y
         </TouchButton>
-        <TouchButton variant="secondary" size="small" :loading="isLoading" @click="handleHomeZ">
+        <TouchButton variant="secondary" size="min" :loading="isLoading" @click="handleHomeZ">
           Home Z
         </TouchButton>
-        <TouchButton variant="primary" size="small" @click="openExtruderControl">
+        <TouchButton variant="primary" size="min" @click="openExtruderControl">
           Extruder Controls
         </TouchButton>
-        <TouchButton variant="secondary" size="small" :loading="isLoading" @click="handleDisableSteppers">
+        <TouchButton variant="secondary" size="min" :loading="isLoading" @click="handleDisableSteppers">
           Disable Steppers
         </TouchButton>
       </div>
