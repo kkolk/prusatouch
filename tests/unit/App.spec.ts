@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { createPinia, setActivePinia } from 'pinia'
@@ -205,6 +205,31 @@ describe('App', () => {
       expect(posValues[0].text()).toBe('123.5')
       expect(posValues[1].text()).toBe('78.9')
       expect(posValues[2].text()).toBe('5.7')
+    })
+  })
+
+  describe('Printer Info Fetching', () => {
+    it('should fetch printer info and version on mount', async () => {
+      const { usePrinterStore } = await import('../../src/stores/printer')
+      const printerStore = usePrinterStore()
+      const fetchPrinterInfoSpy = vi.spyOn(printerStore, 'fetchPrinterInfo')
+      const fetchVersionSpy = vi.spyOn(printerStore, 'fetchVersion')
+
+      const newWrapper = mount(App, {
+        global: {
+          plugins: [router],
+          stubs: {
+            RouterView: true,
+            OfflineBanner: true,
+            Toast: true
+          }
+        }
+      })
+
+      await newWrapper.vm.$nextTick()
+
+      expect(fetchPrinterInfoSpy).toHaveBeenCalledOnce()
+      expect(fetchVersionSpy).toHaveBeenCalledOnce()
     })
   })
 })

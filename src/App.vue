@@ -92,7 +92,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { usePrinterStore } from './stores/printer'
 import { useNotificationsStore } from './stores/notifications'
@@ -103,6 +103,14 @@ const router = useRouter()
 const route = useRoute()
 const printerStore = usePrinterStore()
 const notificationsStore = useNotificationsStore()
+
+// Fetch printer info once on app mount (before any components use it)
+onMounted(async () => {
+  await Promise.all([
+    printerStore.fetchPrinterInfo(),
+    printerStore.fetchVersion()
+  ])
+})
 
 const tabs = [
   { name: 'home', route: '/', icon: '🏠', label: 'Home' },
