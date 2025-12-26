@@ -30,8 +30,6 @@
       class="status-screen"
       @click="openControlSheet"
     >
-      <StatusBadge :state="printerState" />
-
       <div class="status-content">
         <div class="progress-column">
           <ProgressRing :progress="progress" :size="250" :stroke-width="14" :frozen="isFrozen">
