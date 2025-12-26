@@ -137,4 +137,56 @@ describe('ProgressRing', () => {
     const circle = wrapper.find('circle.progress')
     expect(circle.attributes('stroke-width')).toBe('14')
   })
+
+  it('renders thumbnail when thumbnailUrl is provided', () => {
+    const wrapper = mount(ProgressRing, {
+      props: { progress: 50, thumbnailUrl: '/test-thumb.png' }
+    })
+    expect(wrapper.find('.thumbnail').exists()).toBe(true)
+    expect(wrapper.find('.thumbnail').attributes('src')).toBe('/test-thumb.png')
+  })
+
+  it('does not render thumbnail when thumbnailUrl is not provided', () => {
+    const wrapper = mount(ProgressRing, {
+      props: { progress: 50 }
+    })
+    expect(wrapper.find('.thumbnail').exists()).toBe(false)
+  })
+
+  it('shows percentage overlay when showPercentage is true', () => {
+    const wrapper = mount(ProgressRing, {
+      props: { progress: 75, thumbnailUrl: '/test-thumb.png', showPercentage: true }
+    })
+    expect(wrapper.find('.percentage-overlay').exists()).toBe(true)
+    expect(wrapper.find('.percentage-overlay').text()).toBe('75%')
+  })
+
+  it('does not show percentage overlay when showPercentage is false', () => {
+    const wrapper = mount(ProgressRing, {
+      props: { progress: 75, thumbnailUrl: '/test-thumb.png', showPercentage: false }
+    })
+    expect(wrapper.find('.percentage-overlay').exists()).toBe(false)
+  })
+
+  it('fallbacks to slot when no thumbnailUrl provided', () => {
+    const wrapper = mount(ProgressRing, {
+      props: { progress: 50 },
+      slots: {
+        default: '<div class="custom-content">Custom</div>'
+      }
+    })
+    expect(wrapper.find('.custom-content').exists()).toBe(true)
+    expect(wrapper.find('.custom-content').text()).toBe('Custom')
+  })
+
+  it('uses slot content instead of thumbnail when both provided (slot takes precedence)', () => {
+    const wrapper = mount(ProgressRing, {
+      props: { progress: 50 },
+      slots: {
+        default: '<div class="custom-content">Custom</div>'
+      }
+    })
+    expect(wrapper.find('.custom-content').exists()).toBe(true)
+    expect(wrapper.find('.thumbnail').exists()).toBe(false)
+  })
 })

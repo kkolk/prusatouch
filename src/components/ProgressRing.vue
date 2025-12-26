@@ -7,13 +7,16 @@ interface Props {
   strokeWidth?: number
   color?: string
   frozen?: boolean      // When true, stops animation
+  thumbnailUrl?: string // Optional thumbnail URL to display in center
+  showPercentage?: boolean // Show percentage text (default: true)
 }
 
 const props = withDefaults(defineProps<Props>(), {
   size: 250,    // 240-260px range, use middle value
   strokeWidth: 14,  // 12-16px range, use middle value
   color: 'var(--prusa-orange)',
-  frozen: false
+  frozen: false,
+  showPercentage: true
 })
 
 // Clamp progress to valid range (0-100)
@@ -64,9 +67,15 @@ const shouldAnimate = computed(() => !props.frozen && props.progress > 0)
       />
     </svg>
 
-    <!-- Center slot for content -->
+    <!-- Center content: thumbnail or slot -->
     <div class="center-content">
-      <slot></slot>
+      <div v-if="thumbnailUrl" class="thumbnail-container">
+        <img :src="thumbnailUrl" alt="Print thumbnail" class="thumbnail" />
+        <div v-if="showPercentage" class="percentage-overlay">
+          {{ Math.round(clampedProgress) }}%
+        </div>
+      </div>
+      <slot v-else></slot>
     </div>
   </div>
 </template>
@@ -135,5 +144,37 @@ svg.frozen .progress {
   font-size: 52px; /* 48-56px range, use middle value */
   font-weight: bold;
   color: var(--text-primary);
+}
+
+/* Thumbnail container */
+.thumbnail-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Thumbnail image */
+.thumbnail {
+  width: calc(100% - 32px); /* Scale within ring, accounting for stroke */
+  height: calc(100% - 32px);
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Percentage overlay on thumbnail */
+.percentage-overlay {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+  padding: 4px 12px;
+  border-radius: 12px;
+  backdrop-filter: blur(4px);
 }
 </style>
