@@ -4,7 +4,6 @@ import { useFilesStore } from '@/stores/files'
 import { useJobStore } from '@/stores/job'
 import type { FileItem } from '@/stores/files'
 import type { PrintFileInfo } from '@/api/models/PrintFileInfo'
-import type { PrintFileMetadata } from '@/api/models/PrintFileMetadata'
 
 interface Props {
   visible: boolean
@@ -55,21 +54,21 @@ const filamentLength = computed(() => {
 const filamentWeight = computed(() => {
   const g = detailedInfo.value?.meta?.['filament used [g]']
   if (!g) return 'Unknown'
-  const grams = parseFloat(g).toFixed(1)
+  const grams = g.toFixed(1)
   return `${grams} g`
 })
 
 const layerHeight = computed(() => {
   const height = detailedInfo.value?.meta?.layer_height
   if (!height) return 'Unknown'
-  const formattedHeight = parseFloat(height).toFixed(1)
+  const formattedHeight = height.toFixed(1)
   return `${formattedHeight} mm`
 })
 
 const nozzleSize = computed(() => {
   const diameter = detailedInfo.value?.meta?.nozzle_diameter
   if (!diameter) return 'Unknown'
-  const formattedDiameter = parseFloat(diameter).toFixed(1)
+  const formattedDiameter = diameter.toFixed(1)
   return `${formattedDiameter} mm`
 })
 
@@ -128,7 +127,7 @@ async function fetchDetailedInfo() {
     const { DefaultService } = await import('@/api')
     // Strip leading slash from storage path
     const storageId = props.storage.replace(/^\//, '')
-    const response = await DefaultService.getApiV1FilesOne(storageId, props.path, 'application/json')
+    const response = await DefaultService.getApiV1Files(storageId, props.path, undefined, 'application/json')
 
     // Check if response is PrintFileInfo (has meta property)
     if (response && 'meta' in response) {
