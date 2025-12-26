@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import StatusBadge from './StatusBadge.vue'
 import TemperatureDisplay from './TemperatureDisplay.vue'
+import ConnectStatusIndicator from './ConnectStatusIndicator.vue'
 
 interface Props {
   nozzleTemp: { current: number; target: number }
@@ -64,13 +65,7 @@ function goToSettings() {
 
       <!-- Right: Connection Status + Settings Gear -->
       <div class="header-right">
-        <div class="connection-status">
-          <span
-            class="connection-dot"
-            :class="{ connected: isConnected }"
-            :aria-label="isConnected ? 'Connected' : 'Offline'"
-          ></span>
-        </div>
+        <ConnectStatusIndicator :connected="isConnected" />
         <button class="settings-btn" @click="goToSettings" aria-label="Settings">
           <span class="settings-icon">⚙️</span>
         </button>
@@ -127,23 +122,6 @@ function goToSettings() {
   gap: var(--space-md);
   min-width: 100px;
   justify-content: flex-end;
-}
-
-.connection-status {
-  display: flex;
-  align-items: center;
-}
-
-.connection-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--status-error);
-  flex-shrink: 0;
-}
-
-.connection-dot.connected {
-  background: var(--status-success);
 }
 
 .settings-btn {

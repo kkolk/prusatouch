@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils'
 import KioskHeader from '../../../src/components/KioskHeader.vue'
 import StatusBadge from '../../../src/components/StatusBadge.vue'
 import TemperatureDisplay from '../../../src/components/TemperatureDisplay.vue'
+import ConnectStatusIndicator from '../../../src/components/ConnectStatusIndicator.vue'
 
 describe('KioskHeader', () => {
   it('renders with correct structure', () => {
@@ -85,10 +86,10 @@ describe('KioskHeader', () => {
       }
     })
 
-    const dot = wrapper.find('.connection-dot')
-    expect(dot.exists()).toBe(true)
-    expect(dot.classes()).toContain('connected')
-    expect(dot.attributes('aria-label')).toBe('Connected')
+    const indicator = wrapper.findComponent(ConnectStatusIndicator)
+    expect(indicator.exists()).toBe(true)
+    expect(indicator.props('connected')).toBe(true)
+    expect(indicator.classes()).toContain('status-connected')
   })
 
   it('displays red connection dot when disconnected', () => {
@@ -101,10 +102,10 @@ describe('KioskHeader', () => {
       }
     })
 
-    const dot = wrapper.find('.connection-dot')
-    expect(dot.exists()).toBe(true)
-    expect(dot.classes()).not.toContain('connected')
-    expect(dot.attributes('aria-label')).toBe('Offline')
+    const indicator = wrapper.findComponent(ConnectStatusIndicator)
+    expect(indicator.exists()).toBe(true)
+    expect(indicator.props('connected')).toBe(false)
+    expect(indicator.classes()).toContain('status-offline')
   })
 
   it('renders settings gear button', () => {

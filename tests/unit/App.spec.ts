@@ -4,6 +4,7 @@ import { createRouter, createMemoryHistory } from 'vue-router'
 import { createPinia, setActivePinia } from 'pinia'
 import App from '../../src/App.vue'
 import { routes } from '../../src/router'
+import ConnectStatusIndicator from '../../src/components/ConnectStatusIndicator.vue'
 
 describe('App', () => {
   let router: ReturnType<typeof createRouter>
@@ -188,9 +189,10 @@ describe('App', () => {
       await router.isReady()
       const wrapper = mount(App, { global: { plugins: [router] } })
 
-      const dot = wrapper.find('.connection-dot')
-      expect(dot.exists()).toBe(true)
-      expect(dot.classes()).toContain('connected')
+      const indicator = wrapper.findComponent(ConnectStatusIndicator)
+      expect(indicator.exists()).toBe(true)
+      expect(indicator.props('connected')).toBe(true)
+      expect(indicator.classes()).toContain('status-connected')
     })
 
     it('displays red connection dot when printer is disconnected', async () => {
@@ -202,9 +204,10 @@ describe('App', () => {
       await router.isReady()
       const wrapper = mount(App, { global: { plugins: [router] } })
 
-      const dot = wrapper.find('.connection-dot')
-      expect(dot.exists()).toBe(true)
-      expect(dot.classes()).not.toContain('connected')
+      const indicator = wrapper.findComponent(ConnectStatusIndicator)
+      expect(indicator.exists()).toBe(true)
+      expect(indicator.props('connected')).toBe(false)
+      expect(indicator.classes()).toContain('status-offline')
     })
 
     it('displays connection dot with correct aria-label when connected', async () => {
@@ -216,8 +219,9 @@ describe('App', () => {
       await router.isReady()
       const wrapper = mount(App, { global: { plugins: [router] } })
 
-      const dot = wrapper.find('.connection-dot')
-      expect(dot.attributes('aria-label')).toBe('Connected')
+      const indicator = wrapper.findComponent(ConnectStatusIndicator)
+      expect(indicator.props('connected')).toBe(true)
+      expect(indicator.attributes('aria-label')).toBe('Connected')
     })
 
     it('displays connection dot with correct aria-label when offline', async () => {
@@ -229,8 +233,9 @@ describe('App', () => {
       await router.isReady()
       const wrapper = mount(App, { global: { plugins: [router] } })
 
-      const dot = wrapper.find('.connection-dot')
-      expect(dot.attributes('aria-label')).toBe('Offline')
+      const indicator = wrapper.findComponent(ConnectStatusIndicator)
+      expect(indicator.props('connected')).toBe(false)
+      expect(indicator.attributes('aria-label')).toBe('Offline')
     })
   })
 
