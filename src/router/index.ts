@@ -1,19 +1,21 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 
-// Eagerly loaded (initial view)
-import HomeView from '../views/HomeView.vue'
-
 // Lazy loaded (code splitting)
+const StatusView = () => import('../views/StatusView.vue')
 const FilesView = () => import('../views/FilesView.vue')
 const ControlView = () => import('../views/ControlView.vue')
 const SettingsView = () => import('../views/SettingsView.vue')
 
 export const routes: RouteRecordRaw[] = [
   {
+    path: '/status',
+    name: 'status',
+    component: StatusView,
+    meta: { title: 'Status' }
+  },
+  {
     path: '/',
-    name: 'home',
-    component: HomeView,
-    meta: { title: 'Home' }
+    redirect: '/status'
   },
   {
     path: '/files',
@@ -35,7 +37,7 @@ export const routes: RouteRecordRaw[] = [
   },
   {
     path: '/:pathMatch(.*)*',
-    redirect: '/'
+    redirect: '/status'
   }
 ]
 

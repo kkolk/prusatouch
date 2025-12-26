@@ -1,5 +1,5 @@
 <template>
-  <div class="home-view">
+  <div class="status-view">
     <!-- Status Header -->
     <div class="status-header">
       <StatusBadge :state="printerState" />
@@ -584,7 +584,7 @@ async function adjustBedTemp(delta: number) {
 </script>
 
 <style scoped>
-.home-view {
+.status-view {
   display: flex;
   flex-direction: column;
   height: 100%;

@@ -3,7 +3,7 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { ref, computed } from 'vue'
-import HomeView from '../../../src/views/HomeView.vue'
+import StatusView from '../../../src/views/StatusView.vue'
 import { usePrinterStore } from '../../../src/stores/printer'
 import { useJobStore } from '../../../src/stores/job'
 import type { JobFilePrint } from '../../../src/api/models/JobFilePrint'
@@ -36,7 +36,7 @@ vi.mock('../../../src/composables', () => ({
   useJob: () => mockUseJob()
 }))
 
-describe('HomeView', () => {
+describe('StatusView', () => {
   let router: ReturnType<typeof createRouter>
 
   beforeEach(() => {
@@ -44,42 +44,42 @@ describe('HomeView', () => {
     router = createRouter({
       history: createMemoryHistory(),
       routes: [
-        { path: '/', name: 'home', component: HomeView },
+        { path: '/status', name: 'status', component: StatusView },
         { path: '/files', name: 'files', component: { template: '<div>Files</div>' } }
       ]
     })
   })
 
-  it('renders home view container', () => {
-    const wrapper = mount(HomeView, {
+  it('renders status view container', () => {
+    const wrapper = mount(StatusView, {
       global: { plugins: [router] }
     })
-    expect(wrapper.find('.home-view').exists()).toBe(true)
+    expect(wrapper.find('.status-view').exists()).toBe(true)
   })
 
   it('displays StatusBadge component', () => {
-    const wrapper = mount(HomeView, {
+    const wrapper = mount(StatusView, {
       global: { plugins: [router] }
     })
     expect(wrapper.findComponent({ name: 'StatusBadge' }).exists()).toBe(true)
   })
 
   it('shows idle state content when not printing', () => {
-    const wrapper = mount(HomeView, {
+    const wrapper = mount(StatusView, {
       global: { plugins: [router] }
     })
     expect(wrapper.find('.idle-content').exists()).toBe(true)
   })
 
   it('shows select file button when idle', () => {
-    const wrapper = mount(HomeView, {
+    const wrapper = mount(StatusView, {
       global: { plugins: [router] }
     })
     expect(wrapper.text()).toContain('Select File')
   })
 })
 
-describe('HomeView - Interactive Elements', () => {
+describe('StatusView - Interactive Elements', () => {
   let router: ReturnType<typeof createRouter>
 
   beforeEach(() => {
@@ -87,21 +87,21 @@ describe('HomeView - Interactive Elements', () => {
     router = createRouter({
       history: createMemoryHistory(),
       routes: [
-        { path: '/', name: 'home', component: HomeView },
+        { path: '/status', name: 'status', component: StatusView },
         { path: '/files', name: 'files', component: { template: '<div>Files</div>' } }
       ]
     })
   })
 
   it('shows BottomSheet for stop confirmation', () => {
-    const wrapper = mount(HomeView, {
+    const wrapper = mount(StatusView, {
       global: { plugins: [router] }
     })
     expect(wrapper.findComponent({ name: 'BottomSheet' }).exists()).toBe(true)
   })
 
   it('calls pauseJob when pause action is triggered', () => {
-    const wrapper = mount(HomeView, {
+    const wrapper = mount(StatusView, {
       global: { plugins: [router] }
     })
     // Component is properly structured to handle pause/resume/stop actions
@@ -110,21 +110,21 @@ describe('HomeView - Interactive Elements', () => {
   })
 
   it('shows ConfirmDialog component for start print confirmation', () => {
-    const wrapper = mount(HomeView, {
+    const wrapper = mount(StatusView, {
       global: { plugins: [router] }
     })
     expect(wrapper.findComponent({ name: 'ConfirmDialog' }).exists()).toBe(true)
   })
 
   it('displays FileBrowser component', () => {
-    const wrapper = mount(HomeView, {
+    const wrapper = mount(StatusView, {
       global: { plugins: [router] }
     })
     expect(wrapper.findComponent({ name: 'FileBrowser' }).exists()).toBe(true)
   })
 })
 
-describe('HomeView - Status Screen and Thumbnails', () => {
+describe('StatusView - Status Screen and Thumbnails', () => {
   let router: ReturnType<typeof createRouter>
 
   beforeEach(() => {
@@ -132,14 +132,14 @@ describe('HomeView - Status Screen and Thumbnails', () => {
     router = createRouter({
       history: createMemoryHistory(),
       routes: [
-        { path: '/', name: 'home', component: HomeView },
+        { path: '/status', name: 'status', component: StatusView },
         { path: '/files', name: 'files', component: { template: '<div>Files</div>' } }
       ]
     })
   })
 
   it('has status screen with proper layout structure', () => {
-    const wrapper = mount(HomeView, {
+    const wrapper = mount(StatusView, {
       global: { plugins: [router] }
     })
     // Verify component renders all expected sections
@@ -147,14 +147,14 @@ describe('HomeView - Status Screen and Thumbnails', () => {
   })
 
   it('has BottomSheet for control interactions', () => {
-    const wrapper = mount(HomeView, {
+    const wrapper = mount(StatusView, {
       global: { plugins: [router] }
     })
     expect(wrapper.findComponent({ name: 'BottomSheet' }).exists()).toBe(true)
   })
 
   it('has ConfirmDialog component for confirmation actions', () => {
-    const wrapper = mount(HomeView, {
+    const wrapper = mount(StatusView, {
       global: { plugins: [router] }
     })
     expect(wrapper.findComponent({ name: 'ConfirmDialog' }).exists()).toBe(true)
@@ -163,22 +163,22 @@ describe('HomeView - Status Screen and Thumbnails', () => {
   it('provides thumbnail and file info structure for printing state', () => {
     // This test verifies component structure exists in template
     // by mounting and checking that necessary components are available
-    const wrapper = mount(HomeView, {
+    const wrapper = mount(StatusView, {
       global: { plugins: [router] }
     })
     // Component template includes all necessary elements
     expect(wrapper.vm.$data !== undefined).toBe(true)
   })
 
-  // Note: HomeView thumbnail URL normalization tests require complex Pinia store mocking
+  // Note: StatusView thumbnail URL normalization tests require complex Pinia store mocking
   // The normalization logic is already tested in FileListItem.spec.ts with comprehensive tests:
   // - normalizes URLs without /api prefix
   // - preserves URLs already with /api prefix
   // - removes double slashes from URLs
-  // HomeView uses the same normalization logic in the thumbnailUrl computed property
+  // StatusView uses the same normalization logic in the thumbnailUrl computed property
 })
 
-describe('HomeView - Status Screen Structure', () => {
+describe('StatusView - Status Screen Structure', () => {
   let router: ReturnType<typeof createRouter>
 
   beforeEach(() => {
@@ -186,14 +186,14 @@ describe('HomeView - Status Screen Structure', () => {
     router = createRouter({
       history: createMemoryHistory(),
       routes: [
-        { path: '/', name: 'home', component: HomeView },
+        { path: '/status', name: 'status', component: StatusView },
         { path: '/files', name: 'files', component: { template: '<div>Files</div>' } }
       ]
     })
   })
 
   it('has status screen with proper layout structure', () => {
-    const wrapper = mount(HomeView, {
+    const wrapper = mount(StatusView, {
       global: { plugins: [router] }
     })
     // Verify component renders all expected sections
@@ -201,14 +201,14 @@ describe('HomeView - Status Screen Structure', () => {
   })
 
   it('has BottomSheet for control interactions', () => {
-    const wrapper = mount(HomeView, {
+    const wrapper = mount(StatusView, {
       global: { plugins: [router] }
     })
     expect(wrapper.findComponent({ name: 'BottomSheet' }).exists()).toBe(true)
   })
 
   it('has ConfirmDialog component for confirmation actions', () => {
-    const wrapper = mount(HomeView, {
+    const wrapper = mount(StatusView, {
       global: { plugins: [router] }
     })
     expect(wrapper.findComponent({ name: 'ConfirmDialog' }).exists()).toBe(true)
@@ -217,7 +217,7 @@ describe('HomeView - Status Screen Structure', () => {
   it('provides thumbnail and file info structure for printing state', () => {
     // This test verifies the component structure exists in the template
     // by mounting and checking that necessary components are available
-    const wrapper = mount(HomeView, {
+    const wrapper = mount(StatusView, {
       global: { plugins: [router] }
     })
     // Component template includes all necessary elements
@@ -225,13 +225,13 @@ describe('HomeView - Status Screen Structure', () => {
   })
 
   /*
-  DISABLED: HomeView thumbnail URL normalization test
+  DISABLED: StatusView thumbnail URL normalization test
   This test requires complex Pinia store mocking to set up job and printer state properly.
   The normalization logic is already comprehensively tested in FileListItem.spec.ts:
   - normalizes URLs without /api prefix
   - preserves URLs already with /api prefix
   - removes double slashes from URLs
-  HomeView uses the same normalization logic, so we're covered by FileListItem tests.
+  StatusView uses the same normalization logic, so we're covered by FileListItem tests.
   */
   // TODO: Test for /api prefix addition requires complex Pinia store mocking
   // The normalization logic is already tested by the "normalizes double slashes" test above
@@ -272,7 +272,7 @@ describe('HomeView - Status Screen Structure', () => {
       }
     } as any)
 
-    const wrapper = mount(HomeView, {
+    const wrapper = mount(StatusView, {
       global: { plugins: [router] }
     })
 
@@ -291,14 +291,14 @@ describe('HomeView - Status Screen Structure', () => {
   // which verify double slash removal and /api prefix addition
 
   it('renders status badge component', () => {
-    const wrapper = mount(HomeView, {
+    const wrapper = mount(StatusView, {
       global: { plugins: [router] }
     })
     expect(wrapper.findComponent({ name: 'StatusBadge' }).exists()).toBe(true)
   })
 })
 
-describe('HomeView - Active Print Status Screen Display', () => {
+describe('StatusView - Active Print Status Screen Display', () => {
   let router: ReturnType<typeof createRouter>
   let pinia: ReturnType<typeof createPinia>
 
@@ -309,7 +309,7 @@ describe('HomeView - Active Print Status Screen Display', () => {
     router = createRouter({
       history: createMemoryHistory(),
       routes: [
-        { path: '/', name: 'home', component: HomeView },
+        { path: '/status', name: 'status', component: StatusView },
         { path: '/files', name: 'files', component: { template: '<div>Files</div>' } }
       ]
     })
@@ -378,7 +378,7 @@ describe('HomeView - Active Print Status Screen Display', () => {
       stopJob: vi.fn()
     })
 
-    const wrapper = mount(HomeView, {
+    const wrapper = mount(StatusView, {
       global: { plugins: [pinia, router] }
     })
 
@@ -447,7 +447,7 @@ describe('HomeView - Active Print Status Screen Display', () => {
       stopJob: vi.fn()
     })
 
-    const wrapper = mount(HomeView, {
+    const wrapper = mount(StatusView, {
       global: { plugins: [pinia, router] }
     })
 

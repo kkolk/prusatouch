@@ -25,7 +25,7 @@ const route = useRoute()
 const tabs = [
   { name: 'files', route: '/files', icon: '📁', label: 'Files' },
   { name: 'control', route: '/control', icon: '🎮', label: 'Control' },
-  { name: 'status', route: '/', icon: '📊', label: 'Status' }
+  { name: 'status', route: '/status', icon: '📊', label: 'Status' }
 ]
 
 // Sliding tab indicator position (GPU-accelerated with transform)
