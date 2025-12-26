@@ -11,7 +11,7 @@ ExecStart=/home/kkolk/.nvm/versions/node/v24.11.1/bin/node server.js
 Restart=always
 RestartSec=5
 Environment="PRUSALINK_USER=kkolk"
-Environment="PRUSALINK_PASS=<set-during-deployment>"
+Environment="PRUSALINK_PASS=<set-from-deployment-script>"
 Environment="PORT=8080"
 Environment="SPA_PATH=/opt/prusatouch/dist"
 

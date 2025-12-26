@@ -23,7 +23,7 @@ export default defineConfig({
     cssCodeSplit: true,
     terserOptions: {
       compress: {
-        drop_console: true,
+        drop_console: false,  // Keep console.log for debugging on Pi kiosk
         drop_debugger: true
       }
     },

@@ -70,13 +70,30 @@ async function loadThumbnail(url: string) {
     // Example: /api/thumbnails/storage//path becomes /api/thumbnails/storage/path
     normalizedUrl = normalizedUrl.replace(/\/+/g, '/')
 
-    // Add cache busting with m_timestamp
-    const cacheBustUrl = `${normalizedUrl}?ct=${props.file.m_timestamp || Date.now()}`
-    const response = await fetch(cacheBustUrl)
+    // Add cache busting with current timestamp to prevent serving stale/corrupted cached responses
+    // Using Date.now() instead of m_timestamp ensures fresh fetches after deployments
+    const cacheBustUrl = `${normalizedUrl}?ct=${Date.now()}`
+    console.log('[Thumbnail] Fetching:', cacheBustUrl)
+    const response = await fetch(cacheBustUrl, {
+      headers: {
+        'Accept': 'image/*'
+      }
+    })
+    console.log('[Thumbnail] Response status:', response.status, response.statusText)
+    console.log('[Thumbnail] Response Content-Type:', response.headers.get('Content-Type'))
+
     if (!response.ok) throw new Error(`Failed to load thumbnail: ${response.status} ${response.statusText}`)
 
+    // Verify response is actually an image (not HTML error page)
+    const contentType = response.headers.get('Content-Type')
+    if (!contentType || !contentType.startsWith('image/')) {
+      throw new Error(`Response is not an image: ${contentType}`)
+    }
+
     const blob = await response.blob()
+    console.log('[Thumbnail] Blob size:', blob.size, 'type:', blob.type)
     const objectUrl = URL.createObjectURL(blob)
+    console.log('[Thumbnail] Object URL:', objectUrl)
 
     // Store in cache for future use
     filesStore.cacheThumbnail(props.file.name, url, objectUrl)

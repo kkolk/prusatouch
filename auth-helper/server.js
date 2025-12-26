@@ -173,6 +173,10 @@ function buildAuthorizationHeader(username, realm, nonce, uri, qop, cnonce, nc, 
 async function requestWithDigest(method, url, headers, data) {
   const uri = new URL(url).pathname + new URL(url).search;
 
+  // Detect if this is an image request by URL pattern
+  const isImageRequest = url.includes('/thumb') || url.includes('/thumbnail') || url.includes('.png') || url.includes('.jpg') || url.includes('.jpeg') || url.includes('.gif') || url.includes('.svg');
+  const responseType = isImageRequest ? 'arraybuffer' : undefined;
+
   // Try with cached nonce first (if available)
   if (nonceCache.nonce && nonceCache.nc > 0) {
     if (DEBUG) {
@@ -217,8 +221,9 @@ async function requestWithDigest(method, url, headers, data) {
         },
         data,
         validateStatus: () => true,
+        responseType,
         // Handle different response types (including empty 204 responses)
-        transformResponse: [(data, headers) => {
+        transformResponse: isImageRequest ? undefined : [(data, headers) => {
           if (!data || data.length === 0) return '';
           if (headers['content-type']?.includes('application/json')) {
             try {
@@ -268,7 +273,8 @@ async function requestWithDigest(method, url, headers, data) {
     headers,
     data,
     validateStatus: () => true,
-    transformResponse: [(data, headers) => {
+    responseType,
+    transformResponse: isImageRequest ? undefined : [(data, headers) => {
       if (!data || data.length === 0) return '';
       if (headers['content-type']?.includes('application/json')) {
         try {
@@ -361,8 +367,9 @@ async function requestWithDigest(method, url, headers, data) {
       },
       data,
       validateStatus: () => true,
+      responseType,
       // Handle different response types (including empty 204 responses)
-      transformResponse: [(data, headers) => {
+      transformResponse: isImageRequest ? undefined : [(data, headers) => {
         // Don't try to parse empty responses
         if (!data || data.length === 0) {
           return '';

@@ -123,7 +123,8 @@ describe('FileListItem', () => {
       await new Promise(resolve => setTimeout(resolve, 0))
 
       expect(fetch).toHaveBeenCalledWith(
-        expect.stringMatching(/^\/api\/thumbnails\/local\/test\.gcode\.orig\.png\?ct=/)
+        expect.stringMatching(/^\/api\/thumbnails\/local\/test\.gcode\.orig\.png\?ct=/),
+        { headers: { 'Accept': 'image/*' } }
       )
     })
 
@@ -143,7 +144,8 @@ describe('FileListItem', () => {
       await new Promise(resolve => setTimeout(resolve, 0))
 
       expect(fetch).toHaveBeenCalledWith(
-        expect.stringMatching(/^\/api\/thumbnails\/local\/test\.gcode\.orig\.png\?ct=/)
+        expect.stringMatching(/^\/api\/thumbnails\/local\/test\.gcode\.orig\.png\?ct=/),
+        { headers: { 'Accept': 'image/*' } }
       )
     })
 
@@ -189,7 +191,8 @@ describe('FileListItem', () => {
       await new Promise(resolve => setTimeout(resolve, 0))
 
       expect(fetch).toHaveBeenCalledWith(
-        expect.stringMatching(/ct=1638316800/)
+        expect.stringMatching(/ct=1638316800/),
+        { headers: { 'Accept': 'image/*' } }
       )
     })
 

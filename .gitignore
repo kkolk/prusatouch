@@ -12,3 +12,4 @@ src/api/
 # Local environment files with credentials
 .env.local
 .env.*.local
+auth-helper/.env
