@@ -26,14 +26,14 @@ describe('App', () => {
     expect(wrapper.find('.app').exists()).toBe(true)
   })
 
-  it('renders top bar', async () => {
+  it('renders kiosk header', async () => {
     router.push('/')
     await router.isReady()
 
     const wrapper = mount(App, {
       global: { plugins: [router] }
     })
-    expect(wrapper.find('.top-bar').exists()).toBe(true)
+    expect(wrapper.find('.kiosk-header').exists()).toBe(true)
   })
 
   it('renders bottom navigation', async () => {
@@ -93,51 +93,21 @@ describe('App', () => {
     expect(wrapper.find('.main-content').exists()).toBe(true)
   })
 
-  describe('top bar displays', () => {
-    it('displays position on control view', async () => {
-      router.push('/control')
-      await router.isReady()
-      const wrapper = mount(App, { global: { plugins: [router] } })
-      expect(wrapper.find('.position-compact').exists()).toBe(true)
-      expect(wrapper.find('.temps-compact').exists()).toBe(false)
-    })
-
-    it('displays temperatures on home view', async () => {
-      router.push('/')
-      await router.isReady()
-      const wrapper = mount(App, { global: { plugins: [router] } })
-      expect(wrapper.find('.temps-compact').exists()).toBe(true)
-      expect(wrapper.find('.position-compact').exists()).toBe(false)
-    })
-
-    it('displays neither position nor temps on files view', async () => {
-      router.push('/files')
-      await router.isReady()
-      const wrapper = mount(App, { global: { plugins: [router] } })
-      expect(wrapper.find('.position-compact').exists()).toBe(false)
-      expect(wrapper.find('.temps-compact').exists()).toBe(false)
-    })
-
-    it('displays neither position nor temps on settings view', async () => {
-      router.push('/settings')
-      await router.isReady()
-      const wrapper = mount(App, { global: { plugins: [router] } })
-      expect(wrapper.find('.position-compact').exists()).toBe(false)
-      expect(wrapper.find('.temps-compact').exists()).toBe(false)
+  describe('kiosk header displays', () => {
+    it('displays temperatures on all views', async () => {
+      const routes = ['/', '/files', '/control', '/settings']
+      for (const route of routes) {
+        router.push(route)
+        await router.isReady()
+        const wrapper = mount(App, { global: { plugins: [router] } })
+        expect(wrapper.find('.kiosk-header').exists()).toBe(true)
+        // KioskHeader contains TemperatureDisplay components
+        expect(wrapper.findComponent({ name: 'TemperatureDisplay' }).exists()).toBe(true)
+      }
     })
   })
 
   describe('computed values', () => {
-    it('calculates position from printerStore', async () => {
-      router.push('/control')
-      await router.isReady()
-      const wrapper = mount(App, { global: { plugins: [router] } })
-      const vm = wrapper.vm as any
-
-      // Default values when no status
-      expect(vm.position).toEqual({ x: 0, y: 0, z: 0 })
-    })
-
     it('calculates nozzle temperature from printerStore', async () => {
       router.push('/')
       await router.isReady()
@@ -181,31 +151,6 @@ describe('App', () => {
       expect(vm.nozzleTemp).toEqual({ current: 216, target: 220 })
       expect(vm.bedTemp).toEqual({ current: 60, target: 60 })
     })
-
-    it('formats position values to 1 decimal place', async () => {
-      const { usePrinterStore } = await import('../../src/stores/printer')
-      const printerStore = usePrinterStore()
-
-      // Set printer status with precise position values
-      printerStore.status = {
-        axis_x: 123.456,
-        axis_y: 78.912,
-        axis_z: 5.678,
-        temp_nozzle: 0,
-        target_nozzle: 0,
-        temp_bed: 0,
-        target_bed: 0
-      } as any
-
-      router.push('/control')
-      await router.isReady()
-      const wrapper = mount(App, { global: { plugins: [router] } })
-
-      const posValues = wrapper.findAll('.pos-value')
-      expect(posValues[0].text()).toBe('123.5')
-      expect(posValues[1].text()).toBe('78.9')
-      expect(posValues[2].text()).toBe('5.7')
-    })
   })
 
   describe('Printer Info Fetching', () => {
@@ -233,43 +178,7 @@ describe('App', () => {
     })
   })
 
-  describe('Status Indicator', () => {
-    it('shows status indicator on files view', async () => {
-      router.push('/files')
-      await router.isReady()
-      const wrapper = mount(App, { global: { plugins: [router] } })
-      expect(wrapper.find('.status-indicator').exists()).toBe(true)
-      expect(wrapper.find('.top-bar-center').exists()).toBe(true)
-    })
-
-    it('shows status indicator on settings view', async () => {
-      router.push('/settings')
-      await router.isReady()
-      const wrapper = mount(App, { global: { plugins: [router] } })
-      expect(wrapper.find('.status-indicator').exists()).toBe(true)
-      expect(wrapper.find('.top-bar-center').exists()).toBe(true)
-    })
-
-    it('does NOT show status indicator on home view', async () => {
-      router.push('/')
-      await router.isReady()
-      const wrapper = mount(App, { global: { plugins: [router] } })
-      expect(wrapper.find('.status-indicator').exists()).toBe(false)
-      // top-bar-center exists with temps-compact inside
-      expect(wrapper.find('.top-bar-center').exists()).toBe(true)
-      expect(wrapper.find('.temps-compact').exists()).toBe(true)
-    })
-
-    it('does NOT show status indicator on control view', async () => {
-      router.push('/control')
-      await router.isReady()
-      const wrapper = mount(App, { global: { plugins: [router] } })
-      expect(wrapper.find('.status-indicator').exists()).toBe(false)
-      // top-bar-center exists with position-compact inside
-      expect(wrapper.find('.top-bar-center').exists()).toBe(true)
-      expect(wrapper.find('.position-compact').exists()).toBe(true)
-    })
-
+  describe('KioskHeader Connection Status', () => {
     it('displays green connection dot when printer is connected', async () => {
       const { usePrinterStore } = await import('../../src/stores/printer')
       const printerStore = usePrinterStore()
@@ -296,46 +205,6 @@ describe('App', () => {
       const dot = wrapper.find('.connection-dot')
       expect(dot.exists()).toBe(true)
       expect(dot.classes()).not.toContain('connected')
-    })
-
-    it('displays user-friendly state text for PRINTING', async () => {
-      const { usePrinterStore } = await import('../../src/stores/printer')
-      const printerStore = usePrinterStore()
-      printerStore.status = { state: 'PRINTING' } as any
-
-      router.push('/files')
-      await router.isReady()
-      const wrapper = mount(App, { global: { plugins: [router] } })
-
-      const statusText = wrapper.find('.status-text')
-      expect(statusText.text()).toBe('Printing')
-    })
-
-    it('displays user-friendly state text for IDLE', async () => {
-      const { usePrinterStore } = await import('../../src/stores/printer')
-      const printerStore = usePrinterStore()
-      printerStore.status = { state: 'IDLE' } as any
-
-      router.push('/files')
-      await router.isReady()
-      const wrapper = mount(App, { global: { plugins: [router] } })
-
-      const statusText = wrapper.find('.status-text')
-      expect(statusText.text()).toBe('Idle')
-    })
-
-    it('displays "Offline" when printer is disconnected', async () => {
-      const { usePrinterStore } = await import('../../src/stores/printer')
-      const printerStore = usePrinterStore()
-      printerStore.status = null
-      printerStore.connection.connected = false
-
-      router.push('/files')
-      await router.isReady()
-      const wrapper = mount(App, { global: { plugins: [router] } })
-
-      const statusText = wrapper.find('.status-text')
-      expect(statusText.text()).toBe('Offline')
     })
 
     it('displays connection dot with correct aria-label when connected', async () => {
