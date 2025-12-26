@@ -44,10 +44,10 @@ describe('App', () => {
     const wrapper = mount(App, {
       global: { plugins: [router] }
     })
-    expect(wrapper.find('.bottom-nav').exists()).toBe(true)
+    expect(wrapper.find('.kiosk-nav').exists()).toBe(true)
   })
 
-  it('renders four nav tabs', async () => {
+  it('renders three nav tabs', async () => {
     router.push('/')
     await router.isReady()
 
@@ -55,18 +55,18 @@ describe('App', () => {
       global: { plugins: [router] }
     })
     const tabs = wrapper.findAll('.nav-tab')
-    expect(tabs.length).toBe(4)
+    expect(tabs.length).toBe(3)
   })
 
   it('highlights active tab based on route', async () => {
-    router.push('/files')
+    router.push('/control')
     await router.isReady()
 
     const wrapper = mount(App, {
       global: { plugins: [router] }
     })
     const activeTab = wrapper.find('.nav-tab.active')
-    expect(activeTab.text()).toContain('Files')
+    expect(activeTab.text()).toContain('Control')
   })
 
   it('navigates when tab is clicked', async () => {
@@ -77,11 +77,11 @@ describe('App', () => {
       global: { plugins: [router] }
     })
 
-    const filesTab = wrapper.findAll('.nav-tab')[1]
-    await filesTab.trigger('click')
+    const controlTab = wrapper.findAll('.nav-tab')[1]
+    await controlTab.trigger('click')
     await flushPromises()
 
-    expect(router.currentRoute.value.name).toBe('files')
+    expect(router.currentRoute.value.name).toBe('control')
   })
 
   it('renders router-view for content', async () => {
@@ -96,7 +96,7 @@ describe('App', () => {
 
   describe('kiosk header displays', () => {
     it('displays temperatures on all views', async () => {
-      const routes = ['/', '/files', '/control', '/settings']
+      const routes = ['/', '/files', '/control']
       for (const route of routes) {
         router.push(route)
         await router.isReady()
