@@ -57,7 +57,7 @@ function handleResetDefaults() {
         <h2 class="section-title">Printer</h2>
         <TouchButton
           variant="secondary"
-          size="small"
+          size="min"
           @click="handleRefreshInfo"
           :disabled="printerStore.printerInfoLoading"
         >
