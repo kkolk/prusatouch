@@ -108,6 +108,7 @@ describe('FileListItem', () => {
       global.fetch = vi.fn(() =>
         Promise.resolve({
           ok: true,
+          headers: new Headers({ 'Content-Type': 'image/png' }),
           blob: () => Promise.resolve(new Blob())
         } as Response)
       )
@@ -132,6 +133,7 @@ describe('FileListItem', () => {
       global.fetch = vi.fn(() =>
         Promise.resolve({
           ok: true,
+          headers: new Headers({ 'Content-Type': 'image/png' }),
           blob: () => Promise.resolve(new Blob())
         } as Response)
       )
@@ -153,6 +155,7 @@ describe('FileListItem', () => {
       global.fetch = vi.fn(() =>
         Promise.resolve({
           ok: true,
+          headers: new Headers({ 'Content-Type': 'image/png' }),
           blob: () => Promise.resolve(new Blob())
         } as Response)
       )
@@ -170,36 +173,34 @@ describe('FileListItem', () => {
       expect(fetchCall).toContain('/Body1')
     })
 
-    it('adds cache busting parameter with m_timestamp', async () => {
+    it('adds cache busting parameter with current timestamp', async () => {
       global.fetch = vi.fn(() =>
         Promise.resolve({
           ok: true,
+          headers: new Headers({ 'Content-Type': 'image/png' }),
           blob: () => Promise.resolve(new Blob())
         } as Response)
       )
 
-      const fileWithTimestamp = {
-        ...mockFile,
-        m_timestamp: 1638316800
-      }
-
       const wrapper = mount(FileListItem, {
-        props: { file: fileWithTimestamp, thumbnailUrl: '/api/thumbnails/local/test.gcode.orig.png' }
+        props: { file: mockFile, thumbnailUrl: '/api/thumbnails/local/test.gcode.orig.png' }
       })
 
       await wrapper.vm.$nextTick()
       await new Promise(resolve => setTimeout(resolve, 0))
 
+      // Should use Date.now() for cache busting (a ~13-digit timestamp)
       expect(fetch).toHaveBeenCalledWith(
-        expect.stringMatching(/ct=1638316800/),
+        expect.stringMatching(/ct=\d{13}/),
         { headers: { 'Accept': 'image/*' } }
       )
     })
 
-    it('adds cache busting with current time when m_timestamp is missing', async () => {
+    it('always uses Date.now() for cache busting regardless of m_timestamp', async () => {
       global.fetch = vi.fn(() =>
         Promise.resolve({
           ok: true,
+          headers: new Headers({ 'Content-Type': 'image/png' }),
           blob: () => Promise.resolve(new Blob())
         } as Response)
       )
