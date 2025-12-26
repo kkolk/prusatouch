@@ -2,13 +2,10 @@ import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 
 export interface Settings {
-  brightness: number // 20-100
-  screensaverTimeout: number // minutes (0 = disabled)
+  // No brightness/screensaver settings - removed
 }
 
 const DEFAULT_SETTINGS: Settings = {
-  brightness: 100,
-  screensaverTimeout: 5
 }
 
 const STORAGE_KEY = 'prusatouch-settings'
@@ -19,8 +16,8 @@ function loadSettings(): Settings {
     if (stored) {
       const parsed = JSON.parse(stored)
       return {
-        brightness: parsed.brightness ?? DEFAULT_SETTINGS.brightness,
-        screensaverTimeout: parsed.screensaverTimeout ?? DEFAULT_SETTINGS.screensaverTimeout
+        ...DEFAULT_SETTINGS,
+        ...parsed
       }
     }
   } catch (error) {
@@ -51,14 +48,6 @@ export const useSettingsStore = defineStore('settings', () => {
   )
 
   // Actions
-  function setBrightness(value: number) {
-    settings.value.brightness = Math.max(20, Math.min(100, value))
-  }
-
-  function setScreensaverTimeout(minutes: number) {
-    settings.value.screensaverTimeout = Math.max(0, minutes)
-  }
-
   function clearCache() {
     // Clear thumbnail cache
     // This will be handled by filesStore
@@ -78,8 +67,6 @@ export const useSettingsStore = defineStore('settings', () => {
     settings,
 
     // Actions
-    setBrightness,
-    setScreensaverTimeout,
     clearCache,
     restartInterface,
     resetToDefaults

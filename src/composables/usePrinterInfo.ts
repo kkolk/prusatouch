@@ -1,4 +1,4 @@
-import { computed, readonly } from 'vue'
+import { computed } from 'vue'
 import { usePrinterStore } from '../stores/printer'
 
 /**
@@ -23,13 +23,13 @@ export function usePrinterInfo() {
   const isLoading = computed(() => store.printerInfoLoading)
 
   return {
-    printerName: readonly(printerName),
-    firmware: readonly(firmware),
-    prusaLink: readonly(prusaLink),
-    hostname: readonly(hostname),
-    serial: readonly(serial),
-    location: readonly(location),
-    nozzleDiameter: readonly(nozzleDiameter),
-    isLoading: readonly(isLoading),
+    printerName,
+    firmware,
+    prusaLink,
+    hostname,
+    serial,
+    location,
+    nozzleDiameter,
+    isLoading,
   }
 }

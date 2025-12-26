@@ -1,50 +1,29 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { computed } from 'vue'
 import { useSettingsStore } from '../stores/settings'
 import { useFilesStore } from '../stores/files'
+import { usePrinterStore } from '../stores/printer'
 import TouchButton from '../components/TouchButton.vue'
 
 const settingsStore = useSettingsStore()
 const filesStore = useFilesStore()
+const printerStore = usePrinterStore()
 
-// Local state
-const networkInfo = ref({
-  ip: 'Loading...',
-  hostname: window.location.hostname || 'Unknown'
-})
-
-const systemInfo = ref({
-  appVersion: '1.0.0',
-  userAgent: navigator.userAgent,
-  platform: navigator.platform,
-  memory: (navigator as any).deviceMemory ? `${(navigator as any).deviceMemory} GB` : 'Unknown'
-})
-
-const screensaverOptions = [
-  { value: 0, label: 'Disabled' },
-  { value: 1, label: '1 minute' },
-  { value: 5, label: '5 minutes' },
-  { value: 10, label: '10 minutes' },
-  { value: 15, label: '15 minutes' },
-  { value: 30, label: '30 minutes' }
-]
-
-// Lifecycle
-onMounted(() => {
-  // Try to get IP from network APIs (not always available in browser)
-  // For now, just show hostname
-  networkInfo.value.ip = 'See network settings'
-})
+// Computed properties for printer info (with fallbacks)
+const printerName = computed(() => printerStore.printerInfo?.name || 'Unknown Printer')
+const firmware = computed(() => printerStore.version?.firmware || 'Unknown')
+const prusaLink = computed(() => printerStore.version?.text || 'Unknown')
+const hostname = computed(() => printerStore.printerInfo?.hostname || 'Unknown')
+const serial = computed(() => printerStore.printerInfo?.serial || 'Unknown')
+const location = computed(() => printerStore.printerInfo?.location || 'Not Set')
+const nozzleDiameter = computed(() => printerStore.printerInfo?.nozzle_diameter?.toString() || 'Unknown')
 
 // Methods
-function handleBrightnessChange(event: Event) {
-  const target = event.target as HTMLInputElement
-  settingsStore.setBrightness(Number(target.value))
-}
-
-function handleScreensaverChange(event: Event) {
-  const target = event.target as HTMLSelectElement
-  settingsStore.setScreensaverTimeout(Number(target.value))
+async function handleRefreshInfo() {
+  await Promise.all([
+    printerStore.fetchPrinterInfo(),
+    printerStore.fetchVersion()
+  ])
 }
 
 function handleClearCache() {
@@ -72,42 +51,44 @@ function handleResetDefaults() {
   <div class="settings-view">
     <h1 class="settings-title">Settings</h1>
 
-    <!-- Display Settings -->
+    <!-- Printer Information -->
     <section class="settings-section">
-      <h2 class="section-title">Display</h2>
-
-      <!-- Brightness Slider -->
-      <div class="setting-item">
-        <label class="setting-label">
-          Brightness: {{ settingsStore.settings.brightness }}%
-        </label>
-        <input
-          type="range"
-          min="20"
-          max="100"
-          step="5"
-          :value="settingsStore.settings.brightness"
-          class="brightness-slider"
-          @input="handleBrightnessChange"
-        />
+      <div class="section-header">
+        <h2 class="section-title">Printer</h2>
+        <TouchButton
+          variant="secondary"
+          size="small"
+          @click="handleRefreshInfo"
+          :disabled="printerStore.printerInfoLoading"
+        >
+          {{ printerStore.printerInfoLoading ? 'Refreshing...' : 'Refresh' }}
+        </TouchButton>
       </div>
 
-      <!-- Screensaver Timeout -->
-      <div class="setting-item">
-        <label class="setting-label">Screensaver Timeout</label>
-        <select
-          :value="settingsStore.settings.screensaverTimeout"
-          class="screensaver-select"
-          @change="handleScreensaverChange"
-        >
-          <option
-            v-for="option in screensaverOptions"
-            :key="option.value"
-            :value="option.value"
-          >
-            {{ option.label }}
-          </option>
-        </select>
+      <div v-if="printerStore.printerInfoLoading" class="loading-state">
+        Loading printer information...
+      </div>
+      <div v-else class="info-grid">
+        <div class="info-item">
+          <span class="info-label">Name:</span>
+          <span class="info-value">{{ printerName }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Serial:</span>
+          <span class="info-value">{{ serial }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Firmware:</span>
+          <span class="info-value">{{ firmware }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">PrusaLink:</span>
+          <span class="info-value">{{ prusaLink }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Nozzle:</span>
+          <span class="info-value">{{ nozzleDiameter }}mm</span>
+        </div>
       </div>
     </section>
 
@@ -115,34 +96,17 @@ function handleResetDefaults() {
     <section class="settings-section">
       <h2 class="section-title">Network</h2>
 
-      <div class="info-grid">
+      <div v-if="printerStore.printerInfoLoading" class="loading-state">
+        Loading network information...
+      </div>
+      <div v-else class="info-grid">
         <div class="info-item">
           <span class="info-label">Hostname:</span>
-          <span class="info-value">{{ networkInfo.hostname }}</span>
+          <span class="info-value">{{ hostname }}</span>
         </div>
         <div class="info-item">
-          <span class="info-label">IP Address:</span>
-          <span class="info-value">{{ networkInfo.ip }}</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- System Information -->
-    <section class="settings-section">
-      <h2 class="section-title">System</h2>
-
-      <div class="info-grid">
-        <div class="info-item">
-          <span class="info-label">App Version:</span>
-          <span class="info-value">{{ systemInfo.appVersion }}</span>
-        </div>
-        <div class="info-item">
-          <span class="info-label">Platform:</span>
-          <span class="info-value">{{ systemInfo.platform }}</span>
-        </div>
-        <div class="info-item">
-          <span class="info-label">Memory:</span>
-          <span class="info-value">{{ systemInfo.memory }}</span>
+          <span class="info-label">Location:</span>
+          <span class="info-value">{{ location }}</span>
         </div>
       </div>
     </section>
@@ -195,71 +159,24 @@ function handleResetDefaults() {
   margin: 0 0 var(--space-md) 0;
 }
 
-/* Setting Items */
-.setting-item {
+/* Section Header (for refresh button) */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: var(--space-md);
 }
 
-.setting-item:last-child {
-  margin-bottom: 0;
+.section-header .section-title {
+  margin: 0;
 }
 
-.setting-label {
-  display: block;
-  font-size: 16px;
-  color: var(--text-primary);
-  margin-bottom: var(--space-sm);
-  font-weight: 500;
-}
-
-/* Brightness Slider */
-.brightness-slider {
-  width: 100%;
-  height: var(--touch-min);
-  -webkit-appearance: none;
-  appearance: none;
-  background: var(--bg-tertiary);
-  border-radius: var(--radius-md);
-  outline: none;
-  cursor: pointer;
-}
-
-.brightness-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 24px;
-  height: 24px;
-  background: var(--prusa-orange);
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-.brightness-slider::-moz-range-thumb {
-  width: 24px;
-  height: 24px;
-  background: var(--prusa-orange);
-  border-radius: 50%;
-  cursor: pointer;
-  border: none;
-}
-
-/* Screensaver Select */
-.screensaver-select {
-  width: 100%;
-  min-height: var(--touch-comfortable);
-  padding: var(--space-sm) var(--space-md);
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-  border: 1px solid var(--bg-tertiary);
-  border-radius: var(--radius-md);
-  font-size: 16px;
-  font-family: inherit;
-  cursor: pointer;
-}
-
-.screensaver-select:focus {
-  outline: 2px solid var(--prusa-orange);
-  outline-offset: 2px;
+/* Loading State */
+.loading-state {
+  padding: var(--space-md);
+  text-align: center;
+  color: var(--text-secondary);
+  font-style: italic;
 }
 
 /* Info Grid */
