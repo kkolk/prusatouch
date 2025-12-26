@@ -489,7 +489,7 @@ paths:
           $ref: '#/components/responses/NotFound'
         409:
           $ref: '#/components/responses/Conflict'
-  /api/v1/files/{storage}/{path}:
+  /api/files/{storage}/{path}:
     parameters:
     - in: header
       name: Accept-Language
@@ -1862,7 +1862,7 @@ components:
 
                 described in this document). It is capable of doing the PUT and
 
-                HEAD to /api/v1/files/{storage}/{path} and it is capable of
+                HEAD to /api/files/{storage}/{path} and it is capable of
 
                 answering the /api/v1/storage endpoint.
 

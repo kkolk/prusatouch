@@ -38,13 +38,14 @@ This directory contains the OpenAPI specification for the PrusaLink API used by 
 
 **Two prefix patterns in PrusaLink:**
 
-1. **`/api/v1/`** - Most endpoints (versioned API)
+1. **`/api/v1/`** - Versioned API endpoints
    - `/api/v1/status`
    - `/api/v1/job`
-   - `/api/v1/files/{storage}/{path}`
+   - `/api/v1/storage`
    - etc.
 
-2. **`/api/`** - Legacy and settings endpoints (unversioned)
+2. **`/api/`** - Files, settings, and legacy endpoints (unversioned)
+   - `/api/files/{storage}/{path}` - **File operations (CRUD)**
    - `/api/version`
    - `/api/settings`
    - `/api/logs`
@@ -52,6 +53,8 @@ This directory contains the OpenAPI specification for the PrusaLink API used by 
    - `/api/printer/printhead`
    - `/api/printer/tool`
    - `/api/printer/bed`
+
+**Note:** PrusaLink 0.8.x uses `/api/files` (not `/api/v1/files`) for file operations.</think><tool_call>TodoWrite<arg_key>todos</arg_key><arg_value>[{"activeForm": "Investigating current image loading issue", "content": "Investigate current image loading issue", "status": "completed"}, {"activeForm": "Identifying root cause of image failure", "content": "Identify root cause of image failure", "status": "completed"}, {"activeForm": "Fixing OpenAPI spec - files endpoint should be /api/files not /api/v1/files", "content": "Fix OpenAPI spec - files endpoint should be /api/files not /api/v1/files", "status": "completed"}, {"activeForm": "Regenerating API client with correct endpoint", "content": "Regenerate API client with correct endpoint", "status": "in_progress"}, {"activeForm": "Verifying images display correctly", "content": "Verify images display correctly", "status": "pending"}]
 
 **Important:** Do not change `/api/` endpoints to `/api/v1/` - this is intentional and matches the real PrusaLink API.
 
