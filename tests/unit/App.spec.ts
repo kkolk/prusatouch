@@ -232,4 +232,161 @@ describe('App', () => {
       expect(fetchVersionSpy).toHaveBeenCalledOnce()
     })
   })
+
+  describe('Status Indicator', () => {
+    it('shows status indicator on files view', async () => {
+      router.push('/files')
+      await router.isReady()
+      const wrapper = mount(App, { global: { plugins: [router] } })
+      expect(wrapper.find('.status-indicator').exists()).toBe(true)
+      expect(wrapper.find('.top-bar-center').exists()).toBe(true)
+    })
+
+    it('shows status indicator on settings view', async () => {
+      router.push('/settings')
+      await router.isReady()
+      const wrapper = mount(App, { global: { plugins: [router] } })
+      expect(wrapper.find('.status-indicator').exists()).toBe(true)
+      expect(wrapper.find('.top-bar-center').exists()).toBe(true)
+    })
+
+    it('does NOT show status indicator on home view', async () => {
+      router.push('/')
+      await router.isReady()
+      const wrapper = mount(App, { global: { plugins: [router] } })
+      expect(wrapper.find('.status-indicator').exists()).toBe(false)
+      // top-bar-center exists with temps-compact inside
+      expect(wrapper.find('.top-bar-center').exists()).toBe(true)
+      expect(wrapper.find('.temps-compact').exists()).toBe(true)
+    })
+
+    it('does NOT show status indicator on control view', async () => {
+      router.push('/control')
+      await router.isReady()
+      const wrapper = mount(App, { global: { plugins: [router] } })
+      expect(wrapper.find('.status-indicator').exists()).toBe(false)
+      // top-bar-center exists with position-compact inside
+      expect(wrapper.find('.top-bar-center').exists()).toBe(true)
+      expect(wrapper.find('.position-compact').exists()).toBe(true)
+    })
+
+    it('displays green connection dot when printer is connected', async () => {
+      const { usePrinterStore } = await import('../../src/stores/printer')
+      const printerStore = usePrinterStore()
+      printerStore.connection.connected = true
+
+      router.push('/files')
+      await router.isReady()
+      const wrapper = mount(App, { global: { plugins: [router] } })
+
+      const dot = wrapper.find('.connection-dot')
+      expect(dot.exists()).toBe(true)
+      expect(dot.classes()).toContain('connected')
+    })
+
+    it('displays red connection dot when printer is disconnected', async () => {
+      const { usePrinterStore } = await import('../../src/stores/printer')
+      const printerStore = usePrinterStore()
+      printerStore.connection.connected = false
+
+      router.push('/files')
+      await router.isReady()
+      const wrapper = mount(App, { global: { plugins: [router] } })
+
+      const dot = wrapper.find('.connection-dot')
+      expect(dot.exists()).toBe(true)
+      expect(dot.classes()).not.toContain('connected')
+    })
+
+    it('displays user-friendly state text for PRINTING', async () => {
+      const { usePrinterStore } = await import('../../src/stores/printer')
+      const printerStore = usePrinterStore()
+      printerStore.status = { state: 'PRINTING' } as any
+
+      router.push('/files')
+      await router.isReady()
+      const wrapper = mount(App, { global: { plugins: [router] } })
+
+      const statusText = wrapper.find('.status-text')
+      expect(statusText.text()).toBe('Printing')
+    })
+
+    it('displays user-friendly state text for IDLE', async () => {
+      const { usePrinterStore } = await import('../../src/stores/printer')
+      const printerStore = usePrinterStore()
+      printerStore.status = { state: 'IDLE' } as any
+
+      router.push('/files')
+      await router.isReady()
+      const wrapper = mount(App, { global: { plugins: [router] } })
+
+      const statusText = wrapper.find('.status-text')
+      expect(statusText.text()).toBe('Idle')
+    })
+
+    it('displays "Offline" when printer is disconnected', async () => {
+      const { usePrinterStore } = await import('../../src/stores/printer')
+      const printerStore = usePrinterStore()
+      printerStore.status = null
+      printerStore.connection.connected = false
+
+      router.push('/files')
+      await router.isReady()
+      const wrapper = mount(App, { global: { plugins: [router] } })
+
+      const statusText = wrapper.find('.status-text')
+      expect(statusText.text()).toBe('Offline')
+    })
+
+    it('displays connection dot with correct aria-label when connected', async () => {
+      const { usePrinterStore } = await import('../../src/stores/printer')
+      const printerStore = usePrinterStore()
+      printerStore.connection.connected = true
+
+      router.push('/files')
+      await router.isReady()
+      const wrapper = mount(App, { global: { plugins: [router] } })
+
+      const dot = wrapper.find('.connection-dot')
+      expect(dot.attributes('aria-label')).toBe('Connected')
+    })
+
+    it('displays connection dot with correct aria-label when offline', async () => {
+      const { usePrinterStore } = await import('../../src/stores/printer')
+      const printerStore = usePrinterStore()
+      printerStore.connection.connected = false
+
+      router.push('/files')
+      await router.isReady()
+      const wrapper = mount(App, { global: { plugins: [router] } })
+
+      const dot = wrapper.find('.connection-dot')
+      expect(dot.attributes('aria-label')).toBe('Offline')
+    })
+  })
+
+  describe('Debug Button Removal', () => {
+    it('does NOT render debug button', async () => {
+      router.push('/')
+      await router.isReady()
+      const wrapper = mount(App, { global: { plugins: [router] } })
+
+      // Check that there's only one settings button (the gear icon)
+      const settingsBtns = wrapper.findAll('.settings-btn')
+      expect(settingsBtns.length).toBe(1)
+
+      // Verify it's the settings icon, not debug
+      const icon = wrapper.find('.settings-icon')
+      expect(icon.text()).toBe('⚙️')
+    })
+
+    it('goToDebug function does not exist', async () => {
+      router.push('/')
+      await router.isReady()
+      const wrapper = mount(App, { global: { plugins: [router] } })
+      const vm = wrapper.vm as any
+
+      expect(typeof vm.goToDebug).toBe('undefined')
+    })
+  })
 })

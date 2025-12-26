@@ -11,41 +11,63 @@
     <header class="top-bar">
       <div class="top-bar-content">
         <h1 class="app-title">PrusaTouch</h1>
+
+        <!-- Center content: Position, Temps, or Status -->
+        <template v-if="isFilesView || isSettingsView">
+          <div class="top-bar-center">
+            <!-- Status Indicator (Files/Settings View) -->
+            <div class="status-indicator">
+              <span
+                class="connection-dot"
+                :class="{ connected: printerStore.isConnected }"
+                :aria-label="printerStore.isConnected ? 'Connected' : 'Offline'"
+              ></span>
+              <span class="status-text">{{ displayState }}</span>
+            </div>
+          </div>
+        </template>
+
         <!-- Position Display (Control View Only) -->
-        <!-- Note: Position values use 1 decimal place for compact display in top bar -->
-        <div v-if="isControlView" class="position-compact">
-          <span class="pos-item">
-            <span class="pos-label">X:</span>
-            <span class="pos-value">{{ position.x.toFixed(1) }}</span>
-          </span>
-          <span class="pos-item">
-            <span class="pos-label">Y:</span>
-            <span class="pos-value">{{ position.y.toFixed(1) }}</span>
-          </span>
-          <span class="pos-item">
-            <span class="pos-label">Z:</span>
-            <span class="pos-value">{{ position.z.toFixed(1) }}</span>
-          </span>
-        </div>
+        <template v-else-if="isControlView">
+          <div class="top-bar-center">
+            <div class="position-compact">
+              <span class="pos-item">
+                <span class="pos-label">X:</span>
+                <span class="pos-value">{{ position.x.toFixed(1) }}</span>
+              </span>
+              <span class="pos-item">
+                <span class="pos-label">Y:</span>
+                <span class="pos-value">{{ position.y.toFixed(1) }}</span>
+              </span>
+              <span class="pos-item">
+                <span class="pos-label">Z:</span>
+                <span class="pos-value">{{ position.z.toFixed(1) }}</span>
+              </span>
+            </div>
+          </div>
+        </template>
+
         <!-- Temperature Display (Home View Only) -->
-        <div v-if="isHomeView" class="temps-compact">
-          <span class="temp-item">
-            <span class="temp-icon">🔥</span>
-            <span class="temp-value">{{ nozzleTemp.current }}°</span>
-            <span class="temp-separator">/</span>
-            <span class="temp-target">{{ nozzleTemp.target }}°</span>
-          </span>
-          <span class="temp-item">
-            <span class="temp-icon">🛏️</span>
-            <span class="temp-value">{{ bedTemp.current }}°</span>
-            <span class="temp-separator">/</span>
-            <span class="temp-target">{{ bedTemp.target }}°</span>
-          </span>
-        </div>
+        <template v-else-if="isHomeView">
+          <div class="top-bar-center">
+            <div class="temps-compact">
+              <span class="temp-item">
+                <span class="temp-icon">🔥</span>
+                <span class="temp-value">{{ nozzleTemp.current }}°</span>
+                <span class="temp-separator">/</span>
+                <span class="temp-target">{{ nozzleTemp.target }}°</span>
+              </span>
+              <span class="temp-item">
+                <span class="temp-icon">🛏️</span>
+                <span class="temp-value">{{ bedTemp.current }}°</span>
+                <span class="temp-separator">/</span>
+                <span class="temp-target">{{ bedTemp.target }}°</span>
+              </span>
+            </div>
+          </div>
+        </template>
+
         <div class="top-bar-actions">
-          <button class="settings-btn" @click="goToDebug" aria-label="Debug">
-            <span class="settings-icon">🐛</span>
-          </button>
           <button class="settings-btn" @click="goToSettings" aria-label="Settings">
             <span class="settings-icon">⚙️</span>
           </button>
@@ -112,6 +134,23 @@ onMounted(async () => {
   ])
 })
 
+// User-friendly state labels for status display
+const STATE_LABELS: Record<string, string> = {
+  'IDLE': 'Idle',
+  'PRINTING': 'Printing',
+  'PAUSED': 'Paused',
+  'FINISHED': 'Complete',
+  'STOPPED': 'Stopped',
+  'ERROR': 'Error',
+  'READY': 'Ready',
+  'BUSY': 'Busy',
+  'ATTENTION': 'Attention',
+  'DISCONNECTED': 'Offline'
+}
+
+const isFilesView = computed(() => route.path === '/files')
+const isSettingsView = computed(() => route.path === '/settings')
+
 const tabs = [
   { name: 'home', route: '/', icon: '🏠', label: 'Home' },
   { name: 'files', route: '/files', icon: '📁', label: 'Files' },
@@ -152,6 +191,12 @@ const bedTemp = computed(() => ({
   target: Math.round(printerStore.status?.target_bed ?? 0)
 }))
 
+// Status display text with user-friendly formatting
+const displayState = computed(() => {
+  const state = printerStore.status?.state || 'DISCONNECTED'
+  return STATE_LABELS[state] || state
+})
+
 function isActive(path: string): boolean {
   return route.path === path
 }
@@ -162,10 +207,6 @@ function navigate(path: string) {
 
 function goToSettings() {
   router.push('/settings')
-}
-
-function goToDebug() {
-  router.push('/debug')
 }
 
 function handleRetryConnection() {
@@ -209,6 +250,43 @@ function handleRetryConnection() {
   font-weight: bold;
   color: var(--prusa-orange);
   margin: 0;
+}
+
+/* Top Bar Center Content */
+.top-bar-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 200px;
+}
+
+/* Status Indicator */
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+}
+
+.connection-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--status-error);
+  flex-shrink: 0;
+}
+
+.connection-dot.connected {
+  background: var(--status-success);
+}
+
+.status-text {
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--text-primary);
+  text-transform: uppercase;
 }
 
 /* Position Display (Compact) */
