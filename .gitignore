@@ -9,6 +9,10 @@ test-results
 src/api/
 .beads
 
+# AI tool artifacts
+.opencode_runs
+.playwright-mcp
+
 # Local environment files with credentials
 .env.local
 .env.*.local
