@@ -67,6 +67,17 @@
         </TouchButton>
       </div>
     </div>
+
+    <!-- Expanded File View Modal -->
+    <ExpandedFileView
+      v-if="selectedFile"
+      :visible="showExpandedView"
+      :file="selectedFile"
+      :storage="selectedStorage"
+      :path="filesStore.currentPath === '/' ? `/${selectedFile.name}` : `${filesStore.currentPath}/${selectedFile.name}`"
+      :thumbnail-url="hasThumbnailRef(selectedFile) ? selectedFile.refs.thumbnail : undefined"
+      @close="handleCloseExpandedView"
+    />
   </div>
 </template>
 
@@ -74,11 +85,16 @@
 import { ref, onMounted, computed } from 'vue'
 import FileListItem from '@/components/FileListItem.vue'
 import TouchButton from '@/components/TouchButton.vue'
+import ExpandedFileView from '@/components/ExpandedFileView.vue'
 import { useFilesStore, type FileItem } from '@/stores/files'
 
 const filesStore = useFilesStore()
 const selectedStorage = ref('/local')
 const errorMessage = ref<string>('')
+
+// State for expanded file view
+const selectedFile = ref<FileItem | null>(null)
+const showExpandedView = ref(false)
 
 const hasFiles = computed(() => filesStore.sortedFiles.length > 0)
 
@@ -131,9 +147,15 @@ async function handleFileClick(file: FileItem) {
       errorMessage.value = 'Failed to open folder. Please try again.'
     }
   } else {
-    // TODO: Show file actions or start print
-    console.log('File selected:', file.name)
+    // Show expanded file view modal
+    selectedFile.value = file
+    showExpandedView.value = true
   }
+}
+
+function handleCloseExpandedView() {
+  showExpandedView.value = false
+  selectedFile.value = null
 }
 
 async function navigateToBreadcrumb(index: number) {
