@@ -1,22 +1,24 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { useSettingsStore } from '../stores/settings'
 import { useFilesStore } from '../stores/files'
 import { usePrinterStore } from '../stores/printer'
+import { usePrinterInfo } from '../composables/usePrinterInfo'
 import TouchButton from '../components/TouchButton.vue'
 
 const settingsStore = useSettingsStore()
 const filesStore = useFilesStore()
 const printerStore = usePrinterStore()
 
-// Computed properties for printer info (with fallbacks)
-const printerName = computed(() => printerStore.printerInfo?.name || 'Unknown Printer')
-const firmware = computed(() => printerStore.version?.firmware || 'Unknown')
-const prusaLink = computed(() => printerStore.version?.text || 'Unknown')
-const hostname = computed(() => printerStore.printerInfo?.hostname || 'Unknown')
-const serial = computed(() => printerStore.printerInfo?.serial || 'Unknown')
-const location = computed(() => printerStore.printerInfo?.location || 'Not Set')
-const nozzleDiameter = computed(() => printerStore.printerInfo?.nozzle_diameter?.toString() || 'Unknown')
+// Printer info from composable (with fallbacks)
+const {
+  printerName,
+  firmware,
+  prusaLink,
+  hostname,
+  serial,
+  location,
+  nozzleDiameter
+} = usePrinterInfo()
 
 // Methods
 async function handleRefreshInfo() {

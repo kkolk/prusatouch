@@ -49,7 +49,7 @@ describe('KioskHeader', () => {
 
     const statusBadge = wrapper.findComponent(StatusBadge)
     expect(statusBadge.exists()).toBe(true)
-    expect(statusBadge.props('state')).toBe('Printing')
+    expect(statusBadge.props('state')).toBe('PRINTING')
   })
 
   it('renders two TemperatureDisplay components', () => {
@@ -160,14 +160,14 @@ describe('KioskHeader', () => {
     expect(settingsBtn.attributes('aria-label')).toBe('Settings')
   })
 
-  it('maps printer state to user-friendly labels', () => {
+  it('maps printer state to StatusBadge states', () => {
     const testCases = [
-      { input: 'IDLE', expected: 'Idle' },
-      { input: 'PRINTING', expected: 'Printing' },
-      { input: 'PAUSED', expected: 'Paused' },
-      { input: 'ERROR', expected: 'Error' },
-      { input: 'FINISHED', expected: 'Complete' },
-      { input: 'DISCONNECTED', expected: 'Offline' }
+      { input: 'IDLE', expected: 'IDLE' },
+      { input: 'PRINTING', expected: 'PRINTING' },
+      { input: 'PAUSED', expected: 'PAUSED' },
+      { input: 'ERROR', expected: 'ERROR' },
+      { input: 'FINISHED', expected: 'FINISHED' },
+      { input: 'DISCONNECTED', expected: 'ERROR' }
     ]
 
     testCases.forEach(({ input, expected }) => {
@@ -196,7 +196,7 @@ describe('KioskHeader', () => {
     })
 
     const statusBadge = wrapper.findComponent(StatusBadge)
-    // Unknown states are passed through as-is
-    expect(statusBadge.props('state')).toBe('UNKNOWN_STATE')
+    // Unknown states map to ERROR
+    expect(statusBadge.props('state')).toBe('ERROR')
   })
 })

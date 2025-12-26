@@ -17,10 +17,10 @@ describe('Router', () => {
     expect(Array.isArray(routes)).toBe(true)
   })
 
-  it('has home route at root path', () => {
-    const homeRoute = routes.find(r => r.path === '/')
-    expect(homeRoute).toBeDefined()
-    expect(homeRoute?.name).toBe('home')
+  it('has status route', () => {
+    const statusRoute = routes.find(r => r.path === '/status')
+    expect(statusRoute).toBeDefined()
+    expect(statusRoute?.name).toBe('status')
   })
 
   it('has files route', () => {
@@ -35,9 +35,9 @@ describe('Router', () => {
     expect(settingsRoute?.name).toBe('settings')
   })
 
-  it('navigates to home by default', async () => {
+  it('navigates to status by default', async () => {
     await router.push('/')
-    expect(router.currentRoute.value.name).toBe('home')
+    expect(router.currentRoute.value.name).toBe('status')
   })
 
   it('navigates to files route', async () => {
@@ -50,8 +50,8 @@ describe('Router', () => {
     expect(router.currentRoute.value.name).toBe('settings')
   })
 
-  it('redirects unknown routes to home', async () => {
+  it('redirects unknown routes to status', async () => {
     await router.push('/unknown-route')
-    expect(router.currentRoute.value.name).toBe('home')
+    expect(router.currentRoute.value.name).toBe('status')
   })
 })
