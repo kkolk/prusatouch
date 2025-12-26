@@ -5,9 +5,9 @@ import { nextTick } from 'vue'
 vi.mock('../../../src/api', () => ({
   DefaultService: {
     getApiV1Storage: vi.fn(),
-    getApiFiles: vi.fn(),
-    postApiFiles: vi.fn(),
-    deleteApiFiles: vi.fn()
+    getApiV1Files: vi.fn(),
+    postApiV1Files: vi.fn(),
+    deleteApiV1Files: vi.fn()
   }
 }))
 
@@ -20,7 +20,7 @@ describe('useFiles', () => {
 
   it('provides sorted files with folders first', async () => {
     const { DefaultService } = await import('../../../src/api')
-    vi.mocked(DefaultService.getApiFiles).mockResolvedValue({
+    vi.mocked(DefaultService.getApiV1Files).mockResolvedValue({
       children: [
         { name: 'zebra.gcode', size: 1000 },
         { name: 'folder', size: 0, type: 'FOLDER' },
@@ -48,7 +48,7 @@ describe('useFiles', () => {
       resolveFiles = resolve
     })
 
-    vi.mocked(DefaultService.getApiFiles).mockReturnValue(filesPromise as any)
+    vi.mocked(DefaultService.getApiV1Files).mockReturnValue(filesPromise as any)
 
     const { useFiles } = await import('../../../src/composables/useFiles')
     const { isLoading, navigate } = useFiles()
@@ -68,7 +68,7 @@ describe('useFiles', () => {
 
   it('provides breadcrumb navigation', async () => {
     const { DefaultService } = await import('../../../src/api')
-    vi.mocked(DefaultService.getApiFiles).mockResolvedValue({ children: [] })
+    vi.mocked(DefaultService.getApiV1Files).mockResolvedValue({ children: [] })
 
     const { useFiles } = await import('../../../src/composables/useFiles')
     const { breadcrumbs, navigate } = useFiles()
@@ -85,25 +85,25 @@ describe('useFiles', () => {
 
   it('exposes startPrint action', async () => {
     const { DefaultService } = await import('../../../src/api')
-    vi.mocked(DefaultService.postApiFiles).mockResolvedValue(undefined)
+    vi.mocked(DefaultService.postApiV1Files).mockResolvedValue(undefined)
 
     const { useFiles } = await import('../../../src/composables/useFiles')
     const { startPrint, currentStorage } = useFiles()
 
     // Set current storage context
-    vi.mocked(DefaultService.getApiFiles).mockResolvedValue({ children: [] })
+    vi.mocked(DefaultService.getApiV1Files).mockResolvedValue({ children: [] })
     const { navigate } = useFiles()
     await navigate('usb', '/')
 
     await startPrint('/test.gcode')
 
-    expect(DefaultService.postApiFiles).toHaveBeenCalledWith('usb', '/test.gcode')
+    expect(DefaultService.postApiV1Files).toHaveBeenCalledWith('usb', '/test.gcode')
   })
 
   it('exposes deleteFile action', async () => {
     const { DefaultService } = await import('../../../src/api')
-    vi.mocked(DefaultService.deleteApiFiles).mockResolvedValue(undefined)
-    vi.mocked(DefaultService.getApiFiles).mockResolvedValue({ children: [] })
+    vi.mocked(DefaultService.deleteApiV1Files).mockResolvedValue(undefined)
+    vi.mocked(DefaultService.getApiV1Files).mockResolvedValue({ children: [] })
 
     const { useFiles } = await import('../../../src/composables/useFiles')
     const { deleteFile, navigate } = useFiles()
@@ -111,7 +111,7 @@ describe('useFiles', () => {
     await navigate('local', '/')
     await deleteFile('/old-file.gcode')
 
-    expect(DefaultService.deleteApiFiles).toHaveBeenCalledWith('local', '/old-file.gcode')
+    expect(DefaultService.deleteApiV1Files).toHaveBeenCalledWith('local', '/old-file.gcode')
   })
 
   it('provides thumbnail from cache', async () => {

@@ -437,7 +437,7 @@ export class DefaultService {
      * @returns any File or folder metadata retrieved successfully
      * @throws ApiError
      */
-    public static getApiFiles(
+    public static getApiV1Files(
         storage: string,
         path: string,
         acceptLanguage?: string,
@@ -445,7 +445,7 @@ export class DefaultService {
     ): CancelablePromise<(FileInfo | PrintFileInfo | FirmwareFileInfo | FolderInfo)> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/files/{storage}/{path}',
+            url: '/api/v1/files/{storage}/{path}',
             path: {
                 'storage': storage,
                 'path': path,
@@ -479,7 +479,7 @@ export class DefaultService {
      * @returns any Created
      * @throws ApiError
      */
-    public static putApiFiles(
+    public static putApiV1Files(
         storage: string,
         path: string,
         acceptLanguage?: string,
@@ -492,7 +492,7 @@ export class DefaultService {
     ): CancelablePromise<any> {
         return __request(OpenAPI, {
             method: 'PUT',
-            url: '/api/files/{storage}/{path}',
+            url: '/api/v1/files/{storage}/{path}',
             path: {
                 'storage': storage,
                 'path': path,
@@ -551,7 +551,7 @@ export class DefaultService {
      * @returns void
      * @throws ApiError
      */
-    public static postApiFiles(
+    public static postApiV1Files(
         storage: string,
         path: string,
         acceptLanguage?: string,
@@ -560,7 +560,7 @@ export class DefaultService {
     ): CancelablePromise<void> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/api/files/{storage}/{path}',
+            url: '/api/v1/files/{storage}/{path}',
             path: {
                 'storage': storage,
                 'path': path,
@@ -591,7 +591,7 @@ export class DefaultService {
      * @returns string OK
      * @throws ApiError
      */
-    public static headApiFiles(
+    public static headApiV1Files(
         storage: string,
         path: string,
         acceptLanguage?: string,
@@ -599,7 +599,7 @@ export class DefaultService {
     ): CancelablePromise<string> {
         return __request(OpenAPI, {
             method: 'HEAD',
-            url: '/api/files/{storage}/{path}',
+            url: '/api/v1/files/{storage}/{path}',
             path: {
                 'storage': storage,
                 'path': path,
@@ -652,7 +652,7 @@ export class DefaultService {
      * @returns void
      * @throws ApiError
      */
-    public static deleteApiFiles(
+    public static deleteApiV1Files(
         storage: string,
         path: string,
         acceptLanguage?: string,
@@ -661,7 +661,7 @@ export class DefaultService {
     ): CancelablePromise<void> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/api/files/{storage}/{path}',
+            url: '/api/v1/files/{storage}/{path}',
             path: {
                 'storage': storage,
                 'path': path,

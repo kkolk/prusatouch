@@ -71,7 +71,7 @@ export const useFilesStore = defineStore('files', () => {
     try {
       loading.value = true
       const { DefaultService } = await import('../api')
-      const response = await DefaultService.getApiFiles(storage, path, undefined, 'application/json')
+      const response = await DefaultService.getApiV1Files(storage, path, undefined, 'application/json')
       // Response can be FolderInfo which has children property
       if ('children' in response) {
         files.value = response.children || []
@@ -98,7 +98,7 @@ export const useFilesStore = defineStore('files', () => {
   async function startPrint(storage: string, path: string) {
     try {
       const { DefaultService } = await import('../api')
-      await DefaultService.postApiFiles(storage, path)
+      await DefaultService.postApiV1Files(storage, path)
     } catch (error) {
       console.error('Failed to start print:', error)
       throw error
@@ -108,7 +108,7 @@ export const useFilesStore = defineStore('files', () => {
   async function deleteFile(storage: string, path: string) {
     try {
       const { DefaultService } = await import('../api')
-      await DefaultService.deleteApiFiles(storage, path)
+      await DefaultService.deleteApiV1Files(storage, path)
 
       // Refresh file list
       await fetchFiles(storage, currentPath.value || '/')

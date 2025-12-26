@@ -116,7 +116,7 @@ export const useJobStore = defineStore('job', () => {
   async function startPrint(storage: string, path: string) {
     try {
       const { DefaultService } = await import('../api')
-      await DefaultService.postApiFiles(storage, path)
+      await DefaultService.postApiV1Files(storage, path)
       // Fetch the newly started job
       await fetchJob()
     } catch (error) {
