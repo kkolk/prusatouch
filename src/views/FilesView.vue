@@ -22,7 +22,7 @@
           <option
             v-for="storage in filesStore.storages"
             :key="storage.path"
-            :value="storage.name"
+            :value="storage.path"
           >
             {{ storage.name }}
           </option>
@@ -77,7 +77,7 @@ import TouchButton from '@/components/TouchButton.vue'
 import { useFilesStore, type FileItem } from '@/stores/files'
 
 const filesStore = useFilesStore()
-const selectedStorage = ref('local')
+const selectedStorage = ref('/local')
 const errorMessage = ref<string>('')
 
 const hasFiles = computed(() => filesStore.sortedFiles.length > 0)
