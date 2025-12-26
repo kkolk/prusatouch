@@ -125,9 +125,10 @@ async function fetchDetailedInfo() {
   try {
     loading.value = true
     const { DefaultService } = await import('@/api')
-    // Strip leading slash from storage path
+    // Strip leading slash from storage and path
     const storageId = props.storage.replace(/^\//, '')
-    const response = await DefaultService.getApiV1Files(storageId, props.path, undefined, 'application/json')
+    const filePath = props.path.replace(/^\//, '')
+    const response = await DefaultService.getApiV1Files(storageId, filePath, undefined, 'application/json')
 
     // Check if response is PrintFileInfo (has meta property)
     if (response && 'meta' in response) {
