@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { StatusPrinter } from '../api/models/StatusPrinter'
+import type { Info } from '../api/models/Info'
+import type { Version } from '../api/models/Version'
 import { PrintheadJogCommand } from '../api/models/PrintheadJogCommand'
 import { PrintheadHomeCommand } from '../api/models/PrintheadHomeCommand'
 import { PrintheadDisableSteppersCommand } from '../api/models/PrintheadDisableSteppersCommand'
@@ -30,6 +32,9 @@ export const usePrinterStore = defineStore('printer', () => {
     timerId: null as number | null
   })
   const temperatureHistory = ref<TemperatureDataPoint[]>([])
+  const printerInfo = ref<Info | null>(null)
+  const version = ref<Version | null>(null)
+  const printerInfoLoading = ref(false)
 
   // Getters
   const isConnected = computed(() => connection.value.connected)
@@ -281,12 +286,38 @@ export const usePrinterStore = defineStore('printer', () => {
     }
   }
 
+  async function fetchPrinterInfo() {
+    try {
+      printerInfoLoading.value = true
+      const { DefaultService } = await import('../api')
+      printerInfo.value = await DefaultService.getApiV1Info()
+    } catch (error) {
+      console.error('Failed to fetch printer info:', error)
+      // Keep printerInfo as null - composable will use fallbacks
+    } finally {
+      printerInfoLoading.value = false
+    }
+  }
+
+  async function fetchVersion() {
+    try {
+      const { DefaultService } = await import('../api')
+      version.value = await DefaultService.getApiVersion()
+    } catch (error) {
+      console.error('Failed to fetch version:', error)
+      // Keep version as null - composable will use fallbacks
+    }
+  }
+
   return {
     // State
     status,
     connection,
     polling,
     temperatureHistory,
+    printerInfo,
+    version,
+    printerInfoLoading,
 
     // Getters
     isConnected,
@@ -303,6 +334,8 @@ export const usePrinterStore = defineStore('printer', () => {
     setNozzleTemp,
     setBedTemp,
     extrudeFilament,
-    retractFilament
+    retractFilament,
+    fetchPrinterInfo,
+    fetchVersion
   }
 })

@@ -106,4 +106,106 @@ describe('printerStore', () => {
       expect(typeof store.setBedTemp).toBe('function')
     })
   })
+
+  describe('fetchPrinterInfo', () => {
+    it('should fetch and store printer info', async () => {
+      const store = usePrinterStore()
+      const mockPrinterInfo = {
+        name: 'Prusa MINI',
+        serial: 'CZPX18F000',
+        hostname: 'prusamini',
+        location: 'Home Office',
+        nozzle_diameter: 0.4,
+        sd_ready: true,
+        mmu: false,
+        farm_mode: false
+      }
+
+      // Mock API call
+      const { DefaultService } = await import('../../../src/api')
+      vi.spyOn(DefaultService, 'getApiV1Info').mockResolvedValue(mockPrinterInfo)
+
+      await store.fetchPrinterInfo()
+
+      expect(store.printerInfo).toEqual(mockPrinterInfo)
+      expect(store.printerInfoLoading).toBe(false)
+    })
+
+    it('should handle fetch errors gracefully', async () => {
+      const store = usePrinterStore()
+
+      // Mock API error
+      const { DefaultService } = await import('../../../src/api')
+      vi.spyOn(DefaultService, 'getApiV1Info').mockRejectedValue(new Error('Network error'))
+
+      await store.fetchPrinterInfo()
+
+      expect(store.printerInfo).toBeNull()
+      expect(store.printerInfoLoading).toBe(false)
+    })
+
+    it('should set loading state during fetch', async () => {
+      const store = usePrinterStore()
+      const mockPrinterInfo = {
+        name: 'Prusa MINI',
+        serial: 'CZPX18F000'
+      }
+
+      let resolveCall: ((value: any) => void) | null = null
+
+      // Mock API with delay to test loading state
+      const { DefaultService } = await import('../../../src/api')
+      vi.spyOn(DefaultService, 'getApiV1Info').mockImplementation(() => {
+        return new Promise((resolve) => {
+          resolveCall = resolve
+        })
+      })
+
+      const fetchPromise = store.fetchPrinterInfo()
+
+      // Should be loading during fetch
+      expect(store.printerInfoLoading).toBe(true)
+
+      // Resolve the promise after a short delay
+      await new Promise(resolve => setTimeout(resolve, 10))
+      resolveCall!(mockPrinterInfo)
+      await fetchPromise
+
+      // Should not be loading after fetch
+      expect(store.printerInfoLoading).toBe(false)
+    })
+  })
+
+  describe('fetchVersion', () => {
+    it('should fetch and store version info', async () => {
+      const store = usePrinterStore()
+      const mockVersion = {
+        api: '0.7.0',
+        version: '0.9.0',
+        printer: 'MK3S',
+        text: '0.9.0',
+        firmware: '3.13.0'
+      }
+
+      // Mock API call
+      const { DefaultService } = await import('../../../src/api')
+      vi.spyOn(DefaultService, 'getApiVersion').mockResolvedValue(mockVersion)
+
+      await store.fetchVersion()
+
+      expect(store.version).toEqual(mockVersion)
+    })
+
+    it('should handle version fetch errors gracefully', async () => {
+      const store = usePrinterStore()
+
+      // Mock API error
+      const { DefaultService } = await import('../../../src/api')
+      vi.spyOn(DefaultService, 'getApiVersion').mockRejectedValue(new Error('Unauthorized'))
+
+      await store.fetchVersion()
+
+      expect(store.version).toBeNull()
+    })
+  })
 })
