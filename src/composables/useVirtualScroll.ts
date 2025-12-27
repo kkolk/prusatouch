@@ -71,10 +71,10 @@ export function useVirtualScroll(
       absoluteIndex: startIndex + index,
       style: {
         transform: `translateY(${(startIndex + index) * itemHeight}px)`,
-        position: 'absolute',
-        top: '0',
-        left: '0',
-        right: '0',
+        position: 'absolute' as const,
+        top: '0px' as const,
+        left: '0px' as const,
+        right: '0px' as const,
         height: `${itemHeight}px`
       }
     }))
