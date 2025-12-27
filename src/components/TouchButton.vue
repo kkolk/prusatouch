@@ -49,7 +49,7 @@ function handleClick() {
   font-size: 18px;
   font-weight: bold;
   cursor: pointer;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  transition: transform var(--transition-fast);
   display: inline-flex;
   align-items: center;
   justify-content: center;
