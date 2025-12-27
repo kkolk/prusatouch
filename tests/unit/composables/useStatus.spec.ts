@@ -110,4 +110,52 @@ describe('useStatus', () => {
     // Should not have made more calls after stopping
     expect(vi.mocked(DefaultService.getApiV1Status).mock.calls.length).toBe(callCount)
   })
+
+  it('returns true for isBusy when printer state is BUSY', async () => {
+    const { DefaultService } = await import('../../../src/api')
+    vi.mocked(DefaultService.getApiV1Status).mockResolvedValue({
+      printer: { state: 'BUSY' }
+    })
+
+    const { useStatus } = await import('../../../src/composables/useStatus')
+    const { isBusy } = useStatus()
+
+    await vi.runAllTimersAsync()
+    await nextTick()
+
+    expect(isBusy.value).toBe(true)
+  })
+
+  it('returns false for isBusy when printer state is IDLE', async () => {
+    const { DefaultService } = await import('../../../src/api')
+    vi.mocked(DefaultService.getApiV1Status).mockResolvedValue({
+      printer: { state: 'IDLE' }
+    })
+
+    const { useStatus } = await import('../../../src/composables/useStatus')
+    const { isBusy } = useStatus()
+
+    await vi.runAllTimersAsync()
+    await nextTick()
+
+    expect(isBusy.value).toBe(false)
+  })
+
+  it('printerState still normalizes BUSY to IDLE (no regression)', async () => {
+    const { DefaultService } = await import('../../../src/api')
+    vi.mocked(DefaultService.getApiV1Status).mockResolvedValue({
+      printer: { state: 'BUSY' }
+    })
+
+    const { useStatus } = await import('../../../src/composables/useStatus')
+    const { printerState, isBusy } = useStatus()
+
+    await vi.runAllTimersAsync()
+    await nextTick()
+
+    // printerState should normalize BUSY to IDLE for StatusBadge
+    expect(printerState.value).toBe('IDLE')
+    // isBusy should expose raw BUSY state
+    expect(isBusy.value).toBe(true)
+  })
 })

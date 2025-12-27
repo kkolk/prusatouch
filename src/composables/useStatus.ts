@@ -36,6 +36,11 @@ export function useStatus() {
     }
   })
 
+  const isBusy = computed(() => {
+    const state = store.status?.state
+    return state === 'BUSY'
+  })
+
   const nozzleTemp = computed(() => ({
     current: store.status?.temp_nozzle ?? 0,
     target: store.status?.target_nozzle ?? 0
@@ -83,6 +88,9 @@ export function useStatus() {
 
     // Raw store access (for advanced use)
     status: readonly(computed(() => store.status)),
+
+    // Additional state
+    isBusy: readonly(isBusy),
 
     // Lifecycle
     startPolling,
