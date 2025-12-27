@@ -232,6 +232,7 @@ async function handleSetTemp(temp: number) {
       :visible="showExtruderControl"
       :current="nozzleTemp.current"
       :target="nozzleTemp.target"
+      :disabled="isLoading"
       @close="closeExtruderControl"
       @extrude="handleExtrude"
       @retract="handleRetract"

@@ -7,9 +7,12 @@ interface Props {
   visible: boolean
   current: number
   target: number
+  disabled?: boolean
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  disabled: false
+})
 
 const emit = defineEmits<{
   close: []
@@ -35,6 +38,9 @@ const isHot = computed(() => props.current >= 170)
 const isCold = computed(() => props.current < 40)
 const isHeating = computed(() => props.current < props.target && props.target > 0)
 const isReady = computed(() => isHot.value && Math.abs(props.current - props.target) < 5)
+
+// Can extrude if nozzle is hot AND not disabled
+const canExtrude = computed(() => isHot.value && !props.disabled)
 
 const statusClass = computed(() => {
   if (isCold.value) return 'status-cold'
@@ -130,7 +136,7 @@ function handleClose() {
       <TouchButton
         variant="primary"
         size="large"
-        :disabled="!isHot"
+        :disabled="!canExtrude"
         @click="handleExtrude"
       >
         Extrude
@@ -138,7 +144,7 @@ function handleClose() {
       <TouchButton
         variant="secondary"
         size="large"
-        :disabled="!isHot"
+        :disabled="!canExtrude"
         @click="handleRetract"
       >
         Retract

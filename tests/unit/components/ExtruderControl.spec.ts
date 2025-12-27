@@ -193,4 +193,54 @@ describe('ExtruderControl', () => {
 
     expect(wrapper.emitted('close')).toBeTruthy()
   })
+
+  it('disables extrude button when disabled prop is true', () => {
+    const wrapper = mount(ExtruderControl, {
+      props: { visible: true, current: 200, target: 215, disabled: true }
+    })
+    const extrudeButton = wrapper.findAll('button').find(btn =>
+      btn.text().includes('Extrude')
+    )
+    expect(extrudeButton?.attributes('disabled')).toBeDefined()
+  })
+
+  it('disables retract button when disabled prop is true', () => {
+    const wrapper = mount(ExtruderControl, {
+      props: { visible: true, current: 200, target: 215, disabled: true }
+    })
+    const retractButton = wrapper.findAll('button').find(btn =>
+      btn.text().includes('Retract')
+    )
+    expect(retractButton?.attributes('disabled')).toBeDefined()
+  })
+
+  it('thermal safeguard still works - cold nozzle disables extrude even when disabled is false', () => {
+    const wrapper = mount(ExtruderControl, {
+      props: { visible: true, current: 160, target: 215, disabled: false }
+    })
+    const extrudeButton = wrapper.findAll('button').find(btn =>
+      btn.text().includes('Extrude')
+    )
+    expect(extrudeButton?.attributes('disabled')).toBeDefined()
+  })
+
+  it('both conditions work together - hot nozzle and not disabled enables extrude', () => {
+    const wrapper = mount(ExtruderControl, {
+      props: { visible: true, current: 200, target: 215, disabled: false }
+    })
+    const extrudeButton = wrapper.findAll('button').find(btn =>
+      btn.text().includes('Extrude')
+    )
+    expect(extrudeButton?.attributes('disabled')).toBeUndefined()
+  })
+
+  it('disabled prop overrides thermal state - hot nozzle but disabled prevents extrude', () => {
+    const wrapper = mount(ExtruderControl, {
+      props: { visible: true, current: 200, target: 215, disabled: true }
+    })
+    const extrudeButton = wrapper.findAll('button').find(btn =>
+      btn.text().includes('Extrude')
+    )
+    expect(extrudeButton?.attributes('disabled')).toBeDefined()
+  })
 })
