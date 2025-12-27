@@ -47,7 +47,7 @@ function handleClick() {
   border: none;
   border-radius: var(--radius-md);
   font-size: 18px;
-  font-weight: bold;
+  font-weight: var(--font-weight-bold);
   cursor: pointer;
   transition: transform var(--transition-fast);
   display: inline-flex;

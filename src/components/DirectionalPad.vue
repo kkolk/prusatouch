@@ -123,7 +123,7 @@ function handleMove(axis: 'x' | 'y' | 'z', direction: number) {
 
 .z-label {
   font-size: var(--font-md);
-  font-weight: bold;
+  font-weight: var(--font-weight-bold);
   color: var(--text-secondary);
   padding: var(--space-xs);
 }

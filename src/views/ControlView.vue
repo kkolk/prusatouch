@@ -303,7 +303,7 @@ async function handleSetTemp(temp: number) {
   background: var(--bg-secondary);
   color: var(--text-primary);
   font-size: 14px;
-  font-weight: bold;
+  font-weight: var(--font-weight-bold);
   cursor: pointer;
   transition: transform var(--transition-fast);
   font-family: inherit;

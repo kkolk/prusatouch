@@ -248,7 +248,7 @@ function handleClick() {
 
 .filename {
   font-size: 18px;
-  font-weight: bold;
+  font-weight: var(--font-weight-bold);
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;

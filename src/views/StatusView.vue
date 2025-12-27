@@ -606,7 +606,7 @@ async function adjustBedTemp(delta: number) {
   padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-md);
   text-align: center;
-  font-weight: bold;
+  font-weight: var(--font-weight-bold);
 }
 
 /* Idle Content */

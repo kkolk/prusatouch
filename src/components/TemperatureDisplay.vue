@@ -51,7 +51,7 @@ const stateClass = computed(() => {
   align-items: center;
   gap: var(--space-sm);
   font-size: 18px;
-  font-weight: bold;
+  font-weight: var(--font-weight-bold);
 }
 
 .temperature-display.tappable {

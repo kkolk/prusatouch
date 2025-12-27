@@ -299,7 +299,7 @@ onMounted(() => {
 .filename {
   margin: 0;
   font-size: var(--font-xl);
-  font-weight: bold;
+  font-weight: var(--font-weight-bold);
   color: var(--text-primary);
   text-align: center;
   word-break: break-word;
@@ -327,7 +327,7 @@ onMounted(() => {
 
 .label {
   font-size: var(--font-xs);
-  font-weight: bold;
+  font-weight: var(--font-weight-bold);
   color: var(--text-tertiary);
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -335,7 +335,7 @@ onMounted(() => {
 
 .value {
   font-size: var(--font-lg);
-  font-weight: bold;
+  font-weight: var(--font-weight-bold);
   color: var(--text-primary);
 }
 
@@ -356,7 +356,7 @@ onMounted(() => {
   border: none;
   border-radius: var(--radius-md);
   font-size: var(--font-lg);
-  font-weight: bold;
+  font-weight: var(--font-weight-bold);
   cursor: pointer;
   font-family: inherit;
   transition: transform var(--transition-fast);

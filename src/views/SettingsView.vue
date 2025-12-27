@@ -141,7 +141,7 @@ function handleResetDefaults() {
 
 .settings-title {
   font-size: 28px;
-  font-weight: bold;
+  font-weight: var(--font-weight-bold);
   color: var(--text-primary);
   margin: 0 0 var(--space-lg) 0;
 }
@@ -156,7 +156,7 @@ function handleResetDefaults() {
 
 .section-title {
   font-size: 20px;
-  font-weight: bold;
+  font-weight: var(--font-weight-bold);
   color: var(--prusa-orange);
   margin: 0 0 var(--space-md) 0;
 }

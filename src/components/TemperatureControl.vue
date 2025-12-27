@@ -155,7 +155,7 @@ function handleCancel() {
 
 .temp-reading .value {
   font-size: 32px;
-  font-weight: bold;
+  font-weight: var(--font-weight-bold);
   color: var(--text-primary);
 }
 
@@ -191,7 +191,7 @@ function handleCancel() {
 
 .preset-label {
   font-size: 16px;
-  font-weight: bold;
+  font-weight: var(--font-weight-bold);
   color: var(--text-primary);
 }
 
@@ -220,7 +220,7 @@ function handleCancel() {
   border-radius: var(--radius-md);
   color: var(--text-primary);
   font-size: 18px;
-  font-weight: bold;
+  font-weight: var(--font-weight-bold);
   font-family: inherit;
 }
 

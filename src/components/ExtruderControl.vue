@@ -178,7 +178,7 @@ function handleClose() {
 
 .temp-reading .value {
   font-size: var(--font-xl);
-  font-weight: bold;
+  font-weight: var(--font-weight-bold);
   color: var(--prusa-orange);
   font-family: monospace;
 }
@@ -194,7 +194,7 @@ function handleClose() {
 
 .status-text {
   font-size: var(--font-md);
-  font-weight: bold;
+  font-weight: var(--font-weight-bold);
 }
 
 .status-cold {
@@ -242,7 +242,7 @@ function handleClose() {
 
 .preset-label {
   font-size: var(--font-sm);
-  font-weight: bold;
+  font-weight: var(--font-weight-bold);
 }
 
 .preset-temp {
@@ -287,7 +287,7 @@ function handleClose() {
   background: var(--bg-secondary);
   color: var(--text-primary);
   font-size: var(--font-md);
-  font-weight: bold;
+  font-weight: var(--font-weight-bold);
   cursor: pointer;
   transition: transform var(--transition-fast);
   font-family: inherit;

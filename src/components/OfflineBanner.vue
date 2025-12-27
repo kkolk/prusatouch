@@ -69,7 +69,7 @@ const emit = defineEmits<{
 
 .banner-title {
   font-size: 16px;
-  font-weight: bold;
+  font-weight: var(--font-weight-bold);
 }
 
 .banner-subtitle {
@@ -85,7 +85,7 @@ const emit = defineEmits<{
   border: none;
   border-radius: var(--radius-md);
   font-size: 14px;
-  font-weight: bold;
+  font-weight: var(--font-weight-bold);
   cursor: pointer;
   transition: transform var(--transition-fast);
   font-family: inherit;
