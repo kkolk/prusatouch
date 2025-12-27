@@ -1,10 +1,17 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import ExpandedFileView from '../../../src/components/ExpandedFileView.vue'
 
 // Mock fetch for thumbnail loading
 global.fetch = vi.fn()
+
+// Mock the API before importing
+vi.mock('../../../src/api', () => ({
+  DefaultService: {
+    getApiV1Files: vi.fn()
+  }
+}))
 
 describe('ExpandedFileView', () => {
   const mockFile = {
@@ -214,6 +221,116 @@ describe('ExpandedFileView', () => {
     const buttons = wrapper.findAll('.btn')
     buttons.forEach(btn => {
       expect(btn.classes()).toContain('btn')
+    })
+  })
+
+  describe('path normalization in fetchDetailedInfo', () => {
+    beforeEach(async () => {
+      const { DefaultService } = await import('../../../src/api')
+      vi.mocked(DefaultService.getApiV1Files).mockResolvedValue({
+        type: 'PRINT_FILE' as any,
+        name: 'test-print.gcode',
+        display_name: 'Test Print.gcode',
+        read_only: false,
+        size: 1024,
+        m_timestamp: 0,
+        meta: {
+          estimated_print_time: 3600,
+          'filament used [mm]': 1000,
+          'filament used [g]': 10,
+          layer_height: 0.2,
+          nozzle_diameter: 0.4
+        }
+      })
+    })
+
+    afterEach(() => {
+      vi.clearAllMocks()
+    })
+
+    it('normalizes storage with leading slash: /local + /file.gcode', async () => {
+      const { DefaultService } = await import('../../../src/api')
+      const wrapper = mount(ExpandedFileView, {
+        props: {
+          visible: true,
+          file: mockFile,
+          storage: '/local',
+          path: '/test-print.gcode'
+        }
+      })
+
+      // Wait for fetchDetailedInfo to be called in onMounted
+      await new Promise(resolve => setTimeout(resolve, 0))
+
+      expect(DefaultService.getApiV1Files).toHaveBeenCalledWith(
+        'local',  // Storage should have leading slash stripped
+        'test-print.gcode',  // Path should have leading slash stripped
+        undefined,
+        'application/json'
+      )
+    })
+
+    it('normalizes storage with leading slash: /local + file.gcode', async () => {
+      const { DefaultService } = await import('../../../src/api')
+      const wrapper = mount(ExpandedFileView, {
+        props: {
+          visible: true,
+          file: mockFile,
+          storage: '/local',
+          path: 'test-print.gcode'
+        }
+      })
+
+      await new Promise(resolve => setTimeout(resolve, 0))
+
+      expect(DefaultService.getApiV1Files).toHaveBeenCalledWith(
+        'local',
+        'test-print.gcode',
+        undefined,
+        'application/json'
+      )
+    })
+
+    it('handles storage without slash: local + /file.gcode', async () => {
+      const { DefaultService } = await import('../../../src/api')
+      const wrapper = mount(ExpandedFileView, {
+        props: {
+          visible: true,
+          file: mockFile,
+          storage: 'local',
+          path: '/test-print.gcode'
+        }
+      })
+
+      await new Promise(resolve => setTimeout(resolve, 0))
+
+      expect(DefaultService.getApiV1Files).toHaveBeenCalledWith(
+        'local',
+        'test-print.gcode',
+        undefined,
+        'application/json'
+      )
+    })
+
+    it('handles no slashes: local + file.gcode', async () => {
+      const { DefaultService } = await import('../../../src/api')
+      const wrapper = mount(ExpandedFileView, {
+        props: {
+          visible: true,
+          file: mockFile,
+          storage: 'local',
+          path: 'test-print.gcode'
+        }
+      })
+
+      await new Promise(resolve => setTimeout(resolve, 0))
+
+      expect(DefaultService.getApiV1Files).toHaveBeenCalledWith(
+        'local',
+        'test-print.gcode',
+        undefined,
+        'application/json'
+      )
     })
   })
 })
