@@ -195,7 +195,6 @@ function handleClose() {
   border-radius: var(--radius-md);
   text-align: center;
   margin-bottom: var(--space-md);
-  transition: opacity var(--transition-normal);
 }
 
 .status-text {

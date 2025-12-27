@@ -266,6 +266,7 @@ async function handleSetTemp(temp: number) {
 
 <style scoped>
 .control-view {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -402,6 +403,7 @@ async function handleSetTemp(temp: number) {
   align-items: center;
   justify-content: center;
   z-index: 10;
+  will-change: opacity;
   animation: fadeIn 0.2s ease-out;
 }
 
