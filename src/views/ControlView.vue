@@ -405,6 +405,7 @@ async function handleSetTemp(temp: number) {
   z-index: 10;
   will-change: opacity;
   animation: fadeIn 0.2s ease-out;
+  pointer-events: auto;
 }
 
 @keyframes fadeIn {
