@@ -15,6 +15,100 @@ describe('ControlView', () => {
     expect(wrapper.find('.control-view').exists()).toBe(true)
   })
 
+  it('displays position coordinates', () => {
+    const printerStore = usePrinterStore()
+    printerStore.status = {
+      axis_x: 100.5,
+      axis_y: 50.3,
+      axis_z: 10.8,
+      state: StatusPrinter.state.IDLE,
+      temp_nozzle: 0,
+      target_nozzle: 0,
+      temp_bed: 0,
+      target_bed: 0
+    } as StatusPrinter
+
+    const wrapper = mount(ControlView)
+
+    expect(wrapper.text()).toContain('100.5')
+    expect(wrapper.text()).toContain('50.3')
+    expect(wrapper.text()).toContain('10.8')
+  })
+
+  it('displays position with 1 decimal place formatting', () => {
+    const printerStore = usePrinterStore()
+    printerStore.status = {
+      axis_x: 100.123,
+      axis_y: 50.456,
+      axis_z: 10.789,
+      state: StatusPrinter.state.IDLE,
+      temp_nozzle: 0,
+      target_nozzle: 0,
+      temp_bed: 0,
+      target_bed: 0
+    } as StatusPrinter
+
+    const wrapper = mount(ControlView)
+
+    expect(wrapper.text()).toContain('100.1')
+    expect(wrapper.text()).toContain('50.5')
+    expect(wrapper.text()).toContain('10.8')
+  })
+
+  it('defaults to 0.0 when position values are undefined', () => {
+    const printerStore = usePrinterStore()
+    printerStore.status = {
+      state: StatusPrinter.state.IDLE,
+      temp_nozzle: 0,
+      target_nozzle: 0,
+      temp_bed: 0,
+      target_bed: 0
+    } as StatusPrinter
+
+    const wrapper = mount(ControlView)
+
+    expect(wrapper.text()).toContain('X:')
+    expect(wrapper.text()).toContain('Y:')
+    expect(wrapper.text()).toContain('Z:')
+    expect(wrapper.text()).toContain('0.0')
+  })
+
+  it('updates position display when status changes', async () => {
+    const printerStore = usePrinterStore()
+    printerStore.status = {
+      axis_x: 0,
+      axis_y: 0,
+      axis_z: 0,
+      state: StatusPrinter.state.IDLE,
+      temp_nozzle: 0,
+      target_nozzle: 0,
+      temp_bed: 0,
+      target_bed: 0
+    } as StatusPrinter
+
+    const wrapper = mount(ControlView)
+
+    expect(wrapper.text()).toContain('0.0')
+
+    // Update position
+    printerStore.status = {
+      axis_x: 25.5,
+      axis_y: 37.2,
+      axis_z: 5.0,
+      state: StatusPrinter.state.IDLE,
+      temp_nozzle: 0,
+      target_nozzle: 0,
+      temp_bed: 0,
+      target_bed: 0
+    } as StatusPrinter
+
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.text()).toContain('25.5')
+    expect(wrapper.text()).toContain('37.2')
+    expect(wrapper.text()).toContain('5.0')
+  })
+
   it('renders DirectionalPad component', () => {
     const wrapper = mount(ControlView)
     expect(wrapper.findComponent({ name: 'DirectionalPad' }).exists()).toBe(true)

@@ -37,6 +37,13 @@ const nozzleTemp = computed(() => ({
   target: printerStore.status?.target_nozzle || 0
 }))
 
+// Position display (X, Y, Z)
+const position = computed(() => ({
+  x: printerStore.status?.axis_x ?? 0,
+  y: printerStore.status?.axis_y ?? 0,
+  z: printerStore.status?.axis_z ?? 0
+}))
+
 // Methods
 function selectStep(step: number) {
   selectedStep.value = step
@@ -171,6 +178,22 @@ async function handleSetTemp(temp: number) {
 
 <template>
   <div class="control-view">
+    <!-- Position Display -->
+    <div class="position-display">
+      <span class="pos-item">
+        <span class="pos-label">X:</span>
+        <span class="pos-value">{{ position.x.toFixed(1) }}</span>
+      </span>
+      <span class="pos-item">
+        <span class="pos-label">Y:</span>
+        <span class="pos-value">{{ position.y.toFixed(1) }}</span>
+      </span>
+      <span class="pos-item">
+        <span class="pos-label">Z:</span>
+        <span class="pos-value">{{ position.z.toFixed(1) }}</span>
+      </span>
+    </div>
+
     <!-- Busy overlay when printer is BUSY -->
     <div v-if="isBusy" class="busy-overlay">
       <div class="busy-spinner"></div>
@@ -249,6 +272,37 @@ async function handleSetTemp(temp: number) {
   padding: var(--space-xs);
   gap: var(--space-xs);
   overflow: hidden;
+}
+
+/* Position Display */
+.position-display {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-sm);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.pos-item {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+}
+
+.pos-label {
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--text-secondary);
+}
+
+.pos-value {
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--prusa-orange);
+  font-family: monospace;
+  min-width: 40px;
 }
 
 /* Error Banner */
