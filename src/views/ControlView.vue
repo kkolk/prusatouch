@@ -201,7 +201,7 @@ async function handleSetTemp(temp: number) {
 
       <!-- CENTER Column: Directional Pad -->
       <div class="column column-center">
-        <DirectionalPad @move="handleMove" />
+        <DirectionalPad :disabled="isLoading" @move="handleMove" />
       </div>
 
       <!-- RIGHT Column: Action Buttons -->

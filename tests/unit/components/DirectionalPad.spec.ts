@@ -88,4 +88,42 @@ describe('DirectionalPad', () => {
     // Component should have CSS for active state with transform
     expect(button.exists()).toBe(true)
   })
+
+  describe('disabled prop', () => {
+    it('disables all direction buttons when disabled prop is true', () => {
+      const wrapper = mount(DirectionalPad, {
+        props: { disabled: true }
+      })
+
+      expect(wrapper.find('[data-direction="up"]').attributes('disabled')).toBeDefined()
+      expect(wrapper.find('[data-direction="down"]').attributes('disabled')).toBeDefined()
+      expect(wrapper.find('[data-direction="left"]').attributes('disabled')).toBeDefined()
+      expect(wrapper.find('[data-direction="right"]').attributes('disabled')).toBeDefined()
+      expect(wrapper.find('[data-axis="z"][data-direction="up"]').attributes('disabled')).toBeDefined()
+      expect(wrapper.find('[data-axis="z"][data-direction="down"]').attributes('disabled')).toBeDefined()
+    })
+
+    it('does not emit move events when disabled', async () => {
+      const wrapper = mount(DirectionalPad, {
+        props: { disabled: true }
+      })
+
+      await wrapper.find('[data-direction="up"]').trigger('click')
+      await wrapper.find('[data-direction="left"]').trigger('click')
+      await wrapper.find('[data-axis="z"][data-direction="up"]').trigger('click')
+
+      expect(wrapper.emitted('move')).toBeFalsy()
+    })
+
+    it('emits move events when not disabled', async () => {
+      const wrapper = mount(DirectionalPad, {
+        props: { disabled: false }
+      })
+
+      await wrapper.find('[data-direction="up"]').trigger('click')
+
+      expect(wrapper.emitted('move')).toBeTruthy()
+      expect(wrapper.emitted('move')?.[0]).toEqual([{ axis: 'y', direction: 1 }])
+    })
+  })
 })

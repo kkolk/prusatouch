@@ -1,14 +1,23 @@
 <script setup lang="ts">
+interface Props {
+  disabled?: boolean
+}
+
 interface MoveEvent {
   axis: 'x' | 'y' | 'z'
   direction: number  // -1 or 1
 }
+
+const props = withDefaults(defineProps<Props>(), {
+  disabled: false
+})
 
 const emit = defineEmits<{
   move: [event: MoveEvent]
 }>()
 
 function handleMove(axis: 'x' | 'y' | 'z', direction: number) {
+  if (props.disabled) return
   emit('move', { axis, direction })
 }
 </script>
@@ -20,6 +29,7 @@ function handleMove(axis: 'x' | 'y' | 'z', direction: number) {
       <button
         class="pad-button xy-up"
         data-direction="up"
+        :disabled="disabled"
         @click="handleMove('y', 1)"
       >
         <span class="arrow">▲</span>
@@ -29,6 +39,7 @@ function handleMove(axis: 'x' | 'y' | 'z', direction: number) {
         <button
           class="pad-button xy-left"
           data-direction="left"
+          :disabled="disabled"
           @click="handleMove('x', -1)"
         >
           <span class="arrow">◄</span>
@@ -39,6 +50,7 @@ function handleMove(axis: 'x' | 'y' | 'z', direction: number) {
         <button
           class="pad-button xy-right"
           data-direction="right"
+          :disabled="disabled"
           @click="handleMove('x', 1)"
         >
           <span class="arrow">►</span>
@@ -48,6 +60,7 @@ function handleMove(axis: 'x' | 'y' | 'z', direction: number) {
       <button
         class="pad-button xy-down"
         data-direction="down"
+        :disabled="disabled"
         @click="handleMove('y', -1)"
       >
         <span class="arrow">▼</span>
@@ -60,6 +73,7 @@ function handleMove(axis: 'x' | 'y' | 'z', direction: number) {
         class="pad-button z-up"
         data-axis="z"
         data-direction="up"
+        :disabled="disabled"
         @click="handleMove('z', 1)"
       >
         <span class="arrow">▲</span>
@@ -71,6 +85,7 @@ function handleMove(axis: 'x' | 'y' | 'z', direction: number) {
         class="pad-button z-down"
         data-axis="z"
         data-direction="down"
+        :disabled="disabled"
         @click="handleMove('z', -1)"
       >
         <span class="arrow">▼</span>
@@ -156,6 +171,12 @@ function handleMove(axis: 'x' | 'y' | 'z', direction: number) {
 /* GPU-accelerated active state - ONLY transform */
 .pad-button:active {
   transform: scale(0.90);
+}
+
+/* Disabled state */
+.pad-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .arrow {
