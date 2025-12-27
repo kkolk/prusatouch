@@ -70,18 +70,18 @@ function handleClick() {
 
 /* Variant: Primary */
 .touch-button--primary {
-  background: linear-gradient(180deg, #ff8533 0%, var(--prusa-orange) 100%);
+  background: linear-gradient(180deg, var(--prusa-orange-hover) 0%, var(--prusa-orange) 100%);
   color: white;
   box-shadow: var(--shadow-md);
 }
 
 .touch-button--primary:hover:not(:disabled) {
-  background: linear-gradient(180deg, #ff9966 0%, var(--prusa-orange-hover) 100%);
+  background: linear-gradient(180deg, var(--prusa-orange-hover) 0%, var(--prusa-orange-hover) 100%);
   box-shadow: var(--shadow-lg);
 }
 
 .touch-button--primary:active:not(:disabled) {
-  background: linear-gradient(180deg, #e67300 0%, var(--prusa-orange-active) 100%);
+  background: linear-gradient(180deg, var(--prusa-orange-active) 0%, var(--prusa-orange-active) 100%);
 }
 
 /* Variant: Secondary */
@@ -108,12 +108,12 @@ function handleClick() {
 }
 
 .touch-button--danger:hover:not(:disabled) {
-  background: #ff0000;
+  background: var(--status-danger);
   box-shadow: var(--shadow-lg);
 }
 
 .touch-button--danger:active:not(:disabled) {
-  background: #ff0000;
+  background: var(--status-danger);
 }
 
 /* Variant: Tertiary */
