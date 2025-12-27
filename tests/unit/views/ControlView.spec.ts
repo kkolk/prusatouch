@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import ControlView from '../../../src/views/ControlView.vue'
 import { usePrinterStore } from '../../../src/stores/printer'
+import { StatusPrinter } from '../../../src/api/models/StatusPrinter'
 
 describe('ControlView', () => {
   beforeEach(() => {
@@ -158,5 +159,65 @@ describe('ControlView', () => {
     await extruderControl.vm.$emit('set-temp', 215)
 
     expect(setTempSpy).toHaveBeenCalledWith(215)
+  })
+
+  describe('Busy overlay', () => {
+    it('shows busy overlay when printer status is BUSY', async () => {
+      const printerStore = usePrinterStore()
+      // Set printer state to BUSY using the enum
+      printerStore.status = {
+        state: StatusPrinter.state.BUSY,
+        temp_nozzle: 0,
+        target_nozzle: 0,
+        temp_bed: 0,
+        target_bed: 0
+      } as StatusPrinter
+
+      const wrapper = mount(ControlView)
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('.busy-overlay').exists()).toBe(true)
+    })
+
+    it('hides busy overlay when printer status is IDLE', async () => {
+      const printerStore = usePrinterStore()
+      // Set printer state to IDLE using the enum
+      printerStore.status = {
+        state: StatusPrinter.state.IDLE,
+        temp_nozzle: 0,
+        target_nozzle: 0,
+        temp_bed: 0,
+        target_bed: 0
+      } as StatusPrinter
+
+      const wrapper = mount(ControlView)
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('.busy-overlay').exists()).toBe(false)
+    })
+
+    it('commandInProgress provides immediate feedback for commands', async () => {
+      const printerStore = usePrinterStore()
+      const homeAxesSpy = vi.spyOn(printerStore, 'homeAxes').mockImplementation(
+        () => new Promise(resolve => setTimeout(resolve, 100))
+      )
+
+      const wrapper = mount(ControlView)
+
+      // Trigger Home All command
+      const homeButton = wrapper.findAll('button').find(btn =>
+        btn.text().includes('Home All')
+      )
+      await homeButton?.trigger('click')
+
+      // commandInProgress should be true immediately
+      expect(wrapper.vm.commandInProgress).toBe(true)
+
+      // Wait for command to complete
+      await new Promise(resolve => setTimeout(resolve, 150))
+
+      // commandInProgress should be false after command completes
+      expect(wrapper.vm.commandInProgress).toBe(false)
+    })
   })
 })

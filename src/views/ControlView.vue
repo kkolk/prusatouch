@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { usePrinterStore } from '../stores/printer'
+import { useStatus } from '../composables/useStatus'
 import DirectionalPad from '../components/DirectionalPad.vue'
 import TouchButton from '../components/TouchButton.vue'
 import ExtruderControl from '../components/ExtruderControl.vue'
 
-// Store
+// Store & composables
 const printerStore = usePrinterStore()
+const { isBusy } = useStatus()
 
 // Lifecycle - Start/stop polling when view is mounted/unmounted
 onMounted(() => {
@@ -21,8 +23,13 @@ onUnmounted(() => {
 const selectedStep = ref(1) // Default to 1mm
 const stepOptions = [0.1, 1, 10, 100]
 const errorMessage = ref<string>('')
-const isLoading = ref(false)
+const commandInProgress = ref(false)
 const showExtruderControl = ref(false)
+
+// Computed combining commandInProgress and isBusy
+const isLoading = computed(() => {
+  return commandInProgress.value || isBusy.value
+})
 
 // Computed
 const nozzleTemp = computed(() => ({
@@ -38,79 +45,79 @@ function selectStep(step: number) {
 async function handleMove(event: { axis: 'x' | 'y' | 'z'; direction: number }) {
   try {
     errorMessage.value = ''
-    isLoading.value = true
+    commandInProgress.value = true
     const distance = selectedStep.value * event.direction
     await printerStore.moveAxis(event.axis, distance)
   } catch (error) {
     console.error('Failed to move axis:', error)
     errorMessage.value = `Failed to move ${event.axis.toUpperCase()} axis. Please try again.`
   } finally {
-    isLoading.value = false
+    commandInProgress.value = false
   }
 }
 
 async function handleHomeAll() {
   try {
     errorMessage.value = ''
-    isLoading.value = true
+    commandInProgress.value = true
     await printerStore.homeAxes(['x', 'y', 'z'])
   } catch (error) {
     console.error('Failed to home axes:', error)
     errorMessage.value = 'Failed to home all axes. Please try again.'
   } finally {
-    isLoading.value = false
+    commandInProgress.value = false
   }
 }
 
 async function handleHomeX() {
   try {
     errorMessage.value = ''
-    isLoading.value = true
+    commandInProgress.value = true
     await printerStore.homeAxes(['x'])
   } catch (error) {
     console.error('Failed to home X axis:', error)
     errorMessage.value = 'Failed to home X axis. Please try again.'
   } finally {
-    isLoading.value = false
+    commandInProgress.value = false
   }
 }
 
 async function handleHomeY() {
   try {
     errorMessage.value = ''
-    isLoading.value = true
+    commandInProgress.value = true
     await printerStore.homeAxes(['y'])
   } catch (error) {
     console.error('Failed to home Y axis:', error)
     errorMessage.value = 'Failed to home Y axis. Please try again.'
   } finally {
-    isLoading.value = false
+    commandInProgress.value = false
   }
 }
 
 async function handleHomeZ() {
   try {
     errorMessage.value = ''
-    isLoading.value = true
+    commandInProgress.value = true
     await printerStore.homeAxes(['z'])
   } catch (error) {
     console.error('Failed to home Z axis:', error)
     errorMessage.value = 'Failed to home Z axis. Please try again.'
   } finally {
-    isLoading.value = false
+    commandInProgress.value = false
   }
 }
 
 async function handleDisableSteppers() {
   try {
     errorMessage.value = ''
-    isLoading.value = true
+    commandInProgress.value = true
     await printerStore.disableSteppers()
   } catch (error) {
     console.error('Failed to disable steppers:', error)
     errorMessage.value = 'Failed to disable steppers. Please try again.'
   } finally {
-    isLoading.value = false
+    commandInProgress.value = false
   }
 }
 
@@ -125,45 +132,51 @@ function closeExtruderControl() {
 async function handleExtrude(amount: number) {
   try {
     errorMessage.value = ''
-    isLoading.value = true
+    commandInProgress.value = true
     await printerStore.extrudeFilament(amount)
   } catch (error) {
     console.error('Failed to extrude:', error)
     errorMessage.value = 'Failed to extrude filament. Please try again.'
   } finally {
-    isLoading.value = false
+    commandInProgress.value = false
   }
 }
 
 async function handleRetract(amount: number) {
   try {
     errorMessage.value = ''
-    isLoading.value = true
+    commandInProgress.value = true
     await printerStore.retractFilament(amount)
   } catch (error) {
     console.error('Failed to retract:', error)
     errorMessage.value = 'Failed to retract filament. Please try again.'
   } finally {
-    isLoading.value = false
+    commandInProgress.value = false
   }
 }
 
 async function handleSetTemp(temp: number) {
   try {
     errorMessage.value = ''
-    isLoading.value = true
+    commandInProgress.value = true
     await printerStore.setNozzleTemp(temp)
   } catch (error) {
     console.error('Failed to set nozzle temperature:', error)
     errorMessage.value = 'Failed to set nozzle temperature. Please try again.'
   } finally {
-    isLoading.value = false
+    commandInProgress.value = false
   }
 }
 </script>
 
 <template>
   <div class="control-view">
+    <!-- Busy overlay when printer is BUSY -->
+    <div v-if="isBusy" class="busy-overlay">
+      <div class="busy-spinner"></div>
+      <p class="busy-text">Printer busy...</p>
+    </div>
+
     <!-- Error Message -->
     <div v-if="errorMessage" class="error-banner">
       {{ errorMessage }}
@@ -319,5 +332,46 @@ async function handleSetTemp(temp: number) {
   border-color: var(--prusa-orange);
   background: var(--bg-tertiary);
   color: var(--prusa-orange);
+}
+
+/* Busy Overlay */
+.busy-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.busy-spinner {
+  width: 60px;
+  height: 60px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top-color: var(--prusa-orange);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.busy-text {
+  color: var(--prusa-orange);
+  font-size: var(--font-lg);
+  font-weight: var(--font-weight-bold);
+  margin-top: var(--space-md);
 }
 </style>
