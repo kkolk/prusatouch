@@ -55,7 +55,7 @@ const stateClass = computed(() => {
 
 /* PRINTING state - Orange with breathing animation */
 .status-printing {
-  background: rgba(from var(--prusa-orange) r g b / 0.4);
+  background: rgba(255, 102, 0, 0.4);
   color: var(--prusa-orange);
   animation: breathe 2s ease-in-out infinite;
 }
@@ -67,7 +67,7 @@ const stateClass = computed(() => {
 
 /* PAUSED state - Yellow with blinking */
 .status-paused {
-  background: rgba(from var(--status-warning) r g b / 0.4);
+  background: rgba(255, 170, 0, 0.4);
   color: var(--status-warning);
 }
 
@@ -78,7 +78,7 @@ const stateClass = computed(() => {
 
 /* ERROR state - Red with shake on mount */
 .status-error {
-  background: rgba(from var(--status-error) r g b / 0.5);
+  background: rgba(204, 0, 0, 0.5);
   color: var(--status-error);
   animation: shake 0.5s ease-in-out;
 }
@@ -89,7 +89,7 @@ const stateClass = computed(() => {
 
 /* FINISHED state - Green */
 .status-finished {
-  background: rgba(from var(--status-success) r g b / 0.4);
+  background: rgba(0, 255, 0, 0.4);
   color: var(--status-success);
 }
 
