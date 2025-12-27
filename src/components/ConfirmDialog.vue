@@ -100,16 +100,17 @@ function handleDialogClick(event: Event) {
   width: 90%;
   max-width: 400px;
   background: var(--bg-secondary);
+  border: var(--border-medium);
   border-radius: var(--radius-lg);
   padding: var(--space-lg);
   z-index: 2001;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-lg);
 }
 
 .dialog-title {
   margin: 0 0 var(--space-md) 0;
   font-size: 22px;
-  font-weight: bold;
+  font-weight: 700;
   color: var(--text-primary);
 }
 

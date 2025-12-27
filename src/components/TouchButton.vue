@@ -49,7 +49,7 @@ function handleClick() {
   font-size: 18px;
   font-weight: bold;
   cursor: pointer;
-  transition: transform var(--transition-fast);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -60,6 +60,7 @@ function handleClick() {
 /* GPU-accelerated active state - ONLY transform (no width/height/top/left/color changes) */
 .touch-button:active:not(:disabled) {
   transform: scale(0.95);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .touch-button:disabled {
@@ -69,25 +70,33 @@ function handleClick() {
 
 /* Variant: Primary */
 .touch-button--primary {
-  background: var(--prusa-orange);
+  background: linear-gradient(180deg, #ff8533 0%, var(--prusa-orange) 100%);
   color: white;
+  box-shadow: var(--shadow-md);
 }
 
 .touch-button--primary:hover:not(:disabled) {
-  background: var(--prusa-orange-hover);
+  background: linear-gradient(180deg, #ff9966 0%, var(--prusa-orange-hover) 100%);
+  box-shadow: var(--shadow-lg);
 }
 
 .touch-button--primary:active:not(:disabled) {
-  background: var(--prusa-orange-active);
+  background: linear-gradient(180deg, #e67300 0%, var(--prusa-orange-active) 100%);
 }
 
 /* Variant: Secondary */
 .touch-button--secondary {
   background: var(--bg-secondary);
   color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
 }
 
 .touch-button--secondary:hover:not(:disabled) {
+  background: var(--bg-tertiary);
+  box-shadow: var(--shadow-md);
+}
+
+.touch-button--secondary:active:not(:disabled) {
   background: var(--bg-tertiary);
 }
 
@@ -95,9 +104,15 @@ function handleClick() {
 .touch-button--danger {
   background: var(--status-error);
   color: white;
+  box-shadow: var(--shadow-md);
 }
 
 .touch-button--danger:hover:not(:disabled) {
+  background: #ff0000;
+  box-shadow: var(--shadow-lg);
+}
+
+.touch-button--danger:active:not(:disabled) {
   background: #ff0000;
 }
 
@@ -105,9 +120,15 @@ function handleClick() {
 .touch-button--tertiary {
   background: var(--bg-tertiary);
   color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
 }
 
 .touch-button--tertiary:hover:not(:disabled) {
+  background: var(--bg-secondary);
+  box-shadow: var(--shadow-md);
+}
+
+.touch-button--tertiary:active:not(:disabled) {
   background: var(--bg-secondary);
 }
 

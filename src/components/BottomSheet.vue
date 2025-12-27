@@ -74,20 +74,22 @@ function handleContentClick(event: Event) {
   width: 100%;
   max-height: 80vh;
   background: var(--bg-secondary);
+  border: var(--border-medium);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: var(--shadow-lg);
   overflow-y: auto;
   z-index: 1001;
 }
 
 .sheet-header {
   padding: var(--space-md) var(--space-md) var(--space-sm);
-  border-bottom: 1px solid var(--bg-tertiary);
+  border-bottom: var(--border-subtle);
 }
 
 .sheet-title {
   margin: 0;
   font-size: 20px;
-  font-weight: bold;
+  font-weight: 700;
   color: var(--text-primary);
 }
 

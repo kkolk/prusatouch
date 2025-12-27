@@ -142,7 +142,7 @@ svg.frozen .progress {
 /* Progress text styling */
 :deep(.progress-text) {
   font-size: 52px; /* 48-56px range, use middle value */
-  font-weight: bold;
+  font-weight: 700;
   color: var(--text-primary);
 }
 
@@ -172,7 +172,7 @@ svg.frozen .progress {
   background: rgba(0, 0, 0, 0.7);
   color: white;
   font-size: 24px;
-  font-weight: bold;
+  font-weight: 700;
   padding: 4px 12px;
   border-radius: 12px;
   backdrop-filter: blur(4px);

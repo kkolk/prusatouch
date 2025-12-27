@@ -29,9 +29,11 @@ const stateClass = computed(() => {
   gap: var(--space-sm);
   padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-md);
+  border: var(--border-subtle);
   font-size: 14px;
-  font-weight: bold;
+  font-weight: 700;
   text-transform: uppercase;
+  box-shadow: var(--shadow-sm);
 }
 
 .status-dot {
@@ -44,7 +46,7 @@ const stateClass = computed(() => {
 /* IDLE state - Gray */
 .status-idle {
   background: var(--bg-tertiary);
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
 .status-idle .status-dot {
@@ -53,7 +55,7 @@ const stateClass = computed(() => {
 
 /* PRINTING state - Orange with breathing animation */
 .status-printing {
-  background: rgba(255, 102, 0, 0.2);
+  background: rgba(255, 102, 0, 0.4);
   color: var(--prusa-orange);
   animation: breathe 2s ease-in-out infinite;
 }
@@ -65,7 +67,7 @@ const stateClass = computed(() => {
 
 /* PAUSED state - Yellow with blinking */
 .status-paused {
-  background: rgba(255, 170, 0, 0.2);
+  background: rgba(255, 170, 0, 0.4);
   color: var(--status-warning);
 }
 
@@ -76,7 +78,7 @@ const stateClass = computed(() => {
 
 /* ERROR state - Red with shake on mount */
 .status-error {
-  background: rgba(204, 0, 0, 0.2);
+  background: rgba(204, 0, 0, 0.5);
   color: var(--status-error);
   animation: shake 0.5s ease-in-out;
 }
@@ -87,7 +89,7 @@ const stateClass = computed(() => {
 
 /* FINISHED state - Green */
 .status-finished {
-  background: rgba(0, 255, 0, 0.2);
+  background: rgba(0, 255, 0, 0.4);
   color: var(--status-success);
 }
 

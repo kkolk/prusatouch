@@ -655,7 +655,7 @@ async function adjustBedTemp(delta: number) {
 
 .progress-percent {
   font-size: 48px;
-  font-weight: bold;
+  font-weight: 700;
   color: var(--text-primary);
 }
 
@@ -670,7 +670,8 @@ async function adjustBedTemp(delta: number) {
 
 .file-name {
   font-size: 16px;
-  color: var(--text-secondary);
+  font-weight: 700;
+  color: var(--text-primary);
   margin: 0 0 var(--space-xs) 0;
   max-width: 300px;
   overflow: hidden;
@@ -681,7 +682,8 @@ async function adjustBedTemp(delta: number) {
 .layer-info,
 .speed-info {
   font-size: 14px;
-  color: var(--text-tertiary);
+  font-weight: 500;
+  color: var(--text-primary);
   margin: var(--space-xs) 0 0 0;
 }
 
@@ -725,7 +727,7 @@ async function adjustBedTemp(delta: number) {
 
 .progress-text {
   font-size: 52px; /* 48-56px range, use middle value */
-  font-weight: bold;
+  font-weight: 700;
   color: var(--text-primary);
 }
 
@@ -768,8 +770,8 @@ async function adjustBedTemp(delta: number) {
 
 .file-name {
   font-size: var(--font-size-lg);
-  font-weight: 500;
-  color: var(--text-secondary);
+  font-weight: 700;
+  color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
@@ -779,7 +781,8 @@ async function adjustBedTemp(delta: number) {
 
 .time-remaining {
   font-size: var(--font-size-md);
-  color: var(--text-secondary);
+  font-weight: 500;
+  color: var(--text-primary);
 }
 
 /* Control Sheet Content */
@@ -813,7 +816,7 @@ async function adjustBedTemp(delta: number) {
   margin: 0;
   font-size: var(--font-size-md);
   color: var(--text-primary);
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .temp-control-row {
@@ -832,6 +835,6 @@ async function adjustBedTemp(delta: number) {
   text-align: center;
   font-size: var(--font-size-md);
   color: var(--text-primary);
-  font-weight: 500;
+  font-weight: 700;
 }
 </style>

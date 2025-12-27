@@ -193,7 +193,9 @@ function handleClick() {
   min-height: 80px;
   padding: var(--space-sm);
   background: var(--bg-secondary);
+  border: var(--border-medium);
   border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
   cursor: pointer;
   transition: transform var(--transition-fast);
   user-select: none;
@@ -205,7 +207,8 @@ function handleClick() {
 
 .file-list-item.selected {
   background: var(--bg-tertiary);
-  border: 2px solid var(--prusa-orange);
+  border: var(--border-primary);
+  box-shadow: var(--shadow-md);
 }
 
 .thumbnail-container {
