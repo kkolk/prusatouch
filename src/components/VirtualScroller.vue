@@ -8,11 +8,13 @@ interface Props {
   items: FileItem[]
   itemHeight?: number
   bufferSize?: number
+  getThumbnailUrl?: (item: FileItem) => string | null | undefined
 }
 
 const props = withDefaults(defineProps<Props>(), {
   itemHeight: 80,
-  bufferSize: 2
+  bufferSize: 2,
+  getThumbnailUrl: undefined
 })
 
 const emit = defineEmits<{
@@ -75,6 +77,7 @@ function handleItemClick(file: FileItem) {
     >
       <FileListItem
         :file="item"
+        :thumbnail-url="props.getThumbnailUrl ? props.getThumbnailUrl(item) : undefined"
         @click="handleItemClick"
       />
     </div>

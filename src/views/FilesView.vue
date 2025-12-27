@@ -49,15 +49,13 @@
       </div>
 
       <!-- File List -->
-      <div v-if="hasFiles" class="file-list">
-        <FileListItem
-          v-for="file in filesStore.sortedFiles"
-          :key="file.name"
-          :file="file"
-          :thumbnail-url="hasThumbnailRef(file) ? file.refs.thumbnail : undefined"
-          @click="handleFileClick"
-        />
-      </div>
+      <VirtualScroller
+        v-if="hasFiles"
+        :items="filesStore.sortedFiles"
+        :item-height="80"
+        :get-thumbnail-url="getThumbnailUrl"
+        @item-click="handleFileClick"
+      />
 
       <!-- Empty State -->
       <div v-else class="empty-state">
@@ -83,9 +81,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import FileListItem from '@/components/FileListItem.vue'
 import TouchButton from '@/components/TouchButton.vue'
 import ExpandedFileView from '@/components/ExpandedFileView.vue'
+import VirtualScroller from '@/components/VirtualScroller.vue'
 import { useFilesStore, type FileItem } from '@/stores/files'
 
 const filesStore = useFilesStore()
@@ -97,6 +95,11 @@ const selectedFile = ref<FileItem | null>(null)
 const showExpandedView = ref(false)
 
 const hasFiles = computed(() => filesStore.sortedFiles.length > 0)
+
+// Get thumbnail URL for a file item
+function getThumbnailUrl(file: FileItem): string | null | undefined {
+  return hasThumbnailRef(file) ? file.refs.thumbnail : undefined
+}
 
 // Type guard for checking if file has refs with thumbnail
 function hasThumbnailRef(file: FileItem): file is FileItem & { refs: { thumbnail: string } } {
@@ -290,17 +293,6 @@ async function navigateToBreadcrumb(index: number) {
 
 .breadcrumb-item:hover {
   color: var(--prusa-orange);
-}
-
-/* File List */
-.file-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  flex: 1;
-  padding: var(--space-sm);
 }
 
 /* Empty State */
